@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "additionalDirectories": ["../job"],
+    "deny": [
+      "Edit(../job/**)",
+      "Write(../job/**)",
+      "Bash(git -C ../job push:*)",
+      "Bash(git -C ../job commit:*)",
+      "Bash(git -C ../job checkout:*)",
+      "Bash(git -C ../job reset:*)",
+      "Bash(eas submit:*)"
+    ]
+  }
+}

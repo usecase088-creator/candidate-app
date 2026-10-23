@@ -1,0 +1,9 @@
+# Secrets and local env (CLAUDE.md: Safety)
+.env*
+!.env.local.example
+
+# Local copy of the reference backend (Task 4)
+.reference-backend/
+
+# Dependencies
+node_modules/
