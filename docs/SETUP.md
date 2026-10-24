@@ -26,6 +26,35 @@ recommend for the SDK in `docs/DECISIONS.md` (D9).
    Developer options → USB debugging). This is the main test device on an 8 GB laptop.
 10. An iPhone with Expo Go, for early iOS checks
 
+## Raj's laptop — what is actually installed (2026-10-25)
+
+No Android Studio (8 GB RAM): command-line SDK only, real phone instead of an emulator.
+
+| Tool | Version | Where / how |
+| --- | --- | --- |
+| Node | 24.19.0 | winget `OpenJS.NodeJS.LTS` |
+| JDK | Microsoft OpenJDK 17.0.20 | winget `Microsoft.OpenJDK.17` → `C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot` |
+| adb | platform-tools 37.0.1 | winget `Google.PlatformTools` (on PATH) + same version in the SDK |
+| Android SDK | cmdline-tools 16111833, platform `android-36`, build-tools `36.1.0` | `%LOCALAPPDATA%\Android\Sdk` (zip from dl.google.com, SHA-1 checked). Gradle downloads anything else it needs. |
+| Maestro | 2.11.0 | `%LOCALAPPDATA%\maestro` (GitHub release zip, SHA-256 checked) |
+| GitHub | Git Credential Manager (no `gh`) | user `rajendra0000` |
+
+User environment: `JAVA_HOME`, `ANDROID_HOME`, PATH += `%JAVA_HOME%\bin`, `%ANDROID_HOME%\cmdline-tools\latest\bin`,
+`%LOCALAPPDATA%\maestro\bin`. Restart VS Code after changing them.
+
+Install more SDK packages with a package file (the `.bat` launcher splits arguments at `;`):
+`sdkmanager --package_file=packages.txt` with one package per line, e.g. `platforms;android-36`.
+
+Git Bash rewrites phone paths like `/sdcard/...` into Windows paths. Prefix adb commands with
+`MSYS_NO_PATHCONV=1`.
+
+### Test phone: Realme P3x 5G (RMX3944), Android 15 (API 35), 6 GB RAM
+
+- Developer mode: Settings → About phone → Version → tap **Version number** 7 times.
+- Settings → Additional settings → Developer options → **USB debugging** on, **Disable permission monitoring** on.
+- USB mode: **File transfer / Android Auto**. Accept "Allow USB debugging?" with "Always allow".
+- Check: `adb devices` shows the phone as `device`.
+
 ## iOS
 
 - **Without a Mac** (likely setup):
