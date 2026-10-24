@@ -62,6 +62,8 @@ Sentry (crash reports) and Firebase (Android push, Phase 4).
   on free tiers. Expo, Sentry, Neon (dev), Cloudinary (dev). So they already belong to the client; nothing to hand over.
 - Google Play and Apple accounts stay with the client; Raj is added as a team member.
   Apple/Google organisation accounts wait for the D-U-N-S number (not done yet, 2026-10-24).
+- **Store fees (agreed by phone 2026-10-24):** Google Play and Apple Developer fees are billed to and paid by
+  the client.
 
 ## D8 — Expo plan (decided)
 
