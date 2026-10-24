@@ -41,10 +41,9 @@ The backend sends real SMS through Fast2SMS and has no test mode.
 A copy of the backend for testing backend changes before they go live. Render free web service +
 Neon free database with empty tables and test data only (no real users). Made with the project Gmail.
 
-## D5 — Candidate domain for app links (open, needed by week 4)
+## D5 — Candidate domain for app links (decided 2026-10-24)
 
-The code mentions apronhanger.in, .work and .org. Which one is the live candidate website?
-Email links on that domain will open the app.
+Live candidate website: **apronhanger.work** (Raj). Email links on this domain can open the app (Phase 4).
 
 ## D6 — Which backend commit is live (open, needed before Phase 4)
 
@@ -59,8 +58,10 @@ Check the Render dashboard for the deployed commit before any backend change.
 Expo is the service that builds the app files for the stores. It needs an account, and so do
 Sentry (crash reports) and Firebase (Android push, Phase 4).
 
-- All made with **Raj's new project Gmail**. Handed over to the client at the end.
+- **Changed 2026-10-24:** all made with the **email the client provided for this project** (not a Gmail of Raj's),
+  on free tiers. Expo, Sentry, Neon (dev), Cloudinary (dev). So they already belong to the client; nothing to hand over.
 - Google Play and Apple accounts stay with the client; Raj is added as a team member.
+  Apple/Google organisation accounts wait for the D-U-N-S number (not done yet, 2026-10-24).
 
 ## D8 — Expo plan (decided)
 
