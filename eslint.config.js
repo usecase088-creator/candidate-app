@@ -23,7 +23,8 @@ module.exports = defineConfig([
     },
   },
   {
-    files: ['src/api/client.ts'],
+    // The client itself, and tests that check the network mock or call the backend directly.
+    files: ['src/api/client.ts', 'src/test/**', 'tests/contract/**', 'e2e/**'],
     rules: { 'no-restricted-globals': 'off' },
   },
 ]);

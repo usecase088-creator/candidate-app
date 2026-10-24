@@ -48,3 +48,30 @@ describe('parseEnv', () => {
     ).toThrow(/https/);
   });
 });
+
+describe('getEnv', () => {
+  // expo-constants is a native module; in Jest it has no app config, so we give it one.
+  function loadWithExtra(extra: unknown): typeof import('../env') {
+    let mod: typeof import('../env') | undefined;
+    jest.isolateModules(() => {
+      jest.doMock('expo-constants', () => ({ __esModule: true, default: { expoConfig: { extra } } }));
+      // isolateModules needs a synchronous require to load a fresh copy of the module.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      mod = require('../env');
+    });
+    return mod!;
+  }
+
+  it('validates the config that app.config.ts put in extra', () => {
+    expect(loadWithExtra(valid).getEnv()).toMatchObject(valid);
+  });
+
+  it('returns the same object on every call', () => {
+    const { getEnv } = loadWithExtra(valid);
+    expect(getEnv()).toBe(getEnv());
+  });
+
+  it('throws on first use when the build config is broken', () => {
+    expect(() => loadWithExtra({}).getEnv()).toThrow(/Invalid app config/);
+  });
+});

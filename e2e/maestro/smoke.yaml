@@ -1,0 +1,11 @@
+# Smoke: the dev build launches on the phone and shows the first screen.
+# Becomes "sees the login screen" once Task 8 builds it.
+appId: work.apronhanger.candidate.dev
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: home.placeholder
+    timeout: 30000
+- assertVisible: ApronHanger

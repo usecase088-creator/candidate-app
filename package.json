@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/ui": "~58.0.23",
+    "@tanstack/react-query": "^5.104.5",
     "expo": "~58.0.19",
     "expo-constants": "~58.0.13",
     "expo-device": "~58.0.5",
@@ -29,6 +30,8 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@testing-library/react-native": "^14.1.0",
     "@types/jest": "30.0.0",
     "@types/node": "24.19.2",
     "@types/react": "~19.3.0",
@@ -37,6 +40,7 @@
     "eslint-config-prettier": "10.1.8",
     "jest": "30.5.2",
     "jest-expo": "~58.0.12",
+    "msw": "^3.0.3",
     "prettier": "3.9.10",
     "typescript": "6.0.3"
   },
@@ -64,10 +68,49 @@
   },
   "jest": {
     "preset": "jest-expo",
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/test/jest.setup.ts"
+    ],
     "testPathIgnorePatterns": [
       "/node_modules/",
       "/tests/contract/",
       "/e2e/"
-    ]
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/app/**",
+      "!src/test/**",
+      "!**/__tests__/**"
+    ],
+    "coverageThreshold": {
+      "./src/lib/": {
+        "lines": 85
+      }
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|msw|@msw|@mswjs|@open-draft|rettime|until-async|outvariant|headers-polyfill|is-node-process|strict-event-emitter|@bundled-es-modules|cookie|tough-cookie|tldts|tldts-core|@inquirer|graphql))",
+      "/node_modules/react-native-reanimated/plugin/",
+      "/node_modules/@react-native/babel-preset/"
+    ],
+    "transform": {
+      "^.+.mjs$": [
+        "babel-jest",
+        {
+          "presets": [
+            "babel-preset-expo"
+          ]
+        }
+      ]
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "mjs",
+      "cjs",
+      "json"
+    ],
+    "testEnvironment": "<rootDir>/src/test/jestEnvironment.js"
   }
 }
