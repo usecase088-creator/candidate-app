@@ -24,7 +24,7 @@ a new ID means a brand new app with zero users.
 
 It is written as the company domain backwards plus the app name.
 
-- (Earlier proposal `work.apronhanger.candidate` dropped: the live domain is .work.)
+- (Earlier proposal `in.apronhanger.candidate` dropped: the live domain is .work.)
 - Dev and test builds get `.dev` and `.preview` at the end, so they can sit on the same phone as the real app.
 
 ## D3 — OTP during testing (decided)
