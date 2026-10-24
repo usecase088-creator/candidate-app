@@ -66,7 +66,7 @@ Key technical choices:
   offline banner. No silent failures.
 - **OTA updates**: `expo-updates` is in the first binary (runtime version = fingerprint policy), so later
   JS-only fixes can ship without a store release. Production OTA only with Raj's OK.
-- **IDs (permanent once published)**: Android package and iOS bundle ID `in.apronhanger.candidate`
+- **IDs (permanent once published)**: Android package and iOS bundle ID `work.apronhanger.candidate`
   (`.dev` / `.preview` suffixes for non-production variants so all can be installed side by side).
   URL scheme `apronhanger`. Confirm in `docs/DECISIONS.md` before the first EAS build.
 
@@ -203,7 +203,7 @@ Week 8:
 | # | Decision | Recommendation | Needed by |
 | --- | --- | --- | --- |
 | D1 | Computer | Decided: Windows, 8 GB, no Mac. Real Android phone first; iOS via EAS cloud + real iPhone | Done |
-| D2 | Bundle ID / package name | `in.apronhanger.candidate` (permanent) | Before first EAS build |
+| D2 | Bundle ID / package name | `work.apronhanger.candidate` (permanent) | Before first EAS build |
 | D3 | OTP in tests | Decided: local patch for automated tests; Raj's number (in .env.local only) for manual real-SMS checks; backend test mode for staging | Done |
 | D4 | Staging backend | Render service + Neon branch with empty schema + seed | Week 3 |
 | D5 | Candidate domain for app links | Confirm which domain is the live candidate portal (repo mentions .in, .work and .org) | Week 4 |

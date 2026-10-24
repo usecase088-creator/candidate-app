@@ -13,7 +13,10 @@ Windows laptop, 8 GB RAM, no Mac.
 - iOS can't be built or simulated on Windows. iOS checks run in Expo's cloud (EAS) and on a real iPhone
   once the client's Apple account is ready.
 
-## D2 — Bundle ID / package name (proposed, Raj to confirm)
+## D2 — Bundle ID / package name (decided 2026-10-24)
+
+**`work.apronhanger.candidate`** for Android and iOS (Raj). Matches the live domain apronhanger.work (D5).
+Variants: `work.apronhanger.candidate.dev`, `work.apronhanger.candidate.preview`.
 
 The app's permanent ID inside the stores, like a username. Users never see it. Google calls it
 "package name", Apple calls it "bundle ID". **Once the app is published it can never be changed**;
@@ -21,7 +24,7 @@ a new ID means a brand new app with zero users.
 
 It is written as the company domain backwards plus the app name.
 
-- Proposed: `in.apronhanger.candidate` (domain apronhanger.in, candidate app; leaves room for a recruiter app later)
+- (Earlier proposal `work.apronhanger.candidate` dropped: the live domain is .work.)
 - Dev and test builds get `.dev` and `.preview` at the end, so they can sit on the same phone as the real app.
 
 ## D3 — OTP during testing (decided)
@@ -45,13 +48,13 @@ Neon free database with empty tables and test data only (no real users). Made wi
 
 Live candidate website: **apronhanger.work** (Raj). Email links on this domain can open the app (Phase 4).
 
-## D6 — Which backend commit is live (open, needed before Phase 4)
+## D6 — Which backend commit is live (checked 2026-10-24, re-check before Phase 4)
 
-Check the Render dashboard for the deployed commit before any backend change.
-
-- Reference clone (2026-10-24): `apronhanger/job`, branch `conflict-resolution1`, commit
-  `3fa688523404a75b718ed363ee683e95ea6d7a3e` (2026-10-08). This is what our docs describe. It is **not**
-  confirmed as the live commit; D6 stays open.
+- Render service `job` (`srv-d91b9pjsq97s73a3frsg`, **free plan**, https://job-ojsr.onrender.com), auto-deploys
+  branch `conflict-resolution1`. Live deploy: commit **`35406b4`** (2026-10-04).
+- Our reference clone is `3fa6885` (2026-10-08), 2 commits ahead. Those 2 commits change **website files only**;
+  `backend/` is identical, so `docs/reference/API.md` matches the live backend.
+- Backend work in Phase 4 branches from the live commit at that time (check again via the Render API, read-only).
 
 ## D7 — Account for app services (decided)
 
