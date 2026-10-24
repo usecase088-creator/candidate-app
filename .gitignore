@@ -7,3 +7,40 @@
 
 # Dependencies
 node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Generated native folders (CNG)
+/ios
+/android
+.kotlin/
+
+# Signing material
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+
+# Metro
+.metro-health-check*
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# OS / tooling
+.DS_Store
+*.tsbuildinfo

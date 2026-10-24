@@ -99,6 +99,9 @@ A flow is "done" only when its Maestro flow passes on Android.
 
 ## Safety
 
+- Render (live backend, real users) is **read-only**: `RENDER_API` in `.env.local` is used only for GET requests
+  on services and deploys. Never deploy, restart, suspend, change settings or read env vars there.
+  Nothing is pushed to `apronhanger/job` either.
 - Never call the production API from tests or E2E. The only exception is `npm run drift-check`
   (GET requests on public endpoints).
 - Never commit secrets or personal data. `.env*` is gitignored (except `.env.local.example`).

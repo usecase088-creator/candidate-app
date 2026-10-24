@@ -76,13 +76,16 @@ Sentry (crash reports) and Firebase (Android push, Phase 4).
   free CI minutes for cloud test runs. It stops when used up (no surprise bill) and resets on the 1st.
 - If it runs out in weeks 3–8, take **Starter ($19/month, includes $45 build credit)** for those months and cancel after.
 
-## D9 — Expo SDK version
+## D9 — Expo SDK version (decided 2026-10-24)
 
-Latest stable at project start. Claude Code records the exact number here.
+**SDK 58** (`expo@~58.0.19`, React Native 0.88, React 19.3, TypeScript 6.0, Expo Router 58). Latest stable
+at project start (SDK 58.0.0 released 2026-09-29). Node 22.13+ or 24.3+ required. Stay on it unless a store rule forces an upgrade.
 
-## D10 — URL scheme (proposed)
+## D10 — URL scheme (decided 2026-10-24)
 
-`apronhanger://` — lets links open screens inside the app.
+`apronhanger://` for production — lets links open screens inside the app.
+Dev and preview builds use `apronhanger-dev://` and `apronhanger-preview://`, so links open the right copy
+when several are installed on one phone (same idea as the bundle ID suffixes in D2).
 
 ## D11 — Theme (decided)
 

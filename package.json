@@ -1,0 +1,73 @@
+{
+  "name": "apronhanger-candidate",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "dependencies": {
+    "@expo/ui": "~58.0.23",
+    "expo": "~58.0.19",
+    "expo-constants": "~58.0.13",
+    "expo-device": "~58.0.5",
+    "expo-font": "~58.0.10",
+    "expo-glass-effect": "~58.0.5",
+    "expo-image": "~58.0.17",
+    "expo-linking": "~58.0.14",
+    "expo-router": "~58.0.26",
+    "expo-splash-screen": "~58.0.11",
+    "expo-status-bar": "~58.0.4",
+    "expo-symbols": "~58.0.4",
+    "expo-system-ui": "~58.0.6",
+    "expo-web-browser": "~58.0.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.0",
+    "react-native-gesture-handler": "~3.3.0",
+    "react-native-reanimated": "4.7.1",
+    "react-native-safe-area-context": "~5.10.1",
+    "react-native-screens": "~4.30.0",
+    "react-native-web": "~0.21.4",
+    "react-native-worklets": "0.13.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/jest": "30.0.0",
+    "@types/node": "24.19.2",
+    "@types/react": "~19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-expo": "~58.0.4",
+    "eslint-config-prettier": "10.1.8",
+    "jest": "30.5.2",
+    "jest-expo": "~58.0.12",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "web": "expo start --web",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:contract": "jest --config tests/contract/jest.config.js",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm test -- --ci",
+    "e2e:web": "playwright test",
+    "e2e:android": "adb reverse tcp:3000 tcp:3000 && maestro test e2e/maestro",
+    "backend:local": "node scripts/backend-local.mjs",
+    "drift-check": "node scripts/drift-check.mjs"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/tests/contract/",
+      "/e2e/"
+    ]
+  }
+}

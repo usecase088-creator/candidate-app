@@ -66,16 +66,18 @@ Facts (verified against the code at `3fa6885` during Task 1; corrections marked 
 
 ## Task 2 — Project scaffold
 
-- [ ] `npx create-expo-app@latest` with the default (TypeScript, Expo Router) template, latest stable SDK.
+- [x] `npx create-expo-app@latest` with the default (TypeScript, Expo Router) template, latest stable SDK.
       Record the SDK version in `docs/DECISIONS.md`. Remove template demo screens.
-- [ ] TypeScript strict, `@/` path alias, ESLint (expo config) + Prettier, `.editorconfig`
-- [ ] `app.config.ts` with `APP_VARIANT` = development | preview | production:
+- [x] TypeScript strict, `@/` path alias, ESLint (expo config) + Prettier, `.editorconfig`
+- [x] `app.config.ts` with `APP_VARIANT` = development | preview | production:
       name, bundle ID / package (+ suffix), scheme `apronhanger`, API URL, Sentry env, icon badge
-- [ ] `src/lib/env.ts`: read `EXPO_PUBLIC_*` values, validate with Zod, crash early with a clear message
+      (icon badge waits for the real app icon; variants differ by name for now)
+- [x] `src/lib/env.ts`: validate the build config with Zod, crash early with a clear message
+      (values come from `app.config.ts` `extra`, so APP_VARIANT is the single switch; Sentry DSN from `EXPO_PUBLIC_SENTRY_DSN`)
       (unit test: missing/invalid values throw)
-- [ ] Native folders not committed (CNG): `android/` and `ios/` in `.gitignore`
-- [ ] Scripts from `CLAUDE.md` exist in `package.json`
-- [ ] GitHub Actions: install, lint, typecheck, `npm test` on push and PR
+- [x] Native folders not committed (CNG): `android/` and `ios/` in `.gitignore`
+- [x] Scripts from `CLAUDE.md` exist in `package.json`
+- [x] GitHub Actions: install, lint, typecheck, `npm test` on push and PR
 
 ## Task 3 — Test harness (each layer gets one passing smoke test)
 
