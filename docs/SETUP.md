@@ -88,3 +88,21 @@ work/
 
 Open Claude Code inside `apronhanger-app/`. `.claude/settings.json` gives it read access to `../job`
 and blocks edits there. Check with `/permissions` the first time.
+
+### Known issue: Android build fails on long Windows paths (open, 2026-10-25)
+
+First `npx expo run:android` failed after 47 min in `react-native-reanimated` C++ (`ninja: error: mkdir(...): No such file or directory`).
+Cause: Windows 260-character path limit. The deepest object file is 294 chars from
+`C:\Users\pc\Desktop\apronhanger-app`. `LongPathsEnabled` is 0, and the SDK's CMake 3.22.1 ships ninja 1.10.2,
+which has no long-path support anyway.
+
+Tried:
+- `subst R: <project>`: fails earlier — expo-modules-autolinking can't find `package.json` at a drive root (`R:\`).
+- `subst R: C:\Users\pc\Desktop` → project at `R:\apronhanger-app`: deepest path = 260 chars, too close to the limit.
+
+Next options (pick one):
+1. Move the project to a short path, e.g. `C:\dev\ah` (deepest path ~234). Simplest and permanent; VS Code reopens there.
+2. Install a newer CMake via sdkmanager (ninja ≥ 1.12 supports long paths) + set `LongPathsEnabled=1` (admin) + pin `cmake.dir`.
+
+Before retrying: delete the stale `android/.cxx` folders under `node_modules/*/android/.cxx` and `android/app/.cxx`.
+Gradle, NDK 27.1, build-tools 36/37 and platform 37 are already downloaded, so the next build is much faster.

@@ -81,13 +81,14 @@ Facts (verified against the code at `3fa6885` during Task 1; corrections marked 
 
 ## Task 3 — Test harness (each layer gets one passing smoke test)
 
-- [ ] Jest with `jest-expo` preset, `@testing-library/react-native`, coverage thresholds from PLAN.md
-- [ ] MSW (`msw/node`) server started in Jest setup; `src/test/msw/handlers.ts`; unhandled requests fail the test
-- [ ] `src/test/render.tsx`: renders with all providers (QueryClient with retries off, safe area, theme)
-- [ ] Playwright: Chromium only, mobile viewport (Pixel 7 and iPhone 13 device profiles), `webServer`
+- [x] Jest with `jest-expo` preset, `@testing-library/react-native`, coverage thresholds from PLAN.md
+- [x] MSW (`msw/node`) server started in Jest setup; `src/test/msw/handlers.ts`; unhandled requests fail the test
+- [x] `src/test/render.tsx`: renders with all providers (QueryClient with retries off, safe area, theme)
+- [x] Playwright: Chromium only, mobile viewport (Pixel 7 and iPhone 13 device profiles), `webServer`
       starts Expo web; `e2e/web/smoke.spec.ts` sees the login screen
 - [ ] Maestro: `e2e/maestro/smoke.yaml` launches the app and sees the login screen on the Android emulator
-- [ ] `tests/contract/`: separate Jest project, runs only with `npm run test:contract`, needs local backend
+      (flow written; blocked by the Windows long-path build error, see SETUP.md "Known issue")
+- [x] `tests/contract/`: separate Jest project, runs only with `npm run test:contract`, needs local backend (health smoke test passes once Task 4 runs the backend)
 - [ ] Playwright MCP added to Claude Code (see SETUP.md) so screens can be checked visually during work
 
 ## Task 4 — Local backend (without touching ../job, no Docker)
