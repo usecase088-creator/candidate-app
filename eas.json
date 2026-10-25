@@ -10,28 +10,50 @@
     "development": {
       "extends": "base",
       "distribution": "internal",
-      "env": { "APP_VARIANT": "development" },
-      "android": { "buildType": "apk", "gradleCommand": ":app:assembleDebug" },
-      "ios": { "simulator": true, "buildConfiguration": "Debug" }
+      "env": {
+        "APP_VARIANT": "development"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      },
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Debug"
+      }
     },
     "preview": {
       "extends": "base",
       "distribution": "internal",
-      "env": { "APP_VARIANT": "preview" },
-      "android": { "buildType": "apk" }
+      "env": {
+        "APP_VARIANT": "preview"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "preview"
     },
     "production": {
       "extends": "base",
-      "env": { "APP_VARIANT": "production" },
-      "autoIncrement": true
+      "env": {
+        "APP_VARIANT": "production"
+      },
+      "autoIncrement": true,
+      "channel": "production"
     },
     "e2e-test": {
       "extends": "base",
       "distribution": "internal",
       "withoutCredentials": true,
-      "env": { "APP_VARIANT": "development" },
-      "android": { "buildType": "apk" },
-      "ios": { "simulator": true }
+      "env": {
+        "APP_VARIANT": "development"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      }
     }
   }
 }

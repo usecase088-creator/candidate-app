@@ -21,24 +21,26 @@ describe('expo-updates', () => {
   });
 
   it('never checks for updates in development', () => {
-    expect(
-      configFor({ APP_VARIANT: 'development', EAS_UPDATE_URL: 'https://u.expo.dev/x' }).updates,
-    ).toMatchObject({
+    expect(configFor({ APP_VARIANT: 'development' }).updates).toMatchObject({
       enabled: false,
       checkAutomatically: 'NEVER',
     });
   });
 
-  it('stays off in release variants until the EAS project exists (Task 10)', () => {
-    expect(configFor({ APP_VARIANT: 'production', EAS_UPDATE_URL: undefined }).updates).toMatchObject({
-      enabled: false,
+  it.each(['preview', 'production'])('%s checks on launch, from the EAS project update URL', (variant) => {
+    expect(configFor({ APP_VARIANT: variant }).updates).toMatchObject({
+      enabled: true,
+      url: 'https://u.expo.dev/3bb496c0-6a80-4efe-a672-ccb36ba6fbd9',
+      checkAutomatically: 'ON_LOAD',
     });
   });
+});
 
-  it('checks on launch in release variants once the update URL is set', () => {
-    expect(
-      configFor({ APP_VARIANT: 'production', EAS_UPDATE_URL: 'https://u.expo.dev/abc' }).updates,
-    ).toMatchObject({ enabled: true, url: 'https://u.expo.dev/abc', checkAutomatically: 'ON_LOAD' });
+describe('EAS project', () => {
+  it('belongs to the client organization (D7), with the project id from eas init', () => {
+    const config = configFor({ APP_VARIANT: 'production' });
+    expect(config.owner).toBe('apronhanger-candidate');
+    expect(config.extra?.eas).toEqual({ projectId: '3bb496c0-6a80-4efe-a672-ccb36ba6fbd9' });
   });
 });
 

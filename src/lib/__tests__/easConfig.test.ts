@@ -36,6 +36,13 @@ it.each([
   expect(profile(name).env?.APP_VARIANT).toBe(variant);
 });
 
+it.each([
+  ['preview', 'preview'],
+  ['production', 'production'],
+])('%s builds receive OTA updates on the %s channel', (name, channel) => {
+  expect(eas.build[name].channel).toBe(channel);
+});
+
 it('e2e-test never points at production: development variant (local API), no credentials', () => {
   const p = profile('e2e-test');
   expect(p.env?.APP_VARIANT).toBe('development');

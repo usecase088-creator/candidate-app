@@ -7,6 +7,8 @@ import withWindowsCmake from './plugins/withWindowsCmake.ts';
 type Variant = 'development' | 'preview' | 'production';
 
 const BUNDLE_ID = 'work.apronhanger.candidate'; // D2 — permanent once published
+/** EAS project (eas init 2026-10-25, organization apronhanger-candidate). Public id, not a secret. */
+const EAS_PROJECT_ID = '3bb496c0-6a80-4efe-a672-ccb36ba6fbd9';
 const PRODUCTION_API_URL = 'https://job-ojsr.onrender.com'; // live backend used by apronhanger.work
 
 const VARIANTS: Record<Variant, { name: string; idSuffix: string; scheme: string; apiUrl: string }> = {
@@ -36,15 +38,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const variant = readVariant();
   const v = VARIANTS[variant];
   const bundleId = `${BUNDLE_ID}${v.idSuffix}`;
-  // OTA updates (PLAN.md §2). The URL comes from the EAS project (Task 10, `eas init`); until then updates stay off.
-  // Never in development: Metro serves the JS there.
-  const updateUrl = process.env.EAS_UPDATE_URL;
-  const updatesOn = variant !== 'development' && !!updateUrl;
+  // OTA updates (PLAN.md §2) from the EAS project. Never in development: Metro serves the JS there.
+  // Publishing a production update still needs Raj's OK (CLAUDE.md).
+  const updateUrl = `https://u.expo.dev/${EAS_PROJECT_ID}`;
+  const updatesOn = variant !== 'development';
 
   // withWindowsCmake: long-path-safe CMake for Android builds on Windows (docs/SETUP.md).
   return withWindowsCmake({
     ...config,
     name: v.name,
+    // EAS project lives in the client's Expo organization (D7).
+    owner: 'apronhanger-candidate',
     slug: 'apronhanger-candidate',
     version: '1.0.0',
     orientation: 'portrait',
@@ -96,6 +100,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       reactCompiler: true,
     },
     extra: {
+      eas: { projectId: EAS_PROJECT_ID },
       appVariant: variant,
       apiUrl: process.env.API_URL_OVERRIDE ?? v.apiUrl,
       sentryEnvironment: variant,
