@@ -1,0 +1,529 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String // "RECRUITER" | "CANDIDATE"
+  createdAt    DateTime @default(now())
+
+  username String?
+  fullName String?
+  mobile   String?
+
+  // For recruiters: the hospital they manage
+  hospitalId String?
+  hospital   Hospital? @relation(fields: [hospitalId], references: [id]) // Intentional RESTRICT: users linked to a hospital block hospital hard-delete.
+
+  // For candidates: their profile
+  candidate Candidate?
+
+  // In-app notifications
+  notifications InAppNotification[]
+
+  // Search log (one row per search; tracks pull usage)
+  searchLogs SearchLog[]
+
+  // ── Plan Usage Tracking (NEW) ──────────────────────────────────────────────
+  currentMonthStartDate    DateTime @default(now())
+  jobsPostedThisMonth      Int      @default(0)
+  premiumSearchesThisMonth Int      @default(0)
+
+  // ── Admin Controls ────────────────────────────────────────────────────────
+  isSuspended  Boolean   @default(false) // Admin can suspend login
+  deletedAt    DateTime? // Soft-delete timestamp
+  tokenVersion Int       @default(0) // Incremented on password reset to force logout
+
+  // ── Plan Suspension (NEW) ─────────────────────────────────────────────────
+  planSuspendedAt     DateTime? // Set when plan-suspended; null = not plan-suspended
+  planSuspendedReason String?   // e.g. "Downgrade to Basic: seats reduced from 5 to 2"
+
+  // ── Notification Preferences ──────────────────────────────────────────────
+  notifOnApply   Boolean @default(true) // Email when candidate applies
+  notifWeekly    Boolean @default(false) // Weekly hiring summary
+  notifHighMatch Boolean @default(true) // Notify on >90% match
+
+  // ── Jobs Posted ───────────────────────────────────────────────────────────
+  jobsPosted Job[] @relation("JobPostedBy")
+
+  // Username is unique within a hospital (not globally)
+  @@unique([hospitalId, username])
+  @@unique([mobile, role], name: "unique_mobile_per_role")
+}
+
+model Hospital {
+  id                 String    @id @default(uuid())
+  name               String
+  shortName          String?
+  type               String?
+  city               String?
+  state              String?
+  address            String?
+  phone              String?
+  email              String?
+  website            String?
+  registrationNumber String?
+  beds               Int?
+  founded            Int?
+  about              String?
+  specialties        Json // JSON array
+  verified           Boolean   @default(false)
+  verifiedOn         String?
+  verifiedBy         String?
+  verifiedAt         DateTime?
+
+  // ── Admin Controls ────────────────────────────────────────────────────────
+  isSuspended Boolean   @default(false) // Admin can suspend hospital
+  deletedAt   DateTime? // Soft-delete timestamp
+
+  // ── Onboarding workflow (NEW) ─────────────────────────────────────────────
+  onboardingStatus   String  @default("Pending") // "Pending" | "Approved" | "Rejected" | "RequestMoreDocuments"
+  onboardingNote     String? // Admin note on rejection/approval
+  requestedDocuments String? // Admin-written list of docs needed (RequestMoreDocuments flow)
+  onboardingPlan     String  @default("Basic") // "Basic" | "Pro" | "Premium"
+  mobileVerified     Boolean @default(false) // True after OTP verified at onboarding
+
+  // ── Plan Subscription Lifecycle ───────────────────────────────────────────
+  planExpiresAt    DateTime? // When the current plan expires (authoritative for billing)
+  pendingPlan             String?   // Scheduled plan change at next renewal
+  pendingPlanAt           DateTime? // When the pending plan was requested
+  pendingPlanPaymentRef   String?   // Razorpay payment_id when upgrade was pre-paid (null = not paid yet)
+  planBillingCycle        String?   @default("monthly") // "monthly" (annual: future)
+  maxRecruiters    Int       @default(2) // Set from plan: Basic=2, Pro=2, Premium=5 (see config/plans.ts)
+  submittedBy      String? // Contact person name on onboarding form
+  submittedEmail   String? // Hospital contact email (for onboarding verification)
+  submittedPhone   String? // Hospital contact phone
+  submittedAt      DateTime? // When onboarding form was submitted
+  approvedAt       DateTime? // When admin approved
+  approvedBy       String? // AdminUser id who approved
+  inviteCode       String?   @unique // 12-char alphanumeric code for recruiter signup
+
+  // ── Extended Onboarding Fields ─────────────────────────────────────────────
+  brandName                  String?
+  registrationAuthority      String?
+  nabhStatus                 String?
+  nablStatus                 String?
+  gstNumber                  String?
+  panNumber                  String?
+  ownershipType              String?
+  contactDesignation         String?
+  contactWhatsapp            String?
+  contactAlternatePhone      String?
+  district                   String?
+  pinCode                    String?
+  billingName                String?
+  billingGstNumber           String?
+  billingAddress             String?
+  billingEmail               String?
+  billingPhone               String?
+  icuBeds                    Int?
+  numberOfDoctors            Int?
+  numberOfEmployees          Int?
+  averageMonthlyHiring       Int?
+  preferredHiringStates      String?
+  emergencyHiringRequirement Boolean?
+  internshipHiring           Boolean?
+  campusRecruitment          Boolean?
+  logoUrl                    String?
+  logoCloudinaryId           String?
+
+  jobs           Job[]
+  users          User[]
+  documents      HospitalDocument[]
+  planChangeLogs PlanChangeLog[]
+  paymentOrders  PaymentOrder[]
+
+  @@index([onboardingStatus, deletedAt])
+}
+
+// Verification documents uploaded during hospital onboarding
+model HospitalDocument {
+  id           String   @id @default(uuid())
+  hospitalId   String
+  hospital     Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  name         String // Original filename
+  cloudinaryId String // Cloudinary public_id
+  url          String // Cloudinary secure_url
+  type         String   @default("verification") // "verification" | "accreditation" | "license"
+  uploadedAt   DateTime @default(now())
+}
+
+model Job {
+  id                      String    @id @default(uuid())
+  role                    String
+  category                String?
+  specialty               String
+  subSpecialty            String?
+  location                String
+  city                    String?
+  salaryMin               Float
+  salaryMax               Float
+  experienceMin           Int?
+  experienceMax           Int?
+  experience              String?
+  type                    String
+  shift                   String?
+  status                  String    @default("Active")
+  closedReason            String?   // "plan_expired" | "admin_suspended" | null (manual close)
+  postedDays              Int?
+  postedOn                DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  visibilityEndsAt        DateTime?
+  description             String
+  responsibilities        String?
+  requirements            String?
+  perks                   String?
+  tags                    Json?
+  isFlagged               Boolean   @default(false)
+  /// JSON array of recruiter-defined application fields for this job
+  customApplicationFields Json?
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id]) // Intentional RESTRICT: hospitals with jobs cannot be hard-deleted. Suspend via isSuspended instead.
+
+  postedById String?
+  postedBy   User?   @relation("JobPostedBy", fields: [postedById], references: [id]) // Intentional RESTRICT: jobs retain postedBy reference; delete user only after reassigning jobs.
+
+  applications Application[]
+  savedBy      SavedJob[]
+
+  @@index([status, visibilityEndsAt])
+  @@index([role])
+  @@index([location])
+  @@index([specialty])
+}
+
+model Candidate {
+  id              String  @id @default(uuid())
+  name            String
+  initials        String?
+  role            String?
+  specialty       String?
+  experienceYears Int?
+  location        String?
+  currentEmployer String?
+  summary         String?
+  matchPercent    Int?
+  verified        Boolean @default(false)
+  registration    String?
+  email           String  @unique
+  phone           String?
+  languages       String?
+  procedures      String?
+  skills          Json?
+  education       Json?
+  certifications  Json?
+  experience      Json?
+  profileJson     Json? // Full form profile snapshot (JSON)
+  cvSource        String? // "form" | "upload"
+  uploadedCvName  String?
+  uploadedCvMime  String?
+
+  // ── Cloudinary CV fields (NEW) ────────────────────────────────────────────
+  cvCloudinaryId String? // Cloudinary public_id
+  cvUrl          String? // Cloudinary secure_url (preferred over uploadedCvData)
+
+  // ── Cloudinary Profile Picture / Avatar fields ─────────────────────────────
+  avatarUrl          String? // Cloudinary secure_url for profile picture
+  avatarCloudinaryId String? // Cloudinary public_id for profile picture
+
+  // ── Multiple Documents (NEW) ────────────────────────────────────────────
+  supportingDocuments Json? // JSON array of { name, url, publicId, mime }
+
+  // ── Premium Search Filter Fields (NEW) ─────────────────────────────────────
+  expectedSalaryMin  Float? // LPA (decimal supported e.g. 3.5)
+  expectedSalaryMax  Float? // LPA
+  currentSalaryMin   Float? // LPA
+  currentSalaryMax   Float? // LPA
+  noticePeriod       String? // "Immediately" | "15 days notice" | "30 days notice" | "60 days notice" | "90 days notice"
+  preferredLocations Json? // JSON string[] — preferred job cities/states
+  availabilityStatus String? // "Immediate Joiner" | "Serving Notice Period" | "Open to Opportunities"
+
+  // ── Admin Controls ────────────────────────────────────────────────────────
+  isSuspended Boolean   @default(false) // Admin can suspend candidate
+  deletedAt   DateTime? // Soft-delete timestamp
+
+  // ── Search Index ──────────────────────────────────────────────────────────
+  searchBlob String? @db.Text
+
+  // Link to auth user
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id]) // Intentional RESTRICT: candidate profile blocks user hard-delete while profile exists.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  applications Application[]
+  savedJobs    SavedJob[]
+
+  @@index([specialty, location, experienceYears])
+}
+
+model SavedJob {
+  id      String   @id @default(uuid())
+  savedAt DateTime @default(now())
+
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, jobId])
+}
+
+model Application {
+  id                   String   @id @default(uuid())
+  /// Full workflow status — see applicationStatus.ts for all valid values
+  status               String   @default("Applied")
+  appliedOn            DateTime @default(now())
+  cvSource             String? // "form" | "upload"
+  uploadedCvName       String?
+  uploadedCvMime       String?
+  uploadedCvData       String? // DEPRECATED: base64 — kept for backward compat
+  /// JSON object: { [fieldId]: value } for job-specific questions
+  customFieldResponses String?
+
+  // ── Cloudinary CV fields ───────────────────────────────────────────────────
+  cvCloudinaryId String? // Cloudinary public_id
+  cvUrl          String? // Cloudinary secure_url
+
+  // ── Supporting documents submitted at application time ────────────────────
+  supportingDocuments String? // JSON array of { name, url, publicId, mime }
+
+  // ── Interview scheduling (Stage 3) ────────────────────────────────────────
+  interviewDate    DateTime? // Current/latest scheduled date+time (UTC)
+  interviewType    String? // "Virtual" | "Physical"
+  meetingLink      String? // Video call URL (Virtual interviews)
+  venue            String? // Physical location / address (Physical interviews)
+  interviewerName  String? // Interviewer full name
+  interviewerEmail String? // Interviewer contact email
+  interviewNotes   String? // Recruiter notes visible to candidate
+  interviewRound   Int       @default(1) // Increments on each NextRound outcome
+
+  // ── Interview reschedule history ──────────────────────────────────────────
+  // JSON: { originalSchedule, updatedSchedule, rescheduleCount, history[] }
+  interviewHistory String?
+
+  // ── Candidate interview response (Stage 4) ────────────────────────────────
+  candidateResponseNote String? // Reason for Decline or Reschedule request
+
+  // ── Interview outcome note (Stage 6) ──────────────────────────────────────
+  interviewOutcomeNote String? // Recruiter assessment / feedback
+
+  // ── Document request (Stage 7 — can be triggered at any stage) ───────────
+  requestedDocumentList String? // JSON string[]: document names requested
+  documentRequestNote   String? // Optional context note for candidate
+
+  // ── Offer letter (Stage 9 — Cloudinary PDF) ───────────────────────────────
+  offerLetterUrl          String? // Cloudinary secure_url
+  offerLetterCloudinaryId String? // Cloudinary public_id
+
+  // ── Joining (Stages 11–12) ────────────────────────────────────────────────
+  joiningDate DateTime? // Confirmed joining date
+  joiningNote String? // Onboarding instructions for candidate
+
+  // ── Final status note (Stage 13) ──────────────────────────────────────────
+  finalStatusNote String? // Reason for Dropped / Rejected / OfferRejected
+
+  isFlagged Boolean @default(false)
+
+  // ── Milestone timestamps ───────────────────────────────────────────────────
+  reviewedAt           DateTime?
+  interviewScheduledAt DateTime?
+  offerSentAt          DateTime?
+  joinedAt             DateTime?
+  updatedAt            DateTime  @default(now()) @updatedAt
+
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id]) // Intentional RESTRICT: jobs with applications cannot be hard-deleted. Use status: 'Closed' instead.
+
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id]) // Intentional RESTRICT: candidates with applications cannot be hard-deleted.
+
+  // ── Documents uploaded by candidate in response to a document request ─────
+  applicationDocuments ApplicationDocument[]
+
+  @@unique([jobId, candidateId])
+  @@index([status])
+  @@index([jobId])
+  @@index([candidateId])
+}
+
+// Documents uploaded by candidates (or recruiters) against a specific application
+model ApplicationDocument {
+  id            String      @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  name          String // Human-readable label matching the requested document
+  url           String // Cloudinary secure_url
+  cloudinaryId  String // Cloudinary public_id
+  mime          String? // MIME type (e.g. "application/pdf")
+  uploadedAt    DateTime    @default(now())
+  uploadedBy    String      @default("CANDIDATE") // "CANDIDATE" | "RECRUITER"
+}
+
+// ── Plan change / upgrade / downgrade audit log ─────────────────────────────
+model PlanChangeLog {
+  id            String   @id @default(uuid())
+  hospitalId    String
+  hospital      Hospital @relation(fields: [hospitalId], references: [id]) // Intentional RESTRICT: plan change audit log preserves hospital reference.
+  fromPlan      String // "Basic" | "Pro" | "Premium"
+  toPlan        String // "Basic" | "Pro" | "Premium"
+  changeType    String // "immediate_upgrade" | "scheduled_upgrade" | "scheduled_downgrade" | "renewal"
+  amountPaid    Float? // Pro-rated or full amount in INR
+  effectiveAt   DateTime // When the plan became / becomes active
+  requestedAt   DateTime @default(now())
+  paymentStatus String   @default("Pending") // "Paid" | "Pending" | "Waived"
+  paymentRef    String? // Payment gateway reference (future)
+  note          String?
+}
+
+// ── Admin authentication (separate from User table) ──────────────────────────
+model AdminUser {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  tokenVersion Int       @default(0)
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+}
+
+// ── In-app notifications for recruiters and candidates ───────────────────────
+model InAppNotification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String? // Optional deep-link for the notification
+  createdAt DateTime @default(now())
+}
+
+// ── In-app notifications for Admins ──────────────────────────────────────────
+model AdminNotification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String? // Optional deep-link for the notification
+  createdAt DateTime @default(now())
+}
+
+model PaymentOrder {
+  id              String   @id @default(uuid())
+  hospitalId      String
+  hospital        Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  amount          Float
+  currency        String   @default("INR")
+  razorpayOrderId String   @unique
+  status          String   @default("CREATED") // CREATED, PAID, FAILED
+  planRequested   String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ── Activity / audit log ─────────────────────────────────────────────────────
+model ActivityLog {
+  id         String   @id @default(uuid())
+  entityType String // "hospital" | "recruiter" | "candidate" | "job" | "application"
+  entityId   String
+  action     String // "created" | "approved" | "rejected" | "blocked" | "verified" | "deleted"
+  actorId    String? // Admin or user who performed the action
+  actorRole  String? // "ADMIN" | "RECRUITER" | "CANDIDATE"
+  meta       String? // JSON blob for extra context
+  createdAt  DateTime @default(now())
+}
+
+// ── Impersonation audit trail ────────────────────────────────────────────────
+model ImpersonationLog {
+  id           String   @id @default(uuid())
+  adminId      String // AdminUser.id who performed impersonation
+  targetUserId String // User.id being impersonated
+  targetRole   String // "RECRUITER" | "CANDIDATE"
+  targetEmail  String // For quick audit reading
+  issuedAt     DateTime @default(now())
+  expiresAt    DateTime
+}
+
+model ResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  mobile    String
+  role      String // "RECRUITER" | "CANDIDATE"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}
+
+model OtpVerificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  mobile    String
+  role      String // "RECRUITER" | "CANDIDATE"
+  purpose   String // "signup"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([mobile, role, purpose])
+}
+
+// ── Search log (one row per search session) ──────────────────────────────────
+// Used to enforce "one pull per search" — the searchToken returned by the search
+// endpoint is the id of this record.
+model SearchLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  searchedAt DateTime @default(now())
+  pullUsed   Boolean  @default(false)
+
+  @@index([userId, pullUsed])
+}
+
+// ── Government Job Notifications (managed by Admin) ──────────────────────────
+model GovJob {
+  id            String    @id @default(uuid())
+  examAuthority String
+  name          String
+  lastDate      DateTime? // Optional — posts never auto-expire; admin must delete manually
+  link          String
+  createdAt     DateTime  @default(now())
+
+  @@index([createdAt])
+}
+
+// ── International Job Listings (managed by Admin) ─────────────────────────────
+model InternationalJob {
+  id             String    @id @default(uuid())
+  jobPosition    String
+  specialty      String
+  city           String
+  country        String
+  countryFlag    String    // Emoji flag e.g. 🇬🇧
+  payscale       String    // e.g. "£55k–£75k"
+  experience     String    // e.g. "2+ yrs"
+  qualification  String    // e.g. "MBBS/MD"
+  license        String    // e.g. "GMC"
+  visaSponsorship String   // e.g. "Sponsorship", "Employer", "Depends"
+  applyLink      String
+  lastDate       DateTime? // Optional application deadline
+  createdAt      DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([country])
+}

@@ -12,6 +12,7 @@ module.exports = defineConfig([
       '.expo/*',
       'coverage/*',
       '.reference-backend/*',
+      'staging-backend/*',
       // Run inside .reference-backend with its own Prisma client; not resolvable from this repo.
       'scripts/backend-local/overlay/app-scripts/dbFacts.ts',
       'scripts/backend-local/overlay/app-scripts/seedApp.ts',
@@ -34,7 +35,7 @@ module.exports = defineConfig([
   },
   {
     // The client itself, and tests that check the network mock or call the backend directly.
-    files: ['src/api/createApiClient.ts', 'src/test/**', 'tests/contract/**', 'e2e/**'],
+    files: ['src/api/createApiClient.ts', 'src/test/**', 'tests/contract/**', 'e2e/**', 'scripts/**'],
     rules: { 'no-restricted-globals': 'off' },
   },
 ]);
