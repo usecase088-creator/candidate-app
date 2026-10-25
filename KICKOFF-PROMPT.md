@@ -12,7 +12,7 @@ Step 1 — Check my machine against docs/SETUP.md (node, git, gh auth status, ja
 eas). Tell me what is missing with the exact install step for Windows. Don't install anything without asking.
 
 Step 2 — Do Phase 1 Task 0b: find the `job` repo with the GitHub CLI and clone it to ../job on branch
-conflict-resolution-1. It is READ-ONLY: never edit, commit, push or switch branches there.
+conflict-resolution1 (no hyphen before the 1). It is READ-ONLY: never edit, commit, push or switch branches there.
 Show me the repo name and commit hash you cloned.
 
 Step 3 — Do Phase 1 Task 1 (reference inventory: docs/reference/API.md, SCREENS.md, THEME.md).

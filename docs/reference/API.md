@@ -185,8 +185,9 @@ mounted on**, so the counts add up across those paths for the same IP.
 
 #### 14. `GET /api/saved-jobs` — B: `routes/savedJobRoutes.ts:10` · W: `lib/savedJobs.ts:7,14`, `routes/saved-jobs.tsx:22`
 - Auth: CANDIDATE. No limiter.
-- 200: `[{ savedAt, job: formatJob }]`, newest first. Each `job` also carries `applications` (all rows for that
-  job, see notes) and `postedBy` is **not** included (not loaded).
+- 200: `[{ savedAt, job: formatJob }]`, newest first. Since the hotfix (PR 1, live 2026-10-26, commit `5b569f1`) each
+  `job` carries only the applicant count (`applicants`), **no** `applications` list; `postedBy` is not included.
+  Before the hotfix it carried every application row of the job (see notes).
 - Errors: 400 `No candidate profile linked` · 500.
 
 #### 15. `POST /api/saved-jobs` — B: `savedJobRoutes.ts:33` · W: `lib/savedJobs.ts:22`
@@ -324,9 +325,10 @@ mounted on**, so the counts add up across those paths for the same IP.
     "Posted today" for every job and its "newest" sort does nothing. `postedOn` is the real date.
 12. **`q` search is case-sensitive** on Postgres. The website avoids it by filtering on the device.
 13. **Privacy (backend, report to Raj, do not fix in Phase 1–3):**
-    - `GET /api/jobs` (list) returns `postedBy.email` (recruiter email) to anyone; detail redacts it.
-    - `GET /api/saved-jobs` includes `job.applications`: every application row for that job, including other
-      candidates' IDs, statuses, CV URLs and interview data.
+    - FIXED 2026-10-26 (PR 1, live `5b569f1`): `GET /api/jobs` (list) used to return `postedBy.email` to anyone; it now
+      returns only `postedBy {id, name}` unless the caller is the owning recruiter (same as the detail route).
+    - FIXED 2026-10-26 (PR 1): `GET/POST /api/saved-jobs` used to include `job.applications` (other candidates' IDs,
+      statuses, CV URLs, interview data). They now return only the applicant count.
     - `GET /api/candidates/me` returns `searchBlob`, `isSuspended`, `deletedAt`, `userId` (own data, low risk).
     - `syncFormProfile` copies `profile.verified` from the request, so a candidate can mark themselves **verified**.
     - `PUT /api/candidates/me` without `profile` spreads the rest of the body into a Prisma update (mass assignment).
@@ -335,5 +337,5 @@ mounted on**, so the counts add up across those paths for the same IP.
 16. Response shapes include many extra fields. Our Zod schemas must use `.passthrough()` and only require what we use.
 17. **Migrations lag `schema.prisma`** (found in Task 4, 2026-10-25). No migration creates `Hospital.logoUrl`,
     `Hospital.logoCloudinaryId`, `GovJob` or `InternationalJob`, yet the live site serves gov/intl jobs, so production was
-    probably synced with `prisma db push`. Render's start command only runs `prisma migrate deploy`. Our local backend
+    probably synced by hand (`prisma db push`): Render's start command is `npx tsx src/index.ts` (checked 2026-10-26), so no migration runs on deploy at all, `npm start` is not used. Our local backend
     runs `migrate deploy` then `db push`. Worth raising with the backend team before Phase 4.
