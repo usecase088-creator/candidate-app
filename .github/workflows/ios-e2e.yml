@@ -1,0 +1,91 @@
+# iPhone simulator tests on GitHub's macOS runners (PHASE-1 Task 10). No Mac, no iPhone, no Expo paid plan needed:
+# EAS builds the iOS simulator app for free (`eas build -p ios --profile e2e-test`); this job downloads the latest one,
+# runs our Maestro flows on an iPhone simulator, and keeps screenshots and a video.
+# Started by hand only: macOS minutes count 10x against the free GitHub allowance (about 15 runs a month).
+name: ios-e2e
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: EAS build id (empty = latest finished iOS e2e-test build)
+        required: false
+        default: ''
+      flows:
+        description: Maestro flow files (space separated)
+        required: false
+        default: e2e/maestro/smoke.yaml
+
+jobs:
+  ios-simulator:
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Find the iOS simulator build on EAS
+        id: build
+        run: |
+          if [ -n "${{ inputs.build_id }}" ]; then
+            npx --yes eas-cli@latest build:view "${{ inputs.build_id }}" --json > build.json
+          else
+            npx --yes eas-cli@latest build:list --platform ios --buildProfile e2e-test --status finished \
+              --limit 1 --json --non-interactive | jq '.[0]' > build.json
+          fi
+          echo "id=$(jq -r '.id' build.json)" >> "$GITHUB_OUTPUT"
+          echo "url=$(jq -r '.artifacts.buildUrl' build.json)" >> "$GITHUB_OUTPUT"
+          jq '{id, buildProfile, appVersion, gitCommitHash, completedAt}' build.json
+
+      - name: Download and unpack the .app
+        run: |
+          curl -sSL "${{ steps.build.outputs.url }}" -o app.tar.gz
+          mkdir app && tar -xzf app.tar.gz -C app
+          APP=$(find app -maxdepth 3 -name '*.app' -type d | head -1)
+          echo "APP=$APP" >> "$GITHUB_ENV"
+          echo "App: $APP"
+
+      - name: Boot an iPhone simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j \
+            | jq -r '[.devices | to_entries[] | select(.key | test("iOS")) | .value[] | select(.name | test("^iPhone"))] | last | .udid')
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl list devices booted
+
+      - name: Install the app
+        run: xcrun simctl install "$UDID" "$APP"
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Run Maestro flows (with screen recording)
+        run: |
+          mkdir -p output
+          xcrun simctl io "$UDID" recordVideo --codec=h264 output/run.mp4 &
+          REC=$!
+          set +e
+          maestro --device "$UDID" test ${{ inputs.flows }} --format junit --output output/report.xml \
+            --debug-output output/maestro
+          RESULT=$?
+          set -e
+          sleep 2
+          xcrun simctl io "$UDID" screenshot output/final.png
+          kill -INT $REC; wait $REC || true
+          exit $RESULT
+
+      - name: Keep screenshots, video and Maestro output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-e2e-${{ steps.build.outputs.id }}
+          path: output
+          retention-days: 14
