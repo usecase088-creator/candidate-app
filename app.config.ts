@@ -66,6 +66,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     ios: {
       bundleIdentifier: bundleId,
+      // Only standard HTTPS/TLS: exempt from US export rules, so App Store Connect asks no encryption questions.
+      infoPlist: { ITSAppUsesNonExemptEncryption: false },
       icon: './assets/expo.icon',
     },
     android: {

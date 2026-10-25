@@ -44,6 +44,14 @@ describe('EAS project', () => {
   });
 });
 
+describe('App Store', () => {
+  it('declares that the app uses only exempt encryption (HTTPS), so TestFlight needs no extra paperwork', () => {
+    expect(configFor({ APP_VARIANT: 'production' }).ios?.infoPlist).toMatchObject({
+      ITSAppUsesNonExemptEncryption: false,
+    });
+  });
+});
+
 describe('plugins', () => {
   it('includes expo-secure-store (keeps tokens out of Android backups)', () => {
     expect(pluginNames(configFor({ APP_VARIANT: 'development' }))).toContain('expo-secure-store');

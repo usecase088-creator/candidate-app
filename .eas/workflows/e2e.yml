@@ -1,5 +1,7 @@
 # Cloud E2E (PHASE-1 Task 10). On demand only: every run uses EAS build minutes (D8, free plan) — ask Raj first.
 # Run with: npx eas-cli workflow:run .eas/workflows/e2e.yml
+# NOTE (2026-10-25): Maestro jobs need a paid Expo plan (Starter, D8). On the Free plan EAS refuses this workflow;
+# run `eas build --profile e2e-test` alone (free) and the flows locally on the phone instead.
 # Builds the e2e-test profile (development variant: local API address, so nothing can reach production) and runs
 # only flows that need no backend. Auth flows need a backend the cloud can reach (staging, D4).
 name: e2e

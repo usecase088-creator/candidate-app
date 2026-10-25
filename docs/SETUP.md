@@ -209,7 +209,8 @@ Expo account: the client's project email (D7).
 npx eas-cli@latest login          # once, interactive: the Expo account of the project email
 npx eas-cli@latest init           # once: creates the EAS project; put the printed projectId in app.config.ts
 npx eas-cli@latest build -p android --profile preview          # 1 build: installable APK for testers
-npx eas-cli@latest workflow:run .eas/workflows/e2e.yml         # 2 builds + 2 Maestro runs (Android + iOS simulator)
+npx eas-cli@latest workflow:run .eas/workflows/e2e.yml         # 2 builds + 2 Maestro runs; needs a paid plan (Starter)
+npx eas-cli@latest build -p ios --profile e2e-test             # 1 build: iOS simulator app, proves iOS compiles (free)
 ```
 
 Profiles (`eas.json`, rules checked by `src/lib/__tests__/easConfig.test.ts`): `development` (debug APK / iOS
