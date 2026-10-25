@@ -192,6 +192,9 @@ Week 7:
 - Store listings, screenshots, data safety (Google), App Privacy (Apple), content rating, age rating,
   government-info disclaimer, reviewer demo account and notes
 - Production builds, submit to both stores
+- **Open item for the client (their cost, not ours):** move the production backend from the Render free plan to a
+  paid always-on instance **before store submission**. The free plan sleeps and a cold start takes ~50 s, which hurts
+  store review and first app open. Needs the client's decision and payment by the start of week 7.
 
 Week 8:
 - Answer review, fix if asked

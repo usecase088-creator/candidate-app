@@ -44,6 +44,10 @@ The backend sends real SMS through Fast2SMS and has no test mode.
 A copy of the backend for testing backend changes before they go live. Render free web service +
 Neon free database with empty tables and test data only (no real users). Made with the project Gmail.
 
+**Update 2026-10-26 (Raj):** staging is **never** created in the client's Render workspace. Free services share
+750 instance hours per workspace, so a second free service could get the live backend suspended. Staging goes in
+Raj's own Render account, later. Until then no staging service exists and `npm run staging:deploy` stays unused.
+
 ## D5 — Candidate domain for app links (decided 2026-10-24)
 
 Live candidate website: **apronhanger.work** (Raj). Email links on this domain can open the app (Phase 4).
