@@ -158,3 +158,11 @@ Rule change, only for this hotfix (see CLAUDE.md): `../job` stays read-only; the
 (Raj gives it; if it is not the head of `conflict-resolution1`, stop and tell him). No push to the deployed branch, no
 merge, no deploy, no production data, no Render API writes. Raj reviews, merges and deploys. The exception ends when Raj
 confirms the hotfix is live. Which issues are fixed: those he approves from `docs/client/ISSUES-TRIAGE.md` group A. (Raj)
+
+## D22 — One-off read-only production DB check for the A3 abuse check (2026-10-26, Raj)
+
+Exception to D13. Raj explicitly allowed using the production database URL from `../job/backend/.env.txt`
+(file is git-ignored in the job repo, never copied, never printed) **read-only**, once, for the SELECT statements in
+`docs/client/A3-production-checks.sql`. How: every connection runs inside `SET TRANSACTION READ ONLY`, only statements that
+start with SELECT are sent, output is counts and IDs only (no names, emails, phones), the URL and credentials are never
+printed or logged. Nothing else may use that URL. The exception ends when the A3 results are delivered; D13 applies again.

@@ -38,6 +38,7 @@ Raj built the website, so security/privacy bugs in it are fixed for free, with h
   staging service of D20 too; `npm run staging:deploy` stays unused until Raj says so).
 - Fix only the issues Raj approved from `docs/client/ISSUES-TRIAGE.md` (group A: security/privacy).
 - When Raj confirms the hotfix is live, this exception ends and the rules above apply again.
+- D22: one-off exception, read-only production DB check (SELECT only, counts/IDs only) for `docs/client/A3-production-checks.sql`. Nothing else uses the production DB URL.
 
 ## Scope guard
 
