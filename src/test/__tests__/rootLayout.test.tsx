@@ -1,31 +1,24 @@
 import { useFonts } from 'expo-font';
 import { renderRouter, screen } from 'expo-router/testing-library';
 
+import AuthLayout from '@/app/(auth)/_layout';
+import Login from '@/app/(auth)/login';
 import RootLayout from '@/app/_layout';
 import DevUi, { isDevToolsEnabled } from '@/app/dev-ui';
-import Index from '@/app/index';
+import { resetSessionForTests } from '@/features/auth/sessionStore';
 
+// Start-up, guards and splash are covered in navigation.test.tsx. This file: the dev-only UI catalog.
 jest.mock('expo-font', () => ({ ...jest.requireActual('expo-font'), useFonts: jest.fn() }));
 jest.mock('expo-splash-screen', () => ({
   hideAsync: jest.fn(() => Promise.resolve()),
   preventAutoHideAsync: jest.fn(() => Promise.resolve()),
 }));
 
-const routes = { _layout: RootLayout, index: Index, 'dev-ui': DevUi };
+const routes = { _layout: RootLayout, '(auth)/_layout': AuthLayout, '(auth)/login': Login, 'dev-ui': DevUi };
 
-beforeEach(() => jest.mocked(useFonts).mockReturnValue([true, null]));
-
-describe('root layout', () => {
-  it('shows the first screen once fonts are ready', async () => {
-    await renderRouter(routes, { initialUrl: '/' });
-    expect(screen.getByTestId('home.placeholder')).toBeOnTheScreen();
-  });
-
-  it('shows nothing (splash stays) while fonts load', async () => {
-    jest.mocked(useFonts).mockReturnValue([false, null]);
-    await renderRouter(routes, { initialUrl: '/' });
-    expect(screen.queryByTestId('home.placeholder')).toBeNull();
-  });
+beforeEach(() => {
+  resetSessionForTests();
+  jest.mocked(useFonts).mockReturnValue([true, null]);
 });
 
 describe('UI catalog (development builds only)', () => {
@@ -35,10 +28,10 @@ describe('UI catalog (development builds only)', () => {
     expect(isDevToolsEnabled({ appVariant: 'production' })).toBe(false);
   });
 
-  it('shows every base component in development', async () => {
+  it('shows every base component in development, signed in or not', async () => {
     await renderRouter(routes, { initialUrl: '/dev-ui' });
+    await screen.findByTestId('dev.ui');
     for (const id of [
-      'dev.ui',
       'dev.ui.button.primary',
       'dev.ui.button.gradient',
       'dev.ui.email',

@@ -54,3 +54,19 @@ it('still starts with the system font if loading fails (never stuck on the splas
   expect(screen.getByText('app')).toBeTruthy();
   expect(SplashScreen.hideAsync).toHaveBeenCalledTimes(1);
 });
+
+it('keeps the splash while the app still holds it (e.g. session restore), then hides it', async () => {
+  jest.mocked(useFonts).mockReturnValue([true, null]);
+  const { rerender } = await render(
+    <FontGate holdSplash>
+      <Text>app</Text>
+    </FontGate>,
+  );
+  expect(SplashScreen.hideAsync).not.toHaveBeenCalled();
+  await rerender(
+    <FontGate holdSplash={false}>
+      <Text>app</Text>
+    </FontGate>,
+  );
+  expect(SplashScreen.hideAsync).toHaveBeenCalledTimes(1);
+});

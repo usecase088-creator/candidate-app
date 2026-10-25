@@ -153,10 +153,14 @@ Facts (verified against the code at `3fa6885` during Task 1; corrections marked 
 
 ## Task 7 — Navigation shell
 
-- [ ] Root layout: providers, fonts, Sentry, session restore; splash stays until `restoring` ends
-- [ ] Route groups: `(auth)` (login, signup, forgot-password) and `(tabs)` (Home, Search, Applications,
+- [x] Root layout: providers, fonts, Sentry, session restore; splash stays until `restoring` ends
+      (also: Sentry reports API parse errors; online/focus managers started)
+- [x] Route groups: `(auth)` (login, signup, forgot-password) and `(tabs)` (Home, Search, Applications,
       Profile as placeholders). Guard: signed out → login; signed in → tabs.
-- [ ] Tests with `expo-router/testing-library` (`renderRouter`): redirect rules, back behaviour after login/logout
+      Guards are `<Redirect>`s in the group layouts: `Stack.Protected` showed "Unmatched Route" for `/` and
+      tab deep links when signed out. Tabs: `expo-router/js-tabs` with `expo-symbols` icons. Profile has Sign out.
+- [x] Tests with `expo-router/testing-library` (`renderRouter`): redirect rules, back behaviour after login/logout
+      (`src/test/__tests__/navigation.test.tsx`; smoke flows now expect the login screen)
 
 ## Task 8 — Auth screens (TDD, website parity)
 

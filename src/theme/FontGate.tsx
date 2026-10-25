@@ -7,15 +7,16 @@ import { fontAssets } from './fonts';
 /**
  * Keeps the splash screen up until Inter is loaded, so text never flashes in the system font.
  * If loading fails the app still starts (system font) rather than staying on the splash.
+ * `holdSplash`: the app needs more time (session restore); children render, the splash stays on top.
  * The root layout calls SplashScreen.preventAutoHideAsync() at module load.
  */
-export function FontGate({ children }: { children: ReactNode }) {
+export function FontGate({ children, holdSplash = false }: { children: ReactNode; holdSplash?: boolean }) {
   const [loaded, error] = useFonts(fontAssets);
-  const ready = loaded || error !== null;
+  const fontsReady = loaded || error !== null;
 
   useEffect(() => {
-    if (ready) void SplashScreen.hideAsync();
-  }, [ready]);
+    if (fontsReady && !holdSplash) void SplashScreen.hideAsync();
+  }, [fontsReady, holdSplash]);
 
-  return ready ? children : null;
+  return fontsReady ? children : null;
 }

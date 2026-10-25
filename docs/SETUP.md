@@ -173,3 +173,23 @@ maestro test e2e/maestro/smoke.yaml
 ```
 
 The first launch after starting Metro bundles everything from scratch and can take over a minute.
+
+If `npx expo run:android` stops at "ADB device discovery" (seen 2026-10-25), build and install without it:
+`npx expo prebuild --platform android --no-install`, then `cd android && ./gradlew.bat app:assembleDebug -PreactNativeArchitectures=arm64-v8a`
+and `adb install -r app/build/outputs/apk/debug/app-debug.apk`. Run `./gradlew.bat --stop` first if a build
+fails with "Unable to delete file" (an old Gradle daemon holds it).
+
+### Known Metro warning (upstream)
+
+`The package ...\node_modules\expo-router contains an invalid package.json configuration ...
+router-store.js ... does not exist`. Comes from `@sentry/react-native` 8.28 (its Expo Router integration requires
+`expo-router/build/global-state/router-store`, which Expo Router 58 no longer has). Sentry catches the failed require,
+so the app is unaffected; only Sentry's route tracing is missing. Shown when Metro bundles. Recheck when Sentry or
+Expo is upgraded.
+
+### Jest notes
+
+- `expo-router/testing-library`'s `renderRouter` turns on Jest fake timers. `package.json` → `jest.fakeTimers.doNotFake`
+  keeps `nextTick`, `setImmediate` and `queueMicrotask` real, otherwise MSW and Node's fetch stall.
+- Importing `expo` in a test file installs `expo/fetch`; `src/test/jest.setup.ts` puts Node's fetch back before MSW starts.
+- Native modules are faked at the boundary in `__mocks__/` (`expo-secure-store`, `expo-network`).
