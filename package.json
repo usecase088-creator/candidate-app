@@ -58,7 +58,7 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm test -- --ci",
     "e2e:web": "playwright test",
-    "e2e:android": "adb reverse tcp:3000 tcp:3000 && maestro test e2e/maestro",
+    "e2e:android": "adb reverse tcp:3000 tcp:3000 && adb reverse tcp:8081 tcp:8081 && maestro test e2e/maestro",
     "backend:local": "node scripts/backend-local.mjs",
     "drift-check": "node scripts/drift-check.mjs"
   },

@@ -37,14 +37,18 @@ No Android Studio (8 GB RAM): command-line SDK only, real phone instead of an em
 | JDK | Microsoft OpenJDK 17.0.20 | winget `Microsoft.OpenJDK.17` → `C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot` |
 | adb | platform-tools 37.0.1 | winget `Google.PlatformTools` (on PATH) + same version in the SDK |
 | Android SDK | cmdline-tools 16111833, platform `android-36`, build-tools `36.1.0` | `%LOCALAPPDATA%\Android\Sdk` (zip from dl.google.com, SHA-1 checked). Gradle downloads anything else it needs. |
+| CMake (SDK package) | 3.31.6, ships ninja 1.12.1 | `sdkmanager "cmake/3.31.6"`. Needed for long paths, see "Android build on Windows" below. |
 | Maestro | 2.11.0 | `%LOCALAPPDATA%\maestro` (GitHub release zip, SHA-256 checked) |
 | GitHub | Git Credential Manager (no `gh`) | user `rajendra0000` |
 
 User environment: `JAVA_HOME`, `ANDROID_HOME`, PATH += `%JAVA_HOME%\bin`, `%ANDROID_HOME%\cmdline-tools\latest\bin`,
 `%LOCALAPPDATA%\maestro\bin`. Restart VS Code after changing them.
 
+Windows long paths are on (`HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled` = 1, set 2026-10-25).
+
 Install more SDK packages with a package file (the `.bat` launcher splits arguments at `;`):
 `sdkmanager --package_file=packages.txt` with one package per line, e.g. `platforms;android-36`.
+The newer sdkmanager also accepts `/` instead of `;` on the command line, e.g. `sdkmanager "cmake/3.31.6"`.
 
 Git Bash rewrites phone paths like `/sdcard/...` into Windows paths. Prefix adb commands with
 `MSYS_NO_PATHCONV=1`.
@@ -84,36 +88,53 @@ adb reverse tcp:3000 tcp:3000   # lets the phone/emulator on USB use http://loca
 ```
 C:\dev\
   job\                 # reference repo, branch conflict-resolution1 (READ-ONLY)
-  ah\                  # this repo (short name on purpose, see "Known issue" below)
+  ah\                  # this repo (short name on purpose, see "Android build on Windows" below)
 ```
 
-Open Claude Code inside `apronhanger-app/`. `.claude/settings.json` gives it read access to `../job`
+Open Claude Code inside `ah/`. `.claude/settings.json` gives it read access to `../job`
 and blocks edits there. Check with `/permissions` the first time.
 
-### Known issue: Android build fails on long Windows paths (2026-10-25)
+### Android build on Windows (long paths)
 
-First `npx expo run:android` failed after 47 min in `react-native-reanimated` C++ (`ninja: error: mkdir(...): No such file or directory`).
-Cause: Windows 260-character path limit. `LongPathsEnabled` is 0, and the SDK's CMake 3.22.1 ships ninja 1.10.2,
-which has no long-path support anyway.
+React Native's C++ builds create object paths longer than Windows' 260-character limit
+(`ninja: error: mkdir(...): No such file or directory`). The project path counts twice, because CMake copies
+the full source path into the object path, e.g. for gesture-handler's codegen:
 
-The project path counts twice: reanimated's shared C++ (`Common/cpp`) is outside its `android/` CMake folder,
-so CMake puts the full source path inside the object path
-(`<project>\node_modules\react-native-reanimated\android\.cxx\...\reanimated.dir\C_\<project>\node_modules\react-native-reanimated\Common\cpp\...cpp.o`).
-Every character in the project path adds 2 to the deepest path.
+```
+C:\dev\ah\android\app\.cxx\Debug\<hash>\arm64-v8a\rngesturehandler_codegen_autolinked_build\CMakeFiles\
+  react_codegen_rngesturehandler_codegen.dir\C_\dev\ah\node_modules\react-native-gesture-handler\shared\...\*.cpp.o
+```
 
-| Project path | Deepest path |
-| --- | --- |
-| `C:\Users\pc\Desktop\apronhanger-app` | 294 (measured) |
-| `R:\apronhanger-app` (subst) | 260 (measured) |
-| `C:\dev\apronhanger-app` | ~270 (estimated, fails) |
-| `C:\dev\ah` | ~245 (estimated) |
+That is 310 characters even at `C:\dev\ah` (288 with `.cxx` moved to a short folder), so a short project path
+alone is not enough. `subst` doesn't work either (expo-modules-autolinking can't find `package.json` at a drive root).
 
-Tried and rejected:
-- `subst R: <project>`: expo-modules-autolinking can't find `package.json` at a drive root (`R:\`).
-- Long paths (admin registry change + newer CMake): changes the whole machine; NDK tools may still fail.
+What fixed it (2026-10-25):
 
-**Decision: the project lives at `C:\dev\ah`.** Don't move it to a longer path. If a new native library breaks
-the limit again, the fallback is moving `.cxx` to a short folder with AGP `externalNativeBuild.cmake.buildStagingDirectory`.
+1. Windows long paths on (admin PowerShell; new processes pick it up, a restart makes sure):
+   `New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force`
+2. CMake 3.31.6 from the SDK: its ninja 1.12.1 is long-path aware; the default 3.22.1 ships ninja 1.10.2, which is not.
+   Stay on CMake 3.x: CMake 4 drops support for the old `cmake_minimum_required` versions some libraries use.
+3. Every native module must use it. Nothing in the build sets a CMake version, so AGP falls back to 3.22.1.
+   Point AGP at the newer one in `android/local.properties` (machine-specific, not committed; use forward slashes):
 
-Before retrying: delete the stale `android/.cxx` folders under `node_modules/*/android/.cxx` and `android/app/.cxx`.
-Gradle, NDK 27.1, build-tools 36/37 and platform 37 are already downloaded, so the next build is much faster.
+   ```
+   cmake.dir=C:/Users/pc/AppData/Local/Android/Sdk/cmake/3.31.6
+   ```
+
+   `android/` is generated (CNG). **After `npx expo prebuild --clean` or deleting `android/`, add this line again**
+   before building. Setting `externalNativeBuild.cmake.version` from the root `build.gradle` does not work
+   ("It is too late to set version").
+
+Keep the project at `C:\dev\ah` anyway: shorter paths keep us clear of tools that ignore long paths.
+After a failed native build, delete `android/app/.cxx` and `node_modules/*/android/.cxx` before retrying.
+First full build: about 12 minutes on this laptop; rebuilds reuse the Gradle cache.
+
+### Running the dev build on the phone
+
+```
+adb reverse tcp:8081 tcp:8081    # phone reaches Metro over USB at localhost:8081
+npx expo start                   # NOT --localhost: on Windows it listens on [::1] only; adb reverse uses 127.0.0.1
+maestro test e2e/maestro/smoke.yaml
+```
+
+The first launch after starting Metro bundles everything from scratch and can take over a minute.

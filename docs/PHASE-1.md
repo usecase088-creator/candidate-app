@@ -86,8 +86,9 @@ Facts (verified against the code at `3fa6885` during Task 1; corrections marked 
 - [x] `src/test/render.tsx`: renders with all providers (QueryClient with retries off, safe area, theme)
 - [x] Playwright: Chromium only, mobile viewport (Pixel 7 and iPhone 13 device profiles), `webServer`
       starts Expo web; `e2e/web/smoke.spec.ts` sees the login screen
-- [ ] Maestro: `e2e/maestro/smoke.yaml` launches the app and sees the login screen on the Android emulator
-      (flow written; the build needs the project at `C:\dev\ah`, see SETUP.md "Known issue")
+- [x] Maestro: `e2e/maestro/smoke.yaml` launches the app and sees the first screen (login once Task 8 builds it)
+      (passes on the real phone, RMX3944, 2026-10-25; the build needs long paths + CMake 3.31.6,
+      see SETUP.md "Android build on Windows")
 - [x] `tests/contract/`: separate Jest project, runs only with `npm run test:contract`, needs local backend (health smoke test passes once Task 4 runs the backend)
 - [x] Playwright MCP added to Claude Code (`.mcp.json`, see SETUP.md) so screens can be checked visually during work
 

@@ -4,8 +4,9 @@ appId: work.apronhanger.candidate.dev
 ---
 - launchApp:
     clearState: true
+# 120 s: the first launch after starting Metro bundles from scratch (over 30 s on Raj's laptop).
 - extendedWaitUntil:
     visible:
       id: home.placeholder
-    timeout: 30000
+    timeout: 120000
 - assertVisible: ApronHanger
