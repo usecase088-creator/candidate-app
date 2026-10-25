@@ -46,6 +46,9 @@ Raj built the website, so security/privacy bugs in it are fixed for free, with h
   Don't build it until Raj approves it as a paid change.
 - Website bugs: only group A (security/privacy) is fixed free, and only with Raj's OK. Everything else is listed and
   Raj decides.
+- **Security holes found while reading the reference code** (leaks, missing access checks, unfiltered writes, public files):
+  write them into `docs/client/ISSUES-TRIAGE.md` first, with endpoint, who can exploit it, what data and a severity.
+  **Nothing is fixed without Raj's OK**, not even a one-liner, and not while working on something else.
 
 ## Stack
 
