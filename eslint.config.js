@@ -27,14 +27,14 @@ module.exports = defineConfig([
       // CLAUDE.md: all network calls go through src/api/client.ts.
       'no-restricted-globals': [
         'error',
-        { name: 'fetch', message: 'Use src/api/client.ts for network calls.' },
+        { name: 'fetch', message: 'Use src/api/client.ts (createApiClient) for network calls.' },
       ],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },
   {
     // The client itself, and tests that check the network mock or call the backend directly.
-    files: ['src/api/client.ts', 'src/test/**', 'tests/contract/**', 'e2e/**'],
+    files: ['src/api/createApiClient.ts', 'src/test/**', 'tests/contract/**', 'e2e/**'],
     rules: { 'no-restricted-globals': 'off' },
   },
 ]);

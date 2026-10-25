@@ -92,3 +92,14 @@ describe('LottieAnimation (D19)', () => {
     expect(view.props).toMatchObject({ autoPlay: false, loop: false });
   });
 });
+
+describe('LottieAnimation on web (Playwright checks only)', () => {
+  it('keeps the size and testID but plays nothing (no Lottie web player installed)', async () => {
+    const { LottieAnimation: WebLottie } =
+      jest.requireActual<typeof import('../LottieAnimation.web')>('../LottieAnimation.web');
+    await renderWithProviders(<WebLottie testID="w" name="authSuccess" size={64} />);
+    const box = screen.getByTestId('w', HIDDEN);
+    expect(flat(box.props.style)).toMatchObject({ width: 64, height: 64 });
+    expect(screen.queryByTestId('w.lottie', HIDDEN)).toBeNull();
+  });
+});

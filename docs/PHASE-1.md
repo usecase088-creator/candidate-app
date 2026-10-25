@@ -196,9 +196,14 @@ offline banner had no accessible text on Android.
       (test number + 123456), `auth-forgot-password.yaml`, `auth-session-restore.yaml` (stop and relaunch app),
       `auth-role-rejected.yaml`. 6/6 with `smoke.yaml` in 10 min on the RMX3944. Repeatable: the seed frees the
       signup test numbers, and a local patch raises the OTP limit to 100 in OTP test mode.
-- [ ] Playwright (Chromium): login success, validation errors, role rejected
-- [ ] Contract tests: login, me, register, forgot/verify/reset (test mode), public jobs list parses with our schemas
-- [ ] `npm run drift-check`: GET public jobs, gov jobs, intl jobs on production; parse only; no auth, no writes
+- [x] Playwright (Chromium): login success, validation errors, role rejected (+ wrong password). `e2e/web/auth.spec.ts`,
+      API mocked in the browser; 12/12 with the other specs on both device profiles. Found: the web build had been
+      broken since Task 8 (Lottie's web player needs a package we don't ship) → `LottieAnimation.web.tsx` plays nothing.
+- [x] Contract tests: login, me, register, forgot/verify/reset (test mode), public jobs list parses with our schemas
+      (also gov and intl jobs; 12 tests, `tests/contract/`; they use `src/api/createApiClient.ts`, the client factory
+      without React Native imports)
+- [x] `npm run drift-check`: GET public jobs, gov jobs, intl jobs on production; parse only; no auth, no writes
+      (`tests/drift/`, kept out of `npm test`; passed 2026-10-25: 10 jobs, 62 gov, 5 intl)
 
 ## Task 10 — EAS and iOS check (ask Raj before running builds)
 

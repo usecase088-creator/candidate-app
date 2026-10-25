@@ -84,7 +84,8 @@ A flow is "done" only when its Maestro flow passes on Android.
 ## Code rules
 
 - TypeScript strict. No `any`. Use `unknown` + Zod.
-- All network calls go through `src/api/client.ts`. No `fetch` anywhere else.
+- All network calls go through `src/api/client.ts` (the instance; `fetch` itself lives only in its factory
+  `src/api/createApiClient.ts`, which Node tools such as contract tests reuse). No `fetch` anywhere else.
 - Every API response is parsed with a Zod schema in `src/api/schemas/`. Extra fields are fine
   (`.passthrough()`); missing or wrong required fields throw a typed `ApiError` and go to Sentry.
 - Tokens live only in SecureStore through `src/lib/secureStorage`. Never in AsyncStorage, logs or Sentry.

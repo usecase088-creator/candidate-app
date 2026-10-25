@@ -70,7 +70,7 @@
     "e2e:web": "playwright test",
     "e2e:android": "adb reverse tcp:3000 tcp:3000 && adb reverse tcp:8081 tcp:8081 && maestro test e2e/maestro",
     "backend:local": "node scripts/backend-local.ts",
-    "drift-check": "node scripts/drift-check.mjs"
+    "drift-check": "jest --config tests/drift/jest.config.js"
   },
   "private": true,
   "engines": {
@@ -85,7 +85,8 @@
       "/node_modules/",
       "/tests/contract/",
       "/e2e/",
-      "/.reference-backend/"
+      "/.reference-backend/",
+      "/tests/drift/"
     ],
     "collectCoverageFrom": [
       "src/**/*.{ts,tsx}",
