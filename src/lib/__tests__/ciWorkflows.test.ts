@@ -15,9 +15,18 @@ it('runs on macOS with a time limit', () => {
 });
 
 it('tests the e2e-test iOS simulator build (development variant: cannot reach production)', () => {
-  expect(yml).toContain('--profile e2e-test');
+  expect(yml).toContain('--buildProfile e2e-test');
   expect(yml).toContain('--platform ios');
-  expect(yml).not.toMatch(/--profile (preview|production)/);
+  expect(yml).not.toMatch(/--(buildP|p)rofile (preview|production)/);
+});
+
+it('looks up the build and installs packages on a cheap Linux runner, not on macOS (10x minutes)', () => {
+  const linux = yml.slice(yml.indexOf('find-build:'), yml.indexOf('ios-simulator:'));
+  const mac = yml.slice(yml.indexOf('ios-simulator:'));
+  expect(linux).toMatch(/runs-on: ubuntu-/);
+  expect(linux).toContain('npm ci');
+  expect(mac).toContain('needs: find-build');
+  expect(mac).not.toMatch(/npm (ci|install)/);
 });
 
 it('takes the Expo token from GitHub secrets, never from the file', () => {

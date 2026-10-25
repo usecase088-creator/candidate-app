@@ -17,34 +17,47 @@ on:
         default: e2e/maestro/smoke.yaml
 
 jobs:
-  ios-simulator:
-    runs-on: macos-15
-    timeout-minutes: 30
+  # Cheap Linux job (1x minutes): the project's app.config.ts needs its packages installed for eas-cli to read it.
+  find-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    outputs:
+      id: ${{ steps.build.outputs.id }}
+      url: ${{ steps.build.outputs.url }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+
+      - run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Find the iOS simulator build on EAS
         id: build
         run: |
           if [ -n "${{ inputs.build_id }}" ]; then
-            npx --yes eas-cli@latest build:view "${{ inputs.build_id }}" --json > build.json
+            npx eas-cli build:view "${{ inputs.build_id }}" --json > build.json
           else
-            npx --yes eas-cli@latest build:list --platform ios --buildProfile e2e-test --status finished \
-              --limit 1 --json --non-interactive | jq '.[0]' > build.json
+            npx eas-cli build:list --platform ios --buildProfile e2e-test --status finished               --limit 1 --json --non-interactive | jq '.[0]' > build.json
           fi
           echo "id=$(jq -r '.id' build.json)" >> "$GITHUB_OUTPUT"
           echo "url=$(jq -r '.artifacts.buildUrl' build.json)" >> "$GITHUB_OUTPUT"
           jq '{id, buildProfile, appVersion, gitCommitHash, completedAt}' build.json
 
+  ios-simulator:
+    needs: find-build
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Download and unpack the .app
         run: |
-          curl -sSL "${{ steps.build.outputs.url }}" -o app.tar.gz
+          curl -sSL "${{ needs.find-build.outputs.url }}" -o app.tar.gz
           mkdir app && tar -xzf app.tar.gz -C app
           APP=$(find app -maxdepth 3 -name '*.app' -type d | head -1)
           echo "APP=$APP" >> "$GITHUB_ENV"
@@ -86,6 +99,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-e2e-${{ steps.build.outputs.id }}
+          name: ios-e2e-${{ needs.find-build.outputs.id }}
           path: output
           retention-days: 14
