@@ -42,10 +42,16 @@ describe('parseEnv', () => {
     expect(() => parseEnv({ ...valid, apiUrl: 'localhost' })).toThrow(/apiUrl/);
   });
 
-  it('rejects plain http outside development', () => {
+  it('rejects plain http in production', () => {
     expect(() =>
-      parseEnv({ ...valid, appVariant: 'preview', apiUrl: 'http://job-ojsr.onrender.com' }),
+      parseEnv({ ...valid, appVariant: 'production', apiUrl: 'http://job-ojsr.onrender.com' }),
     ).toThrow(/https/);
+  });
+
+  it('allows the local test backend over http in preview (D20)', () => {
+    expect(parseEnv({ ...valid, appVariant: 'preview', apiUrl: 'http://localhost:3000' }).apiUrl).toBe(
+      'http://localhost:3000',
+    );
   });
 });
 

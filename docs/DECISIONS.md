@@ -133,3 +133,12 @@ message for a suspended or deleted account (403). App wording. (Raj)
 `lottie-react-native` (version picked by `npx expo install` for the SDK; native, needs a rebuild) plays the website's
 own animation files from `../job/candidates/public/`, copied into `assets/lottie/`: sign-in/sign-up success,
 OTP sent, password reset success. Reduce Motion: shown without playing, as the website does. (Raj)
+
+## D20 — Only the store build talks to the live server (decided 2026-10-25)
+
+The live Render backend is production. **Only the production (store) build uses it.** Development and preview builds
+talk to the test backend (dev Neon database, OTP test mode): the local copy now, and a staging server on a separate
+Render workspace (D4, `RENDER_STAGING_API`) once deployed, via `PREVIEW_API_URL`. `app.config.ts` refuses to build any
+non-production variant pointed at the live server; preview/development allow plain http to the test backend on
+Android, production stays https-only. The first preview APK (EAS build 7a176915, 2026-10-25) pointed at the live
+server: do not install or share it. (Raj)

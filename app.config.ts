@@ -10,20 +10,24 @@ const BUNDLE_ID = 'work.apronhanger.candidate'; // D2 — permanent once publish
 /** EAS project (eas init 2026-10-25, organization apronhanger-candidate). Public id, not a secret. */
 const EAS_PROJECT_ID = '3bb496c0-6a80-4efe-a672-ccb36ba6fbd9';
 const PRODUCTION_API_URL = 'https://job-ojsr.onrender.com'; // live backend used by apronhanger.work
+/** Local reference backend (Task 4): the dev database, reached from the phone through `adb reverse tcp:3000 tcp:3000`. */
+const LOCAL_API_URL = 'http://localhost:3000';
+/** D20: only the production (store) build may talk to the live server. */
+const LIVE_SERVER = /onrender.com|apronhanger.work/;
 
 const VARIANTS: Record<Variant, { name: string; idSuffix: string; scheme: string; apiUrl: string }> = {
   development: {
     name: 'ApronHanger (Dev)',
     idSuffix: '.dev',
     scheme: 'apronhanger-dev',
-    // Local reference backend (Task 4); reached from the phone through `adb reverse tcp:3000 tcp:3000`.
-    apiUrl: 'http://localhost:3000',
+    apiUrl: LOCAL_API_URL,
   },
   preview: {
     name: 'ApronHanger (Preview)',
     idSuffix: '.preview',
     scheme: 'apronhanger-preview',
-    apiUrl: PRODUCTION_API_URL,
+    // D20: never the live server. The test backend until a staging server exists (D4), then PREVIEW_API_URL.
+    apiUrl: LOCAL_API_URL,
   },
   production: { name: 'ApronHanger', idSuffix: '', scheme: 'apronhanger', apiUrl: PRODUCTION_API_URL },
 };
@@ -38,6 +42,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const variant = readVariant();
   const v = VARIANTS[variant];
   const bundleId = `${BUNDLE_ID}${v.idSuffix}`;
+  const variantUrl = variant === 'preview' ? (process.env.PREVIEW_API_URL ?? v.apiUrl) : v.apiUrl;
+  const apiUrl = process.env.API_URL_OVERRIDE ?? variantUrl;
+  if (variant !== 'production' && LIVE_SERVER.test(apiUrl)) {
+    throw new Error(
+      `D20: the ${variant} build must not use the live server (${apiUrl}). Only production may.`,
+    );
+  }
   // OTA updates (PLAN.md §2) from the EAS project. Never in development: Metro serves the JS there.
   // Publishing a production update still needs Raj's OK (CLAUDE.md).
   const updateUrl = `https://u.expo.dev/${EAS_PROJECT_ID}`;
@@ -88,6 +99,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-router',
       // Keeps SecureStore data out of Android auto-backup (a restored backup can't decrypt it anyway).
       'expo-secure-store',
+      // Release builds block plain http. Development and preview talk to the http test backend (D20);
+      // the store build stays https-only.
+      ['expo-build-properties', { android: { usesCleartextTraffic: variant !== 'production' } }],
       [
         'expo-splash-screen',
         {
@@ -104,7 +118,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     extra: {
       eas: { projectId: EAS_PROJECT_ID },
       appVariant: variant,
-      apiUrl: process.env.API_URL_OVERRIDE ?? v.apiUrl,
+      apiUrl,
       sentryEnvironment: variant,
       sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
     },

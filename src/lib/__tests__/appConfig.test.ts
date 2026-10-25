@@ -44,6 +44,45 @@ describe('EAS project', () => {
   });
 });
 
+describe('which backend each build talks to (D20)', () => {
+  const LIVE = /onrender.com|apronhanger.work/;
+
+  it('only the production build uses the live server', () => {
+    expect(configFor({ APP_VARIANT: 'production' }).extra?.apiUrl).toBe('https://job-ojsr.onrender.com');
+    expect(configFor({ APP_VARIANT: 'development' }).extra?.apiUrl).toBe('http://localhost:3000');
+    expect(configFor({ APP_VARIANT: 'preview', PREVIEW_API_URL: undefined }).extra?.apiUrl).toBe(
+      'http://localhost:3000',
+    );
+  });
+
+  it('preview can point at a staging server later (PREVIEW_API_URL)', () => {
+    expect(
+      configFor({ APP_VARIANT: 'preview', PREVIEW_API_URL: 'https://staging.example.com' }).extra?.apiUrl,
+    ).toBe('https://staging.example.com');
+  });
+
+  it.each([
+    ['preview', { PREVIEW_API_URL: 'https://job-ojsr.onrender.com' }],
+    ['preview', { API_URL_OVERRIDE: 'https://job-ojsr.onrender.com' }],
+    ['development', { API_URL_OVERRIDE: 'https://apronhanger.work' }],
+  ])('refuses to build %s against the live server (%o)', (variant, env) => {
+    expect(() => configFor({ APP_VARIANT: variant, ...env })).toThrow(/live server/);
+  });
+
+  it('allows plain http to the test backend on Android, except in production', () => {
+    const cleartext = (variant: string) => {
+      const plugin = (configFor({ APP_VARIANT: variant }).plugins ?? []).find(
+        (p) => Array.isArray(p) && p[0] === 'expo-build-properties',
+      ) as [string, { android?: { usesCleartextTraffic?: boolean } }] | undefined;
+      return plugin?.[1].android?.usesCleartextTraffic;
+    };
+    expect(cleartext('development')).toBe(true);
+    expect(cleartext('preview')).toBe(true);
+    expect(cleartext('production')).toBe(false);
+    expect(configFor({ APP_VARIANT: 'production' }).extra?.apiUrl).toMatch(LIVE);
+  });
+});
+
 describe('App Store', () => {
   it('declares that the app uses only exempt encryption (HTTPS), so TestFlight needs no extra paperwork', () => {
     expect(configFor({ APP_VARIANT: 'production' }).ios?.infoPlist).toMatchObject({

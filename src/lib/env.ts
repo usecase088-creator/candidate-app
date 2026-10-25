@@ -14,8 +14,9 @@ const envSchema = z
       .transform((dsn) => dsn || undefined),
   })
   .superRefine((env, ctx) => {
-    if (env.appVariant !== 'development' && !env.apiUrl.startsWith('https://')) {
-      ctx.addIssue({ code: 'custom', path: ['apiUrl'], message: 'must use https outside development' });
+    // Production must use https. Development and preview talk to the test backend, which may be http (D20).
+    if (env.appVariant === 'production' && !env.apiUrl.startsWith('https://')) {
+      ctx.addIssue({ code: 'custom', path: ['apiUrl'], message: 'must use https in production' });
     }
   });
 
