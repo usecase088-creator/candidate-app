@@ -199,3 +199,20 @@ Expo is upgraded.
   keeps `nextTick`, `setImmediate` and `queueMicrotask` real, otherwise MSW and Node's fetch stall.
 - Importing `expo` in a test file installs `expo/fetch`; `src/test/jest.setup.ts` puts Node's fetch back before MSW starts.
 - Native modules are faked at the boundary in `__mocks__/` (`expo-secure-store`, `expo-network`).
+
+## EAS (cloud builds, Task 10)
+
+Builds use free-plan minutes (D8): **ask Raj before every build or workflow run**, and say how many builds it uses.
+Expo account: the client's project email (D7).
+
+```
+npx eas-cli@latest login          # once, interactive: the Expo account of the project email
+npx eas-cli@latest init           # once: creates the EAS project; put the printed projectId in app.config.ts
+npx eas-cli@latest build -p android --profile preview          # 1 build: installable APK for testers
+npx eas-cli@latest workflow:run .eas/workflows/e2e.yml         # 2 builds + 2 Maestro runs (Android + iOS simulator)
+```
+
+Profiles (`eas.json`, rules checked by `src/lib/__tests__/easConfig.test.ts`): `development` (debug APK / iOS
+simulator), `preview` (internal APK, live backend), `production` (store build, only with Raj's OK), `e2e-test`
+(development variant, no credentials, APK + iOS simulator). There is no `submit` config on purpose: never
+`eas submit` without Raj's OK.

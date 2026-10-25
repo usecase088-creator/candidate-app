@@ -1,0 +1,40 @@
+# Cloud E2E (PHASE-1 Task 10). On demand only: every run uses EAS build minutes (D8, free plan) — ask Raj first.
+# Run with: npx eas-cli workflow:run .eas/workflows/e2e.yml
+# Builds the e2e-test profile (development variant: local API address, so nothing can reach production) and runs
+# only flows that need no backend. Auth flows need a backend the cloud can reach (staging, D4).
+name: e2e
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build_android:
+    name: Build Android (e2e-test)
+    type: build
+    params:
+      platform: android
+      profile: e2e-test
+
+  build_ios:
+    name: Build iOS simulator (e2e-test)
+    type: build
+    params:
+      platform: ios
+      profile: e2e-test
+
+  maestro_android:
+    name: Maestro on Android emulator
+    needs: [build_android]
+    type: maestro
+    runs_on: linux-large-nested-virtualization
+    params:
+      build_id: ${{ needs.build_android.outputs.build_id }}
+      flow_path: ['e2e/maestro/smoke.yaml']
+
+  maestro_ios:
+    name: Maestro on iOS simulator
+    needs: [build_ios]
+    type: maestro
+    params:
+      build_id: ${{ needs.build_ios.outputs.build_id }}
+      flow_path: ['e2e/maestro/smoke.yaml']
