@@ -217,3 +217,15 @@ Profiles (`eas.json`, rules checked by `src/lib/__tests__/easConfig.test.ts`): `
 simulator), `preview` (internal APK, live backend), `production` (store build, only with Raj's OK), `e2e-test`
 (development variant, no credentials, APK + iOS simulator). There is no `submit` config on purpose: never
 `eas submit` without Raj's OK.
+
+## iPhone tests and screen recordings
+
+- **iPhone simulator tests** run on GitHub's free macOS runners: Actions → **ios-e2e** → Run workflow, or with the token in
+  `.env.local`: `POST /repos/usecase088-creator/candidate-app/actions/workflows/ios-e2e.yml/dispatches` `{"ref":"main"}`.
+  It uses the latest finished EAS `e2e-test` iOS simulator build (`eas build -p ios --profile e2e-test`, free), so build
+  first after UI changes. macOS minutes count 10x: a run is about 30 of the 2,000 free minutes a month. Video, screenshot
+  and the Maestro report are kept as a run artifact for 14 days.
+- **Screen recordings of the phone**: Realme blocks `adb shell screenrecord` and Maestro's recorder, so use **scrcpy**
+  (`winget install Genymobile.scrcpy`): `scrcpy --no-playback --no-control --no-audio --record recordings/x.mp4
+  --time-limit 150` while a Maestro flow runs. `recordings/` is git-ignored. Restart `npm run backend:local` before
+  recording signup (it frees the signup test numbers).

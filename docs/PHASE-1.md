@@ -42,6 +42,7 @@ Read `../job` and write:
 - [x] Note anything odd or risky at the bottom of each file under "Notes for the app".
 
 Facts (verified against the code at `3fa6885` during Task 1; corrections marked **[corrected]**):
+
 - Login is email + password (`POST /api/auth/login`) and returns `{ token, user }`; JWT lasts 15 days, no refresh.
 - **[corrected]** Login serves RECRUITER and CANDIDATE users only; admins are a separate table with their own
   login. The website rejects only RECRUITER, with `rolePortalMismatchMessage` (`lib/authMessages.ts`).
@@ -96,8 +97,7 @@ Facts (verified against the code at `3fa6885` during Task 1; corrections marked 
 
 - [x] `scripts/backend-local.ts` (Node 24 runs it as TypeScript; works on Windows): copies `../job/backend` into
       `.reference-backend/` (gitignored), adds `scripts/backend-local/overlay/`, applies the edits in
-      `scripts/backend-local/patches.ts`, writes its `.env` from `.env.local`, runs `npm ci`, `prisma migrate deploy`
-      + `prisma db push` (migrations lag the schema, API.md note 17) on the **dev Neon database** (D13), the backend
+      `scripts/backend-local/patches.ts`, writes its `.env` from `.env.local`, runs `npm ci`, `prisma migrate deploy` + `prisma db push` (migrations lag the schema, API.md note 17) on the **dev Neon database** (D13), the backend
       seed, our seed, then starts the server on port 3000. Refuses non-Neon hosts, `NODE_ENV=production`, and a
       database with users but no seed account.
 - [x] `.env.local` (gitignored) + `.env.local.example` (committed, no real values): dev database URL,
@@ -207,21 +207,28 @@ offline banner had no accessible text on Android.
 
 ## Task 10 — EAS and iOS check (ask Raj before running builds)
 
-- [ ] `eas init` with Raj's Expo account; `eas.json` profiles: development, preview, production, e2e-test
-      (`withoutCredentials`, Android APK, iOS simulator)
-- [ ] `.eas/workflows/e2e.yml`: build e2e-test for both platforms, run Maestro auth flows.
-      Needs a backend the cloud can reach: until staging exists, run only flows that don't need the backend
-      (smoke, validation), or point to staging once ready.
-- [ ] Quick check on a real iPhone with Expo Go where possible (no Mac, D1)
-- [ ] Free plan only (D8). Count builds; tell Raj before anything that may use up the monthly quota.
+- [x] `eas init` with the client organization's Expo account (`@apronhanger-candidate/apronhanger-candidate`);
+      `eas.json` profiles: development, preview, production, e2e-test (`withoutCredentials`, Android APK, iOS simulator).
+      Preview and development never use the live server (D20).
+- [x] Cloud E2E: Expo's own Maestro jobs need the paid Starter plan (EAS refused `.eas/workflows/e2e.yml` on Free), so the
+      iPhone side runs on GitHub's free macOS runners instead: `.github/workflows/ios-e2e.yml` (manual) downloads the free
+      EAS iOS simulator build, boots an iPhone simulator, runs Maestro, keeps video and screenshot.
+      First green run 2026-10-25: smoke flow on the iPhone simulator (run 40217086566, ~3 min). Auth flows need a backend
+      the cloud can reach: staging is postponed (Raj, 2026-10-25), so only smoke runs there for now.
+- [x] iPhone check: no real iPhone and no Mac (D1), so the iPhone simulator on the GitHub macOS runner stands in. A real
+      iPhone (TestFlight, client's Apple account) is still needed before the App Store submission.
+- [x] Free plan only (D8). Builds used: EAS 2 (iOS simulator e2e-test, Android preview: the Android one pointed at the live
+      server and must not be used, D20); GitHub macOS ~3 min (30 allowance-minutes) plus Linux ~2 min.
 
 ## Phase 1 exit checklist
 
-- [ ] All tasks ticked; `npm run check` green; coverage gates met
-- [ ] Maestro auth flows pass on Android emulator
-- [ ] Playwright auth specs pass on Chromium
-- [ ] Contract tests pass against local backend; drift check passes on production
-- [ ] iOS: smoke flow passes on EAS iOS simulator (or Expo Go check if builds not approved yet)
-- [ ] No warnings in Metro logs; no `any`; no TODOs without an issue
-- [ ] Screen recording for the client: signup and login on Android emulator against local backend
-- [ ] `docs/DECISIONS.md` updated; `CLAUDE.md` "Current phase" moved to Phase 2
+- [x] All tasks ticked; `npm run check` green (488 tests); coverage gates met (98.6% of lines, gate 85%)
+- [x] Maestro auth flows pass on Android (the real phone, RMX3944, rather than an emulator): 6/6
+- [x] Playwright auth specs pass on Chromium (12/12 on both device profiles)
+- [x] Contract tests pass against local backend (12); drift check passes on production (10 jobs, 62 gov, 5 intl)
+- [x] iOS: smoke flow passes on an iPhone simulator (GitHub macOS runner, EAS simulator build)
+- [ ] No warnings in Metro logs: one upstream warning remains (Sentry 8.28 vs Expo Router 58, see SETUP.md); Raj chose
+      to leave it for now. No `any`, no TODOs.
+- [x] Screen recording for the client: signup and login on the Android phone against the local backend
+      (`recordings/phase1-signup.mp4`, `recordings/phase1-login.mp4`, not in git)
+- [ ] `docs/DECISIONS.md` updated (D15 to D20, done); `CLAUDE.md` "Current phase" moves to Phase 2 once Raj accepts Phase 1

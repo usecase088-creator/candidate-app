@@ -44,3 +44,6 @@ test-results/
 # OS / tooling
 .DS_Store
 *.tsbuildinfo
+
+# Screen recordings for the client (large, not source)
+recordings/
