@@ -1,5 +1,7 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
+import withWindowsCmake from './plugins/withWindowsCmake.ts';
+
 // One build-time switch: APP_VARIANT = development | preview | production (PLAN.md §3).
 // Values that differ per variant live here; src/lib/env.ts validates what reaches the app.
 type Variant = 'development' | 'preview' | 'production';
@@ -34,8 +36,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const variant = readVariant();
   const v = VARIANTS[variant];
   const bundleId = `${BUNDLE_ID}${v.idSuffix}`;
+  // OTA updates (PLAN.md §2). The URL comes from the EAS project (Task 10, `eas init`); until then updates stay off.
+  // Never in development: Metro serves the JS there.
+  const updateUrl = process.env.EAS_UPDATE_URL;
+  const updatesOn = variant !== 'development' && !!updateUrl;
 
-  return {
+  // withWindowsCmake: long-path-safe CMake for Android builds on Windows (docs/SETUP.md).
+  return withWindowsCmake({
     ...config,
     name: v.name,
     slug: 'apronhanger-candidate',
@@ -45,6 +52,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     scheme: v.scheme,
     // D11: website light theme only; the app stays light when the phone is in dark mode.
     userInterfaceStyle: 'light',
+    // A new native fingerprint means a new runtime: OTA updates only reach binaries they are compatible with.
+    runtimeVersion: { policy: 'fingerprint' },
+    updates: {
+      enabled: updatesOn,
+      ...(updatesOn ? { url: updateUrl } : {}),
+      checkAutomatically: updatesOn ? 'ON_LOAD' : 'NEVER',
+      fallbackToCacheTimeout: 0,
+    },
     ios: {
       bundleIdentifier: bundleId,
       icon: './assets/expo.icon',
@@ -65,6 +80,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     plugins: [
       'expo-router',
+      // Keeps SecureStore data out of Android auto-backup (a restored backup can't decrypt it anyway).
+      'expo-secure-store',
       [
         'expo-splash-screen',
         {
@@ -84,5 +101,5 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       sentryEnvironment: variant,
       sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
     },
-  };
+  });
 };

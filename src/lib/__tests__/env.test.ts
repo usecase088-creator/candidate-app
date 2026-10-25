@@ -51,8 +51,10 @@ describe('parseEnv', () => {
 
 describe('getEnv', () => {
   // expo-constants is a native module; in Jest it has no app config, so we give it one.
+  // resetModules drops the cached global mock from jest.setup.ts, which isolateModules would otherwise reuse.
   function loadWithExtra(extra: unknown): typeof import('../env') {
     let mod: typeof import('../env') | undefined;
+    jest.resetModules();
     jest.isolateModules(() => {
       jest.doMock('expo-constants', () => ({ __esModule: true, default: { expoConfig: { extra } } }));
       // isolateModules needs a synchronous require to load a fresh copy of the module.

@@ -155,9 +155,10 @@ What fixed it (2026-10-25):
    cmake.dir=C:/Users/pc/AppData/Local/Android/Sdk/cmake/3.31.6
    ```
 
-   `android/` is generated (CNG). **After `npx expo prebuild --clean` or deleting `android/`, add this line again**
-   before building. Setting `externalNativeBuild.cmake.version` from the root `build.gradle` does not work
-   ("It is too late to set version").
+   **Automatic:** the local config plugin `plugins/withWindowsCmake.ts` writes this line on every prebuild
+   (Windows only, from `ANDROID_HOME`, only if that CMake folder exists), so regenerating `android/` keeps it.
+   Prebuild regenerates `android/` whenever plugins or native config change, which also deletes the last APK.
+   Setting `externalNativeBuild.cmake.version` from the root `build.gradle` does not work ("It is too late to set version").
 
 Keep the project at `C:\dev\ah` anyway: shorter paths keep us clear of tools that ignore long paths.
 After a failed native build, delete `android/app/.cxx` and `node_modules/*/android/.cxx` before retrying.

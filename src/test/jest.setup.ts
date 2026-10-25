@@ -1,5 +1,29 @@
 import { server } from './msw/server';
 
+// The native manifest is empty in Jest. Give every test the development variant's `extra` (app.config.ts),
+// pointing at the MSW base URL, so getEnv() and src/api/client.ts work as in the dev build.
+jest.mock('expo-constants', () => {
+  const actual = jest.requireActual('expo-constants');
+  const constants = actual.default;
+  return {
+    ...actual,
+    __esModule: true,
+    default: {
+      ...constants,
+      expoConfig: {
+        ...constants.expoConfig,
+        version: '1.0.0',
+        extra: {
+          appVariant: 'development',
+          apiUrl: 'http://localhost:3000',
+          sentryEnvironment: 'development',
+          sentryDsn: '',
+        },
+      },
+    },
+  };
+});
+
 // Restore Node's fetch & co. (see jestEnvironment.js) so MSW can intercept requests.
 const nodeWebApis = (globalThis as unknown as { __NODE_WEB_APIS__: Record<string, unknown> })
   .__NODE_WEB_APIS__;

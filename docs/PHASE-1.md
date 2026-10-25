@@ -116,17 +116,24 @@ Facts (verified against the code at `3fa6885` during Task 1; corrections marked 
 
 ## Task 5 — Core libraries (TDD)
 
-- [ ] `src/api/errors.ts`: `ApiError` with kinds network | timeout | http | parse; map backend `{ error }` messages
-- [ ] `src/api/client.ts` tests first (MSW): base URL, JSON body, `Authorization` when signed in,
+- [x] `src/api/errors.ts`: `ApiError` with kinds network | timeout | http | parse; map backend `{ error }` messages
+      (5xx → website "Server error..." wording; `serverMessage` kept for screens)
+- [x] `src/api/client.ts` tests first (MSW): base URL, JSON body, `Authorization` when signed in,
       `X-App-Version` + `X-Platform` headers, 20 s timeout, GET retried once on network error and never
       for POST/PATCH/DELETE, Zod parse of every response, 401 calls the session-expired hook once
-- [ ] `src/lib/secureStorage.native.ts` (expo-secure-store) and `.web.ts` (memory only, dev use) with the same interface
-- [ ] `src/features/auth/sessionStore.ts` (Zustand): `restoring | signedOut | signedIn`, `signIn`, `signOut`,
+      (per signed-in token). Parse errors go to `setErrorReporter` (wired to Sentry in Task 7).
+- [x] `src/lib/secureStorage.native.ts` (expo-secure-store) and `.web.ts` (memory only, dev use) with the same interface
+      (`secureStorage.ts` re-exports native for TypeScript; unreadable Keystore entry → treated as signed out)
+- [x] `src/features/auth/sessionStore.ts` (Zustand): `restoring | signedOut | signedIn`, `signIn`, `signOut`,
       `restore` (token → `/api/auth/me` → signedIn, or clear on 401/parse error; keep session on network error)
-- [ ] `src/lib/queryClient.ts`: TanStack Query wired to RN `onlineManager` (expo-network / NetInfo) and `focusManager` (AppState)
-- [ ] `src/lib/sentry.ts`: init only when DSN set and not in tests; `beforeSend` scrubs emails, phone numbers,
-      tokens, request bodies (unit-test the scrubber)
-- [ ] `expo-updates` installed and configured (runtime version policy `fingerprint`), checks disabled in development
+      Also: 403 → signed out as `blocked` with the backend message; non-CANDIDATE refused; user cached for offline.
+- [x] `src/lib/queryClient.ts`: TanStack Query wired to RN `onlineManager` (expo-network) and `focusManager` (AppState).
+      Queries retry network/timeout/5xx up to twice; never 4xx, 429 or parse errors; mutations never.
+- [x] `src/lib/sentry.ts`: init only when DSN set and not in tests; `beforeSend` scrubs emails, phone numbers,
+      tokens, request bodies (unit-test the scrubber: `src/lib/sentryScrub.ts`). The Sentry config plugin
+      (source maps) waits for Task 10, when the Sentry org/project and EAS exist.
+- [x] `expo-updates` installed and configured (runtime version policy `fingerprint`), checks disabled in development.
+      Release variants stay off until `EAS_UPDATE_URL` exists (Task 10, `eas init`).
 
 ## Task 6 — Theme and base components (TDD)
 
