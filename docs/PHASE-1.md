@@ -137,13 +137,19 @@ Facts (verified against the code at `3fa6885` during Task 1; corrections marked 
 
 ## Task 6 — Theme and base components (TDD)
 
-- [ ] `src/theme/tokens.ts` from THEME.md; Inter via `@expo-google-fonts/inter`; splash held until fonts load
-- [ ] Components with tests for states and accessibility props: `Screen` (safe area, edge-to-edge, keyboard
+- [x] `src/theme/tokens.ts` from THEME.md; Inter via `@expo-google-fonts/inter`; splash held until fonts load
+      (`src/theme/FontGate.tsx` in the root layout; error text `#D4212D` per D15, gradients per D16;
+      contrast of every text/background pair tested ≥ 4.5:1)
+- [x] Components with tests for states and accessibility props: `Screen` (safe area, edge-to-edge, keyboard
       avoiding), `Button` (variants, loading, disabled), `TextInput` (label, error, helper),
       `PasswordInput` (show/hide), `OtpInput` (6 boxes, paste support, iOS `textContentType="oneTimeCode"`,
       Android `autoComplete="sms-otp"`), `ErrorState`, `EmptyState`, `Skeleton`, `Toast`, `OfflineBanner`
-- [ ] Every component passes `testID` and `accessibilityLabel` through
-- [ ] Check at font scale 2.0 and 320 pt width (Playwright screenshot at 320 px + emulator font setting)
+      (all in `src/components/ui/`, plus `AppText`; dev-only catalog at `/dev-ui` in development builds)
+- [x] Every component passes `testID` and `accessibilityLabel` through
+- [x] Check at font scale 2.0 and 320 pt width (Playwright screenshot at 320 px + emulator font setting)
+      (2026-10-25: `/dev-ui` on the phone at font scale 2.0, everything wraps, nothing clipped;
+      `e2e/web/narrow-screen.spec.ts` fails if anything is wider than 320 px. Found and fixed: OTP digits
+      showed through the boxes on Android.)
 
 ## Task 7 — Navigation shell
 
@@ -155,6 +161,9 @@ Facts (verified against the code at `3fa6885` during Task 1; corrections marked 
 ## Task 8 — Auth screens (TDD, website parity)
 
 For each screen: write screen tests (MSW) for every state first, then build it.
+
+Found in Task 6 (phone): on Android the window resizes for the keyboard, but a field focused just before the
+keyboard opens stays hidden behind it (no auto-scroll). Forms must scroll the focused field into view.
 
 - [ ] Login: email/password validation and messages as website; server errors shown as website does;
       RECRUITER/ADMIN user rejected with website message and token not stored; loading; keyboard "next/done";

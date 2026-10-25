@@ -105,3 +105,14 @@ Never the production database.
 A separate free Cloudinary account (project Gmail) for dev uploads, so test files never land in the
 client's real storage. Emails in dev: no real sending; Claude Code makes sure the local backend copy
 doesn't crash when the email key is a dummy.
+
+## D15 — Error text colour (decided 2026-10-25)
+
+Small error text uses **`#D4212D`** (`oklch(0.56 0.21 25)`), slightly darker than the website's `--destructive`
+`#E23439`, which is 4.4:1 on white and fails WCAG AA for small text. `#D4212D` is 5.2:1 on white and 5.0:1 on
+`--background`. Same hue. Buttons, icons and borders keep `#E23439`. (Raj, THEME.md note 2.)
+
+## D16 — Gradients (decided 2026-10-25)
+
+`expo-linear-gradient` (Expo SDK) for the website's gradients: the signup button (`.btn-shiny-premium`) and later
+the gov jobs hero. (Raj, THEME.md note 3.)
