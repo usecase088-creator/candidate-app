@@ -142,3 +142,15 @@ Render workspace (D4, `RENDER_STAGING_API`) once deployed, via `PREVIEW_API_URL`
 non-production variant pointed at the live server; preview/development allow plain http to the test backend on
 Android, production stays https-only. The first preview APK (EAS build 7a176915, 2026-10-25) pointed at the live
 server: do not install or share it. (Raj)
+
+## D21 — Security hotfix on the live website backend (decided 2026-10-25)
+
+Raj built the website, so security and privacy bugs in it (someone can see or change data they shouldn't) are fixed
+**for free**, with his approval, before Phase 2. Bugs that expose nothing and improvements are not free: bugs are listed
+for Raj to decide, improvements become paid change requests (`docs/CHANGE-REQUESTS.md`).
+
+Rule change, only for this hotfix (see CLAUDE.md): `../job` stays read-only; the fix is made in a separate clone
+`../job-hotfix`, on branch `hotfix/saved-jobs-privacy`, branched from the commit that is actually deployed on Render
+(Raj gives it; if it is not the head of `conflict-resolution1`, stop and tell him). No push to the deployed branch, no
+merge, no deploy, no production data, no Render API writes. Raj reviews, merges and deploys. The exception ends when Raj
+confirms the hotfix is live. Which issues are fixed: those he approves from `docs/client/ISSUES-TRIAGE.md` group A. (Raj)

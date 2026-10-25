@@ -47,3 +47,6 @@ test-results/
 
 # Screen recordings for the client (large, not source)
 recordings/
+
+# Local-only documents for Raj (issue lists, triage): never committed
+docs/client/

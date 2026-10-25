@@ -23,7 +23,29 @@ Goal: live on Play Store and App Store, no crashes, passes store review first ti
 - If the app and the website behave differently, the website wins, unless
   `docs/DECISIONS.md` says otherwise.
 - Backend changes happen only in Phase 4, on a separate branch of the job repo,
-  and only after Raj says so.
+  and only after Raj says so. **One exception: the security hotfix (D21, below).**
+
+## Security hotfix exception (D21): only for this hotfix
+
+Raj built the website, so security/privacy bugs in it are fixed for free, with his approval, and nothing else is.
+
+- `../job` stays READ-ONLY. The hotfix is done in a **separate clone, `../job-hotfix`**, never in `../job`.
+- Branch from the commit that is **actually deployed on Render**. Ask Raj for it first (he checks Render → Events).
+  If it is not the head of the deployed branch (`conflict-resolution1`, no hyphen before the 1), stop and tell him.
+- Working branch: `hotfix/saved-jobs-privacy`. Never push to the deployed branch, never merge, never deploy, never
+  touch production data. Raj reviews, merges and deploys.
+- No Render API writes at all while this exception is open: never create or change a Render service (this suspends the
+  staging service of D20 too; `npm run staging:deploy` stays unused until Raj says so).
+- Fix only the issues Raj approved from `docs/client/ISSUES-TRIAGE.md` (group A: security/privacy).
+- When Raj confirms the hotfix is live, this exception ends and the rules above apply again.
+
+## Scope guard
+
+- Build only what is in `docs/PLAN.md` (the agreed scope).
+- Anything extra that Raj or the client ask for goes in `docs/CHANGE-REQUESTS.md` with an estimate in developer days.
+  Don't build it until Raj approves it as a paid change.
+- Website bugs: only group A (security/privacy) is fixed free, and only with Raj's OK. Everything else is listed and
+  Raj decides.
 
 ## Stack
 
@@ -102,9 +124,10 @@ A flow is "done" only when its Maestro flow passes on Android.
 
 - Render (live backend, real users) is **read-only**: `RENDER_API` in `.env.local` is used only for GET requests
   on services and deploys. Never deploy, restart, suspend, change settings or read env vars there.
+  Nothing is pushed to `apronhanger/job` either (the hotfix branch in `../job-hotfix` is the one exception, D21).
 - A **separate** Render workspace for staging (`RENDER_STAGING_API` in `.env.local`) may be changed: it only ever holds
   the test backend (dev database, OTP test mode). Only the production build talks to the live server (D20).
-  Nothing is pushed to `apronhanger/job` either.
+  Suspended while the D21 hotfix exception is open.
 - Never call the production API from tests or E2E. The only exception is `npm run drift-check`
   (GET requests on public endpoints).
 - Never commit secrets or personal data. `.env*` is gitignored (except `.env.local.example`).
