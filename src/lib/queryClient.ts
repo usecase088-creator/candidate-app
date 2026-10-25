@@ -47,3 +47,6 @@ export function setupFocusManager(): () => void {
   });
   return () => subscription.remove();
 }
+
+/** The app's one QueryClient (root layout). Cleared on sign-out so no data from the previous user survives. */
+export const appQueryClient = createQueryClient();

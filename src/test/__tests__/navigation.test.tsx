@@ -5,18 +5,10 @@ import * as SecureStore from 'expo-secure-store';
 import * as SplashScreen from 'expo-splash-screen';
 import { delay, http, HttpResponse } from 'msw';
 
-import AuthLayout from '@/app/(auth)/_layout';
-import ForgotPassword from '@/app/(auth)/forgot-password';
-import Login from '@/app/(auth)/login';
-import Signup from '@/app/(auth)/signup';
-import TabsLayout from '@/app/(tabs)/_layout';
-import Applications from '@/app/(tabs)/applications';
-import Home from '@/app/(tabs)/index';
-import Profile from '@/app/(tabs)/profile';
-import Search from '@/app/(tabs)/search';
-import RootLayout from '@/app/_layout';
 import { resetSessionForTests, TOKEN_KEY, useSession } from '@/features/auth/sessionStore';
+import { appQueryClient } from '@/lib/queryClient';
 import { secureStorage } from '@/lib/secureStorage';
+import { appRoutes as routes } from '@/test/appRoutes';
 import { candidateUser, meResponse } from '@/test/fixtures/auth';
 import { API } from '@/test/msw/handlers';
 import { server } from '@/test/msw/server';
@@ -28,19 +20,6 @@ jest.mock('expo-splash-screen', () => ({
   hideAsync: jest.fn(() => Promise.resolve()),
   preventAutoHideAsync: jest.fn(() => Promise.resolve()),
 }));
-
-const routes = {
-  _layout: RootLayout,
-  '(auth)/_layout': AuthLayout,
-  '(auth)/login': Login,
-  '(auth)/signup': Signup,
-  '(auth)/forgot-password': ForgotPassword,
-  '(tabs)/_layout': TabsLayout,
-  '(tabs)/index': Home,
-  '(tabs)/search': Search,
-  '(tabs)/applications': Applications,
-  '(tabs)/profile': Profile,
-};
 
 const fake = SecureStore as typeof SecureStore & { __reset: () => void };
 const mockMe = (reply: () => Response | Promise<Response>) =>
@@ -99,6 +78,9 @@ describe('start-up', () => {
     mockMe(() => HttpResponse.json({ error: 'Invalid or expired token' }, { status: 401 }));
     await startSignedOut();
     expect(useSession.getState().signOutReason).toBe('expired');
+    expect(screen.getByTestId('login.notice')).toHaveTextContent(
+      'Your session has expired. Please sign in again.',
+    );
   });
 
   it('offline with a saved session still opens Home', async () => {
@@ -166,10 +148,13 @@ describe('login and logout', () => {
 
   it('Sign out on Profile goes to login, and back does not return to the tabs', async () => {
     await startSignedIn('/profile', 'profile.screen');
+    appQueryClient.setQueryData(['saved-jobs'], ['job-1']);
     await fireEvent.press(await screen.findByTestId('profile.signout'));
     expect(await screen.findByTestId('login.screen')).toBeOnTheScreen();
     expect(router.canGoBack()).toBe(false);
     await expect(secureStorage.getItem(TOKEN_KEY)).resolves.toBeNull();
+    // Task 8: no data from the previous user survives a sign-out.
+    expect(appQueryClient.getQueryData(['saved-jobs'])).toBeUndefined();
   });
 
   it('a 401 anywhere while signed in sends the user to login', async () => {

@@ -8,7 +8,7 @@ import { api } from '@/api/client';
 import { ToastProvider } from '@/components/ui/Toast';
 import { useSession } from '@/features/auth/sessionStore';
 import { getEnv } from '@/lib/env';
-import { createQueryClient, setupFocusManager, setupOnlineManager } from '@/lib/queryClient';
+import { appQueryClient, setupFocusManager, setupOnlineManager } from '@/lib/queryClient';
 import { initSentry, reportApiError } from '@/lib/sentry';
 import { FontGate } from '@/theme/FontGate';
 
@@ -17,8 +17,6 @@ void SplashScreen.preventAutoHideAsync();
 initSentry(getEnv());
 api.setErrorReporter(reportApiError);
 
-const queryClient = createQueryClient();
-
 export default function RootLayout() {
   const status = useSession((s) => s.status);
 
@@ -26,15 +24,20 @@ export default function RootLayout() {
     void useSession.getState().restore();
     const stopOnline = setupOnlineManager();
     const stopFocus = setupFocusManager();
+    // Sign-out (button, expired token, 401): drop every cached query of that user.
+    const stopClearing = useSession.subscribe((state, prev) => {
+      if (prev.status === 'signedIn' && state.status === 'signedOut') appQueryClient.clear();
+    });
     return () => {
       stopOnline();
       stopFocus();
+      stopClearing();
     };
   }, []);
 
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={appQueryClient}>
         <FontGate holdSplash={status === 'restoring'}>
           <ToastProvider>
             {/* PLAN.md §2 "Auth": the (tabs) and (auth) layouts redirect by session status, deep links included.

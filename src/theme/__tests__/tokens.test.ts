@@ -44,6 +44,7 @@ describe('colours (docs/reference/THEME.md)', () => {
     ['brand on surface', 'brand', 'surface'],
     ['error text on surface', 'errorText', 'surface'],
     ['error text on background', 'errorText', 'background'],
+    ['error text in the error box', 'errorText', 'destructiveSoft'],
     ['primary button text', 'primaryForeground', 'primary'],
     ['brand button text', 'brandForeground', 'brand'],
   ] as const)('%s meets WCAG AA for small text (4.5:1)', (_label, fg, bg) => {

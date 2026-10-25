@@ -116,3 +116,20 @@ Small error text uses **`#D4212D`** (`oklch(0.56 0.21 25)`), slightly darker tha
 
 `expo-linear-gradient` (Expo SDK) for the website's gradients: the signup button (`.btn-shiny-premium`) and later
 the gov jobs hero. (Raj, THEME.md note 3.)
+
+## D17 — "Edit signup details" keeps the typed values (decided 2026-10-25)
+
+On the website, going back from the signup OTP step empties every field (uncontrolled inputs remount). The app keeps
+name, mobile, email and password filled, so the user only fixes what was wrong. Everything else follows the website. (Raj)
+
+## D18 — Say why the user was signed out (decided 2026-10-25)
+
+The website silently sends the user to sign-in. The app's login screen says
+"Your session has expired. Please sign in again." for an expired or rejected token, and shows the backend's
+message for a suspended or deleted account (403). App wording. (Raj)
+
+## D19 — Lottie animations like the website (decided 2026-10-25)
+
+`lottie-react-native` (version picked by `npx expo install` for the SDK; native, needs a rebuild) plays the website's
+own animation files from `../job/candidates/public/`, copied into `assets/lottie/`: sign-in/sign-up success,
+OTP sent, password reset success. Reduce Motion: shown without playing, as the website does. (Raj)

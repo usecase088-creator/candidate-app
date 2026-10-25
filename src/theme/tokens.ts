@@ -21,6 +21,8 @@ export const colors = {
   accentForeground: '#0D172F',
   destructive: '#E23439',
   destructiveForeground: '#F7FBFD',
+  /** Error box background, close to the website's bg-destructive/10, light enough for D15 text to stay 4.5:1. */
+  destructiveSoft: '#FDF2F2',
   /** D15: small error text. #E23439 fails AA for small text; same hue, darker. */
   errorText: '#D4212D',
   /** The website's --success is blue (THEME.md note ²). */

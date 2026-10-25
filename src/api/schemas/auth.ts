@@ -20,3 +20,11 @@ export const AuthResponseSchema = z.object({ token: z.string().min(1), user: Aut
 
 /** GET /api/auth/me 200. */
 export const MeResponseSchema = z.object({ user: AuthUserSchema }).loose();
+
+/** POST /api/auth/signup/verify-otp 200. */
+export const SignupVerifyResponseSchema = z.object({ signup_token: z.string().min(1) }).loose();
+
+/** POST /api/auth/verify-otp 200 (forgot password). */
+export const ResetVerifyResponseSchema = z
+  .object({ reset_token: z.string().min(1), maskedEmail: z.string() })
+  .loose();

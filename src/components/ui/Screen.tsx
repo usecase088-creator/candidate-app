@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import type { ReactNode } from 'react';
+import { type ComponentRef, type ReactNode, useRef } from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet } from 'react-native';
 import { type Edge, SafeAreaView } from 'react-native-safe-area-context';
 
@@ -7,6 +7,7 @@ import { colors, spacing } from '@/theme/tokens';
 
 import { keyboardBehavior } from './keyboardBehavior';
 import { OfflineBanner } from './OfflineBanner';
+import { useKeyboardScroll } from './useKeyboardScroll';
 
 export type ScreenProps = {
   testID: string;
@@ -20,7 +21,7 @@ export type ScreenProps = {
 
 /**
  * Every screen's root: safe areas (Android is edge-to-edge), theme background, dark status bar icons (D11),
- * keyboard avoidance and the offline banner. testIDs: `{id}`, `{id}.keyboard`, `{id}.scroll`.
+ * keyboard avoidance (scroll mode also brings the focused field above the keyboard) and the offline banner. testIDs: `{id}`, `{id}.keyboard`, `{id}.scroll`.
  */
 export function Screen({
   testID,
@@ -29,9 +30,21 @@ export function Screen({
   edges = ['top', 'bottom'],
   padded = true,
 }: ScreenProps) {
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const offset = useRef(0);
+  useKeyboardScroll(
+    (y) => scrollRef.current?.scrollTo({ y, animated: true }),
+    () => offset.current,
+  );
+
   const content = scroll ? (
     <ScrollView
+      ref={scrollRef}
       testID={`${testID}.scroll`}
+      onScroll={(e) => {
+        offset.current = e.nativeEvent.contentOffset.y;
+      }}
+      scrollEventThrottle={16}
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={[styles.scrollContent, padded && styles.padded]}
     >
