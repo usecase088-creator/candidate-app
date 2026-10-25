@@ -87,9 +87,9 @@ Facts (verified against the code at `3fa6885` during Task 1; corrections marked 
 - [x] Playwright: Chromium only, mobile viewport (Pixel 7 and iPhone 13 device profiles), `webServer`
       starts Expo web; `e2e/web/smoke.spec.ts` sees the login screen
 - [ ] Maestro: `e2e/maestro/smoke.yaml` launches the app and sees the login screen on the Android emulator
-      (flow written; blocked by the Windows long-path build error, see SETUP.md "Known issue")
+      (flow written; the build needs the project at `C:\dev\ah`, see SETUP.md "Known issue")
 - [x] `tests/contract/`: separate Jest project, runs only with `npm run test:contract`, needs local backend (health smoke test passes once Task 4 runs the backend)
-- [ ] Playwright MCP added to Claude Code (see SETUP.md) so screens can be checked visually during work
+- [x] Playwright MCP added to Claude Code (`.mcp.json`, see SETUP.md) so screens can be checked visually during work
 
 ## Task 4 — Local backend (without touching ../job, no Docker)
 

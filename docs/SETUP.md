@@ -21,7 +21,8 @@ recommend for the SDK in `docs/DECISIONS.md` (D9).
    Check with `maestro --version`. `maestro studio` helps record flows.
 7. Playwright browser: `npx playwright install chromium` (inside the app repo, after Task 3)
 8. Playwright MCP for Claude Code (lets Claude Code open Expo web in Chromium and look at screens):
-   `claude mcp add playwright npx @playwright/mcp@latest`
+   configured in the committed `.mcp.json` (pinned `@playwright/mcp`, Chromium, Pixel 7). Claude Code asks
+   once to approve the project server; check with `/mcp`. Uses the Chromium from step 7.
 9. A real Android phone with USB debugging on (Settings → About → tap Build number 7 times →
    Developer options → USB debugging). This is the main test device on an 8 GB laptop.
 10. An iPhone with Expo Go, for early iOS checks
@@ -81,28 +82,38 @@ adb reverse tcp:3000 tcp:3000   # lets the phone/emulator on USB use http://loca
 ## Project layout on disk
 
 ```
-work/
-  job/                 # reference repo, branch conflict-resolution1 (READ-ONLY)
-  apronhanger-app/     # this repo
+C:\dev\
+  job\                 # reference repo, branch conflict-resolution1 (READ-ONLY)
+  ah\                  # this repo (short name on purpose, see "Known issue" below)
 ```
 
 Open Claude Code inside `apronhanger-app/`. `.claude/settings.json` gives it read access to `../job`
 and blocks edits there. Check with `/permissions` the first time.
 
-### Known issue: Android build fails on long Windows paths (open, 2026-10-25)
+### Known issue: Android build fails on long Windows paths (2026-10-25)
 
 First `npx expo run:android` failed after 47 min in `react-native-reanimated` C++ (`ninja: error: mkdir(...): No such file or directory`).
-Cause: Windows 260-character path limit. The deepest object file is 294 chars from
-`C:\Users\pc\Desktop\apronhanger-app`. `LongPathsEnabled` is 0, and the SDK's CMake 3.22.1 ships ninja 1.10.2,
+Cause: Windows 260-character path limit. `LongPathsEnabled` is 0, and the SDK's CMake 3.22.1 ships ninja 1.10.2,
 which has no long-path support anyway.
 
-Tried:
-- `subst R: <project>`: fails earlier — expo-modules-autolinking can't find `package.json` at a drive root (`R:\`).
-- `subst R: C:\Users\pc\Desktop` → project at `R:\apronhanger-app`: deepest path = 260 chars, too close to the limit.
+The project path counts twice: reanimated's shared C++ (`Common/cpp`) is outside its `android/` CMake folder,
+so CMake puts the full source path inside the object path
+(`<project>\node_modules\react-native-reanimated\android\.cxx\...\reanimated.dir\C_\<project>\node_modules\react-native-reanimated\Common\cpp\...cpp.o`).
+Every character in the project path adds 2 to the deepest path.
 
-Next options (pick one):
-1. Move the project to a short path, e.g. `C:\dev\ah` (deepest path ~234). Simplest and permanent; VS Code reopens there.
-2. Install a newer CMake via sdkmanager (ninja ≥ 1.12 supports long paths) + set `LongPathsEnabled=1` (admin) + pin `cmake.dir`.
+| Project path | Deepest path |
+| --- | --- |
+| `C:\Users\pc\Desktop\apronhanger-app` | 294 (measured) |
+| `R:\apronhanger-app` (subst) | 260 (measured) |
+| `C:\dev\apronhanger-app` | ~270 (estimated, fails) |
+| `C:\dev\ah` | ~245 (estimated) |
+
+Tried and rejected:
+- `subst R: <project>`: expo-modules-autolinking can't find `package.json` at a drive root (`R:\`).
+- Long paths (admin registry change + newer CMake): changes the whole machine; NDK tools may still fail.
+
+**Decision: the project lives at `C:\dev\ah`.** Don't move it to a longer path. If a new native library breaks
+the limit again, the fallback is moving `.cxx` to a short folder with AGP `externalNativeBuild.cmake.buildStagingDirectory`.
 
 Before retrying: delete the stale `android/.cxx` folders under `node_modules/*/android/.cxx` and `android/app/.cxx`.
 Gradle, NDK 27.1, build-tools 36/37 and platform 37 are already downloaded, so the next build is much faster.
