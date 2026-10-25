@@ -18,6 +18,7 @@ it('appears when the connection drops and goes away when it returns', async () =
   await act(async () => onlineManager.setOnline(false));
   expect(screen.getByTestId('offline.banner')).toHaveTextContent(OFFLINE_MESSAGE);
   expect(screen.getByRole('alert')).toBeOnTheScreen();
+  expect(screen.getByTestId('offline.banner').props.accessibilityLabel).toBe(OFFLINE_MESSAGE);
   await act(async () => onlineManager.setOnline(true));
   expect(screen.queryByTestId('offline.banner')).toBeNull();
 });

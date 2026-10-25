@@ -20,6 +20,7 @@ export function OfflineBanner() {
     <View
       testID="offline.banner"
       accessible
+      accessibilityLabel={OFFLINE_MESSAGE}
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
       style={styles.banner}

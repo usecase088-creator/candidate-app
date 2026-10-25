@@ -1,0 +1,45 @@
+# Sign in, stop the app, start it again: still signed in (token in SecureStore, checked with /api/auth/me).
+appId: work.apronhanger.candidate.dev
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 120000
+- tapOn:
+    id: login.email
+- inputText: candidate@apronhanger.test
+- tapOn:
+    id: login.password
+- inputText: Test@1234
+- hideKeyboard
+- tapOn:
+    id: login.submit
+- extendedWaitUntil:
+    notVisible:
+      id: login.screen
+    timeout: 20000
+- extendedWaitUntil:
+    visible: 'Save password.*'
+    timeout: 8000
+    optional: true
+- runFlow:
+    when:
+      visible: 'Save password.*'
+    commands:
+      - back
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 20000
+- stopApp
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 30000
+- assertVisible: Hi, Test Candidate
+- assertNotVisible:
+    id: login.screen

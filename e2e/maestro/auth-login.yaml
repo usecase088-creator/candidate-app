@@ -1,0 +1,49 @@
+# Sign in with the seeded candidate (local backend), see Home, sign out from Profile.
+# Needs: npm run backend:local and Metro; `npm run e2e:android` sets up the USB tunnels (3000, 8081).
+# The "Welcome back!" toast and the success animation are checked in Jest (LoginScreen.test.tsx): on the phone the
+# system "Save password?" sheet often covers them.
+appId: work.apronhanger.candidate.dev
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 120000
+- tapOn:
+    id: login.email
+- inputText: candidate@apronhanger.test
+- tapOn:
+    id: login.password
+- inputText: Test@1234
+- hideKeyboard
+- tapOn:
+    id: login.submit
+- extendedWaitUntil:
+    notVisible:
+      id: login.screen
+    timeout: 20000
+# Android may offer to save the password (our autofill hints work). It opens a moment after Home; wait for it
+# (optional: other phones don't show it) and close it with Back. Never tap "Never".
+- extendedWaitUntil:
+    visible: 'Save password.*'
+    timeout: 8000
+    optional: true
+- runFlow:
+    when:
+      visible: 'Save password.*'
+    commands:
+      - back
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 20000
+- assertVisible: Hi, Test Candidate
+- tapOn:
+    id: tabs.profile
+- tapOn:
+    id: profile.signout
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 10000

@@ -1,0 +1,70 @@
+# Create an account with a test number (OTP 123456 via the local backend's OTP test mode, D3).
+# Repeatable: the backend seed frees the signup test numbers each time it starts (seedData.signupNumbers).
+appId: work.apronhanger.candidate.dev
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 120000
+- tapOn:
+    id: auth.tab.signup
+- extendedWaitUntil:
+    visible:
+      id: signup.screen
+    timeout: 10000
+- tapOn:
+    id: signup.name
+- inputText: Maestro Tester
+- tapOn:
+    id: signup.mobile
+- inputText: '9000000002'
+- tapOn:
+    id: signup.email
+# A .test address: never a real-looking inbox.
+- inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
+# Keyboard "next" moves to the password field, as a user would (the field is under the keyboard here).
+- pressKey: Enter
+- inputText: Secret@123
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: signup.privacy
+- tapOn:
+    id: signup.terms
+- tapOn:
+    id: signup.privacy
+- scrollUntilVisible:
+    element:
+      id: signup.submit
+    direction: UP
+- tapOn:
+    id: signup.submit
+- extendedWaitUntil:
+    visible: 'Enter the OTP sent to 9000000002.'
+    timeout: 20000
+- tapOn:
+    id: signup.otp
+- inputText: '123456'
+- hideKeyboard
+- tapOn:
+    id: signup.submit
+- extendedWaitUntil:
+    notVisible:
+      id: signup.screen
+    timeout: 30000
+- extendedWaitUntil:
+    visible: 'Save password.*'
+    timeout: 8000
+    optional: true
+- runFlow:
+    when:
+      visible: 'Save password.*'
+    commands:
+      - back
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 20000
+- assertVisible: Hi, Maestro Tester

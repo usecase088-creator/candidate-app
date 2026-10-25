@@ -19,7 +19,8 @@ export type OtpInputProps = {
 };
 
 /**
- * Six boxes drawn over one real, nearly invisible TextInput, so typing, paste and SMS autofill all work.
+ * Six boxes drawn over one real TextInput (boxes on top, touches pass through), so typing, paste and SMS
+ * autofill all work and screen readers still reach the input.
  * testIDs: `{id}` input, `{id}.box.N`, `{id}.boxes`, `{id}.error`.
  */
 export function OtpInput({
@@ -43,9 +44,25 @@ export function OtpInput({
         {label}
       </AppText>
       <View>
+        {/* The input is drawn first, under the opaque boxes. */}
+        <RNTextInput
+          testID={testID}
+          accessibilityLabel={label}
+          accessibilityHint={error}
+          value={value}
+          onChangeText={handleChange}
+          keyboardType="number-pad"
+          maxLength={LENGTH}
+          autoFocus={autoFocus}
+          caretHidden
+          {...otpAutofill}
+          style={styles.hiddenInput}
+        />
         <View
           testID={`${testID}.boxes`}
           style={styles.row}
+          // Touches go through to the input underneath.
+          pointerEvents="none"
           importantForAccessibility="no-hide-descendants"
           accessibilityElementsHidden
         >
@@ -61,19 +78,6 @@ export function OtpInput({
             );
           })}
         </View>
-        <RNTextInput
-          testID={testID}
-          accessibilityLabel={label}
-          accessibilityHint={error}
-          value={value}
-          onChangeText={handleChange}
-          keyboardType="number-pad"
-          maxLength={LENGTH}
-          autoFocus={autoFocus}
-          caretHidden
-          {...otpAutofill}
-          style={styles.hiddenInput}
-        />
       </View>
       {error ? (
         <AppText
@@ -102,16 +106,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Covers the boxes so a tap anywhere focuses it. Fully transparent: at 0.02 the digits showed through on Android.
-  // Still focusable, so typing, paste (long press) and SMS autofill keep working.
+  // Same area as the boxes, drawn under them. Not transparent: at opacity 0.02 digits showed through on Android,
+  // and at 0 Android dropped it from the accessibility tree. Text in the box colour, in case any edge shows.
   hiddenInput: {
     position: 'absolute',
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
-    opacity: 0,
-    color: 'transparent',
+    color: colors.surface,
+    backgroundColor: colors.surface,
     fontFamily: fonts.regular,
     fontSize: fontSizes.base.fontSize,
   },

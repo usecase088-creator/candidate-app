@@ -64,6 +64,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <Pressable
             testID="toast"
             accessibilityRole="alert"
+            accessibilityLabel={toast.message}
             accessibilityLiveRegion="polite"
             accessibilityHint="Tap to dismiss"
             onPress={hide}

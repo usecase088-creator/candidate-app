@@ -50,6 +50,7 @@ describe('FormErrorBox', () => {
     const box = screen.getByTestId('login.error');
     expect(box).toHaveTextContent('Enter a valid email');
     expect(screen.getByRole('alert')).toBeOnTheScreen();
+    expect(box.props.accessibilityLabel).toBe('Enter a valid email');
     expect(flat(screen.getByText('Enter a valid email').props.style).color).toBe(colors.errorText);
   });
 

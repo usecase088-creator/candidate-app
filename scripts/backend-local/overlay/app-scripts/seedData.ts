@@ -166,5 +166,8 @@ export function buildSeedData(env: Env, now: Date) {
     hospitalId: city.id,
   };
 
-  return { candidate, recruiter, hospitals, jobs };
+  /** Free for signup tests: seedApp deletes candidate accounts on these numbers each run, so signup E2E can repeat. */
+  const signupNumbers = numbers.slice(1);
+
+  return { candidate, recruiter, hospitals, jobs, signupNumbers };
 }

@@ -34,6 +34,8 @@ it('shows a message, announced politely to screen readers', async () => {
   const toast = screen.getByTestId('toast');
   expect(toast).toHaveTextContent('OTP sent to your mobile number.');
   expect(toast.props.accessibilityLiveRegion).toBe('polite');
+  // Found on the phone: without a label, Android exposes the toast with no text (Maestro and some readers miss it).
+  expect(toast.props.accessibilityLabel).toBe('OTP sent to your mobile number.');
   expect(screen.getByRole('alert')).toBeOnTheScreen();
 });
 

@@ -167,24 +167,35 @@ Facts (verified against the code at `3fa6885` during Task 1; corrections marked 
 For each screen: write screen tests (MSW) for every state first, then build it.
 
 Found in Task 6 (phone): on Android the window resizes for the keyboard, but a field focused just before the
-keyboard opens stays hidden behind it (no auto-scroll). Forms must scroll the focused field into view.
+keyboard opens stays hidden behind it (no auto-scroll). Fixed: `Screen` scrolls the focused field above the
+keyboard (`useKeyboardScroll`).
 
-- [ ] Login: email/password validation and messages as website; server errors shown as website does;
+The checklist below was written before Task 1 corrected the facts; the website wins (CLAUDE.md): signup is
+**two** steps on one screen (details incl. mobile → OTP), with **no resend and no cooldown** on the website.
+
+- [x] Login: email/password validation and messages as website; server errors shown as website does;
       RECRUITER/ADMIN user rejected with website message and token not stored; loading; keyboard "next/done";
       link to forgot password and signup
-- [ ] Signup step 1: mobile number rules as website (+91 handling exactly as website) → send OTP
-- [ ] Signup step 2: OTP entry, resend with same cooldown as website, wrong/expired OTP messages
-- [ ] Signup step 3: name, email, password rules as website → register → signed in → tabs
-- [ ] Forgot password: mobile → OTP → shows masked email → new password → success → login
-- [ ] Logout (from Profile placeholder): clears token, query cache, goes to login
-- [ ] Session restore: kill and reopen app stays signed in; expired token → login with a clear message
-- [ ] Rate limit (429) messages shown clearly, not as generic errors
+- [x] Signup step 1: name, mobile, email, password with the website rules; mobile sent exactly as typed (no +91
+      handling, like the website); Terms + Privacy consent → send OTP
+- [x] Signup step 2: OTP entry (no resend: the website has none), wrong/expired OTP messages, "Edit signup details"
+      keeps the values (D17) → register → signed in → tabs
+- [x] Forgot password: mobile → OTP → shows masked email → new password → success → login
+- [x] Logout (from Profile placeholder): clears token, query cache, goes to login
+- [x] Session restore: kill and reopen app stays signed in; expired token → login with a clear message (D18)
+- [x] Rate limit (429) messages shown clearly, not as generic errors (the backend's limiter text)
+- [x] Success animation like the website (D19, Lottie)
+
+Checked on the phone (2026-10-25): all six Maestro flows pass in one run against the local backend.
+Fixed on the way: the OTP input was missing from Android's accessibility tree (opacity 0); the toast, red box and
+offline banner had no accessible text on Android.
 
 ## Task 9 — End-to-end
 
-- [ ] Maestro (real Android phone or emulator, local backend): `auth-login.yaml`, `auth-signup.yaml` (test number + 123456),
-      `auth-forgot-password.yaml`, `auth-logout.yaml`, `auth-session-restore.yaml` (stop and relaunch app),
-      `auth-role-rejected.yaml`
+- [x] Maestro (real Android phone or emulator, local backend): `auth-login.yaml` (includes logout), `auth-signup.yaml`
+      (test number + 123456), `auth-forgot-password.yaml`, `auth-session-restore.yaml` (stop and relaunch app),
+      `auth-role-rejected.yaml`. 6/6 with `smoke.yaml` in 10 min on the RMX3944. Repeatable: the seed frees the
+      signup test numbers, and a local patch raises the OTP limit to 100 in OTP test mode.
 - [ ] Playwright (Chromium): login success, validation errors, role rejected
 - [ ] Contract tests: login, me, register, forgot/verify/reset (test mode), public jobs list parses with our schemas
 - [ ] `npm run drift-check`: GET public jobs, gov jobs, intl jobs on production; parse only; no auth, no writes

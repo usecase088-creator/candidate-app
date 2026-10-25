@@ -110,7 +110,21 @@ describe('SMS autofill hints', () => {
   });
 });
 
-it('keeps the real input fully invisible, so typed digits never show through the boxes (seen on Android)', async () => {
-  await setup({ value: '12' }).render();
-  expect(flat(screen.getByTestId('signup.otp').props.style).opacity).toBe(0);
+describe('hiding the real input (found on the phone)', () => {
+  // opacity 0.02 let digits show through on Android; opacity 0 removed the input from Android's accessibility
+  // tree (TalkBack and Maestro could not reach it). The input stays opaque, under the boxes, in the box colour.
+  it('keeps the input opaque so screen readers can reach it', async () => {
+    await setup({ value: '12' }).render();
+    const style = flat(screen.getByTestId('signup.otp').props.style);
+    expect(style.opacity ?? 1).toBe(1);
+    expect(style.color).toBe(colors.surface);
+  });
+
+  it('draws the boxes over the input and lets touches through to it', async () => {
+    await setup({ value: '12' }).render();
+    const boxes = screen.getByTestId('signup.otp.boxes', HIDDEN);
+    expect(boxes.props.pointerEvents).toBe('none');
+    const order = JSON.stringify(screen.toJSON());
+    expect(order.indexOf('"testID":"signup.otp"')).toBeLessThan(order.indexOf('"testID":"signup.otp.boxes"'));
+  });
 });

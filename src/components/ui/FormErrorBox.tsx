@@ -11,6 +11,7 @@ export function FormErrorBox({ testID, message }: { testID: string; message: str
     <View
       testID={testID}
       accessible
+      accessibilityLabel={message}
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
       style={styles.box}

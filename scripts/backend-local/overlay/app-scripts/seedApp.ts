@@ -6,9 +6,20 @@ import { buildSeedData, SEED_PASSWORD } from './seedData';
 const prisma = new PrismaClient();
 
 async function main() {
-  const { candidate, recruiter, hospitals, jobs } = buildSeedData(process.env, new Date());
+  const { candidate, recruiter, hospitals, jobs, signupNumbers } = buildSeedData(process.env, new Date());
   const passwordHash = await bcrypt.hash(SEED_PASSWORD, 10);
   const activeAccount = { passwordHash, deletedAt: null, isSuspended: false, planSuspendedAt: null };
+
+  // Free the signup test numbers: remove candidate accounts created by earlier signup tests (dev database only).
+  const leftovers = await prisma.user.findMany({
+    where: { role: 'CANDIDATE', mobile: { in: signupNumbers }, email: { not: candidate.email } },
+    select: { id: true },
+  });
+  const ids = leftovers.map((u) => u.id);
+  if (ids.length) {
+    await prisma.candidate.deleteMany({ where: { userId: { in: ids } } });
+    await prisma.user.deleteMany({ where: { id: { in: ids } } });
+  }
 
   for (const { id, ...data } of hospitals) {
     await prisma.hospital.upsert({ where: { id }, create: { id, ...data }, update: data });
@@ -39,7 +50,7 @@ async function main() {
   }
 
   console.log(
-    `[seedApp] ${hospitals.length} hospitals, ${jobs.length} jobs, 1 candidate, 1 recruiter (password: see seedData.ts)`,
+    `[seedApp] ${hospitals.length} hospitals, ${jobs.length} jobs, 1 candidate, 1 recruiter (password: see seedData.ts); freed ${ids.length} signup test account(s)`,
   );
 }
 

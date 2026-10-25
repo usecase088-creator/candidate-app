@@ -50,4 +50,16 @@ export const PATCHES: Patch[] = [
       },
     ],
   },
+  {
+    file: 'src/index.ts',
+    why: 'E2E: OTP limit 100 instead of 5 per 15 min in OTP test mode, so all auth flows can run in one go.',
+    edits: [
+      {
+        find: '  max: 5, // 5 OTPs per 15 minutes\n',
+        replace:
+          '  // LOCAL-ONLY PATCH from apronhanger-app scripts/backend-local/patches.ts: room for E2E runs in test mode.\n' +
+          "  max: process.env.OTP_TEST_MODE === 'true' && process.env.NODE_ENV !== 'production' ? 100 : 5,\n",
+      },
+    ],
+  },
 ];

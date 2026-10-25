@@ -1,0 +1,25 @@
+# A recruiter account can't sign in to the candidate app (website message), and no session is kept.
+appId: work.apronhanger.candidate.dev
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 120000
+- tapOn:
+    id: login.email
+- inputText: recruiter@apronhanger.test
+- tapOn:
+    id: login.password
+- inputText: Test@1234
+- hideKeyboard
+- tapOn:
+    id: login.submit
+- extendedWaitUntil:
+    visible: 'This email is registered as a recruiter account. Please sign in on the Recruiter Portal instead.'
+    timeout: 20000
+- assertVisible:
+    id: login.screen
+- assertNotVisible:
+    id: home.screen

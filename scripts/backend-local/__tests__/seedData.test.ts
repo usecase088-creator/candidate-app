@@ -94,3 +94,9 @@ describe('seed jobs', () => {
     expect(new Set(jobs.map((j) => j.id)).size).toBe(jobs.length);
   });
 });
+
+describe('signup test numbers', () => {
+  it('are every test number except the seeded candidate one, freed again on each seed', () => {
+    expect(buildSeedData(env, now).signupNumbers).toEqual(['9000000002', '9000000003']);
+  });
+});

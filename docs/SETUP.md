@@ -101,7 +101,8 @@ npm run test:contract                 # while the backend runs
 **OTP test mode (D3):** with `OTP_TEST_MODE=true`, numbers in `OTP_TEST_NUMBERS` send no SMS and accept `123456`
 (any other code: `Invalid or expired OTP`). Other numbers, like `TEST_MOBILE`, go to Fast2SMS and need the real
 Fast2SMS keys in `.env.local`; without them that send fails with "Failed to send OTP". All OTP routes share one limit:
-**5 requests per 15 minutes per IP**.
+**5 requests per 15 minutes per IP**; a second local patch raises it to **100** while OTP test mode is on, so the
+whole Maestro suite fits in one run (the app's 429 handling is tested in Jest with MSW).
 
 **Seed data** (`scripts/backend-local/overlay/app-scripts/seedData.ts`), password `Test@1234` for both accounts:
 
@@ -110,7 +111,12 @@ Fast2SMS keys in `.env.local`; without them that send fails with "Failed to send
 | Candidate | `candidate@apronhanger.test` | first `OTP_TEST_NUMBERS` entry (forgot-password tests) |
 | Recruiter (login must be rejected by the app) | `recruiter@apronhanger.test` | none |
 
-Plus 2 approved hospitals and 4 active jobs. The other test numbers stay free for signup tests.
+Plus 2 approved hospitals and 4 active jobs. The other test numbers are for signup tests: every seed (each
+`npm run backend:local`) deletes candidate accounts on them, so `auth-signup.yaml` can run again after a restart.
+
+**E2E on the phone:** `npm run backend:local`, `npx expo start`, then `npm run e2e:android` (all flows in
+`e2e/maestro/`, about 10 min). Realme phones may show a "Security test" screen for Maestro's helper app the
+first time: press Back. Flows close Android's "Save password?" sheet with Back; never tap "Never".
 
 **Network:** Prisma tries IPv6 first. On a network that hands out IPv6 but doesn't route it (seen on one Wi-Fi,
 2026-10-25), every database call fails with "Can't reach database server" even though the host answers on IPv4.
