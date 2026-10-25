@@ -333,3 +333,7 @@ mounted on**, so the counts add up across those paths for the same IP.
 14. **No paging anywhere** except `?page=` on applications. Gov/intl jobs return all rows.
 15. **Status labels** come from `candidates/src/lib/applicationStatus.ts` (26 statuses) — copy exactly. See SCREENS.md.
 16. Response shapes include many extra fields. Our Zod schemas must use `.passthrough()` and only require what we use.
+17. **Migrations lag `schema.prisma`** (found in Task 4, 2026-10-25). No migration creates `Hospital.logoUrl`,
+    `Hospital.logoCloudinaryId`, `GovJob` or `InternationalJob`, yet the live site serves gov/intl jobs, so production was
+    probably synced with `prisma db push`. Render's start command only runs `prisma migrate deploy`. Our local backend
+    runs `migrate deploy` then `db push`. Worth raising with the backend team before Phase 4.

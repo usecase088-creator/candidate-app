@@ -7,7 +7,17 @@ module.exports = defineConfig([
   expoConfig,
   prettierConfig,
   {
-    ignores: ['dist/*', '.expo/*', 'coverage/*', '.reference-backend/*', 'android/*', 'ios/*'],
+    ignores: [
+      'dist/*',
+      '.expo/*',
+      'coverage/*',
+      '.reference-backend/*',
+      // Run inside .reference-backend with its own Prisma client; not resolvable from this repo.
+      'scripts/backend-local/overlay/app-scripts/dbFacts.ts',
+      'scripts/backend-local/overlay/app-scripts/seedApp.ts',
+      'android/*',
+      'ios/*',
+    ],
   },
   {
     files: ['**/*.ts', '**/*.tsx'],

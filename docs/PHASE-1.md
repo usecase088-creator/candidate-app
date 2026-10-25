@@ -94,21 +94,25 @@ Facts (verified against the code at `3fa6885` during Task 1; corrections marked 
 
 ## Task 4 — Local backend (without touching ../job, no Docker)
 
-- [ ] `scripts/backend-local` (Node script, works on Windows): copies `../job/backend` into `.reference-backend/`
-      (gitignored), applies local-only patches from `scripts/patches/`, writes its `.env` from `.env.local`,
-      runs `npm ci`, `prisma migrate deploy` on the **dev Neon database** (D13), the backend seed, our seed,
-      then starts the server on port 3000. Refuses to run if the database URL looks like production.
-- [ ] `.env.local` (gitignored) + `.env.local.example` (committed, no real values): dev database URL,
+- [x] `scripts/backend-local.ts` (Node 24 runs it as TypeScript; works on Windows): copies `../job/backend` into
+      `.reference-backend/` (gitignored), adds `scripts/backend-local/overlay/`, applies the edits in
+      `scripts/backend-local/patches.ts`, writes its `.env` from `.env.local`, runs `npm ci`, `prisma migrate deploy`
+      + `prisma db push` (migrations lag the schema, API.md note 17) on the **dev Neon database** (D13), the backend
+      seed, our seed, then starts the server on port 3000. Refuses non-Neon hosts, `NODE_ENV=production`, and a
+      database with users but no seed account.
+- [x] `.env.local` (gitignored) + `.env.local.example` (committed, no real values): dev database URL,
       dev Cloudinary keys (D14), dummy Brevo key, `ALLOWED_ORIGINS_CANDIDATE=http://localhost:8081`,
       `OTP_TEST_MODE`, `OTP_TEST_NUMBERS`, `TEST_MOBILE`
-- [ ] OTP test patch (`scripts/patches/otp-test-mode.patch`): when `OTP_TEST_MODE=true` and not production,
-      skip Fast2SMS and accept `123456` for numbers in `OTP_TEST_NUMBERS`. `TEST_MOBILE` is NOT in that list:
-      it gets a real SMS, for Raj's manual checks only (D3).
-- [ ] Make sure registration and other flows don't crash when the email key is a dummy (patch the copy if needed)
-- [ ] `scripts/seed-app.ts`: test candidate with known email/password, a recruiter account (to test role
-      rejection), a few hospitals and jobs. Idempotent.
-- [ ] Phone/emulator reaches the backend with `adb reverse tcp:3000 tcp:3000` (add to `e2e:android` script)
-- [ ] Document all of this in `docs/SETUP.md` → "Local backend"
+- [x] OTP test patch (`scripts/backend-local/patches.ts` + `overlay/src/lib/otpTestMode.ts`; exact-text edits instead
+      of a `.patch` file because the job checkout has CRLF line endings): when `OTP_TEST_MODE=true` and not
+      production, skip Fast2SMS and accept `123456` for numbers in `OTP_TEST_NUMBERS`. `TEST_MOBILE` is NOT in that
+      list: it gets a real SMS, for Raj's manual checks only (D3), and needs real Fast2SMS keys in `.env.local`.
+- [x] Registration and other flows don't crash without email: the backend gets an empty `BREVO_API_KEY` and skips
+      sending (built-in behaviour, no patch needed)
+- [x] Seed (`scripts/backend-local/overlay/app-scripts/seedData.ts` + `seedApp.ts`): test candidate with known
+      email/password, a recruiter account (to test role rejection), 2 hospitals and 4 jobs. Idempotent (upserts).
+- [x] Phone reaches the backend with `adb reverse tcp:3000 tcp:3000` (in `e2e:android`; checked on the phone 2026-10-25)
+- [x] Document all of this in `docs/SETUP.md` → "Local backend"
 
 ## Task 5 — Core libraries (TDD)
 

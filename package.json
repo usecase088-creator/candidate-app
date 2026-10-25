@@ -59,7 +59,7 @@
     "check": "npm run lint && npm run typecheck && npm test -- --ci",
     "e2e:web": "playwright test",
     "e2e:android": "adb reverse tcp:3000 tcp:3000 && adb reverse tcp:8081 tcp:8081 && maestro test e2e/maestro",
-    "backend:local": "node scripts/backend-local.mjs",
+    "backend:local": "node scripts/backend-local.ts",
     "drift-check": "node scripts/drift-check.mjs"
   },
   "private": true,
@@ -74,7 +74,8 @@
     "testPathIgnorePatterns": [
       "/node_modules/",
       "/tests/contract/",
-      "/e2e/"
+      "/e2e/",
+      "/.reference-backend/"
     ],
     "collectCoverageFrom": [
       "src/**/*.{ts,tsx}",
@@ -111,6 +112,9 @@
       "cjs",
       "json"
     ],
-    "testEnvironment": "<rootDir>/src/test/jestEnvironment.js"
+    "testEnvironment": "<rootDir>/src/test/jestEnvironment.js",
+    "modulePathIgnorePatterns": [
+      "<rootDir>/.reference-backend/"
+    ]
   }
 }

@@ -7,4 +7,5 @@ module.exports = {
   testEnvironment: 'node',
   transform: { '\.[jt]sx?$': ['babel-jest', { presets: ['babel-preset-expo'] }] },
   testTimeout: 30_000,
+  modulePathIgnorePatterns: ['<rootDir>/.reference-backend/'],
 };

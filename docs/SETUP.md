@@ -77,11 +77,45 @@ Needs the reference repo at `../job` and `.env.local` filled (dev Neon database 
 `TEST_MOBILE`). No Docker.
 
 ```
-npm run backend:local      # copies ../job/backend to .reference-backend, migrates the dev database, seeds, starts :3000
-adb reverse tcp:3000 tcp:3000   # lets the phone/emulator on USB use http://localhost:3000
+npm run backend:local                 # set up and start on http://localhost:3000 (Ctrl+C to stop)
+npm run backend:local -- --no-start   # set up only
+adb reverse tcp:3000 tcp:3000         # lets the phone/emulator on USB use http://localhost:3000
+npm run test:contract                 # while the backend runs
 ```
 
-`../job` itself is never changed. Local-only patches live in `scripts/patches/` and are applied to the copy.
+`../job` itself is never changed. What `scripts/backend-local.ts` does, in order:
+
+1. Builds the backend `.env` from `.env.local` (`scripts/backend-local/env.ts`). Refuses `NODE_ENV=production` and any
+   database host that isn't `*.neon.tech` (D13). `RENDER_API`, `TEST_MOBILE` and `EXPO_PUBLIC_*` never reach the backend.
+   `BREVO_API_KEY` is set empty, so the backend logs and skips every email (D14). The Fast2SMS keys are optional.
+2. Copies `../job/backend` to `.reference-backend/` (gitignored; keeps `node_modules`), adds our files from
+   `scripts/backend-local/overlay/`, and applies the edits in `scripts/backend-local/patches.ts`. If the job repo
+   changes and an edit no longer fits, the run stops and names the file.
+3. `npm ci` (only when `package-lock.json` changed) and `prisma generate`.
+4. Safety check before touching the database: if it has users but not our seed candidate, it stops
+   ("looks like production").
+5. `prisma migrate deploy`, then `prisma db push` for the schema parts the job repo has no migration for
+   (API.md "Notes for the app" 17). Then the backend's own seed and ours (`overlay/app-scripts/seedApp.ts`, upserts).
+6. Starts `src/index.ts` with `tsx`.
+
+**OTP test mode (D3):** with `OTP_TEST_MODE=true`, numbers in `OTP_TEST_NUMBERS` send no SMS and accept `123456`
+(any other code: `Invalid or expired OTP`). Other numbers, like `TEST_MOBILE`, go to Fast2SMS and need the real
+Fast2SMS keys in `.env.local`; without them that send fails with "Failed to send OTP". All OTP routes share one limit:
+**5 requests per 15 minutes per IP**.
+
+**Seed data** (`scripts/backend-local/overlay/app-scripts/seedData.ts`), password `Test@1234` for both accounts:
+
+| Account | Email | Mobile |
+| --- | --- | --- |
+| Candidate | `candidate@apronhanger.test` | first `OTP_TEST_NUMBERS` entry (forgot-password tests) |
+| Recruiter (login must be rejected by the app) | `recruiter@apronhanger.test` | none |
+
+Plus 2 approved hospitals and 4 active jobs. The other test numbers stay free for signup tests.
+
+**Network:** Prisma tries IPv6 first. On a network that hands out IPv6 but doesn't route it (seen on one Wi-Fi,
+2026-10-25), every database call fails with "Can't reach database server" even though the host answers on IPv4.
+Check with `curl -6 https://www.google.com`; switch network, or make Windows prefer IPv4 (admin):
+`netsh interface ipv6 set prefixpolicy ::ffff:0:0/96 60 4`. A sleeping Neon database also needs a few seconds to wake.
 
 ## Project layout on disk
 
