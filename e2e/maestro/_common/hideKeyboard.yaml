@@ -1,0 +1,14 @@
+# Closes the keyboard. Android: Maestro's hideKeyboard. iPhone: React Native exposes no dismiss action, so pressing
+# Return on the (single-line) field closes it instead. Used with `runFlow`.
+appId: work.apronhanger.candidate.dev
+---
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - pressKey: Enter
