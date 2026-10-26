@@ -1,19 +1,44 @@
-# Handoff (written 2026-10-26, end of the Phase 1 + security hotfix session)
+# Handoff (written 2026-10-27, end of the Phase 2 session)
 
 Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
 
-- **Phase 1 is accepted** (login, signup, reset, test layers, EAS project; D1–D20). Summary: `docs/PHASE-1-SUMMARY.md`.
-- **Security hotfix, free, on the live website backend (D21).** Done in the separate clone `../job-hotfix`; Raj reviewed, merged and deployed:
-  - **PR 1** (A1 saved-jobs leak + A4 recruiter email in the public job list): fix commit `08cd1ea`, merged as `5b569f1`. Live.
-  - **PR 2** (A3 unfiltered `PUT /api/candidates/me`, allow-list): fix commit `1373342`, merged as `f185fe0`. **Live commit on Render: `f185fe0`**
-    (service `job`, branch `conflict-resolution1`, Auto-Deploy on, root directory `backend`).
-  - Production abuse check for A3 (D22, read-only, run twice): clean. Details in `docs/client/ISSUES-TRIAGE.md` (status table).
-- **Reference clone `../job` is still at `3fa6885`** (read-only, not synced). It does **not** contain the two hotfix merges.
-  `../job-hotfix` (branches `hotfix/saved-jobs-privacy`, `hotfix/candidate-profile-allowlist`; its local `conflict-resolution1` is old,
-  `git fetch origin conflict-resolution1` gets `f185fe0`) is the clone that matches production. Phase 2 step 2 brings the reference up to date.
-- `docs/PHASE-2.md` does **not exist yet**. It is written first in Phase 2 and shown to Raj before any building.
+- **Phase 1 accepted. Phase 2 (Jobs) is built and waiting for Raj's acceptance.** Summary and screen recording plan: `docs/PHASE-2-SUMMARY.md`; plan and
+  checklist: `docs/PHASE-2.md`; decisions D23 (differences from the website) and D24 (staging server); change requests CR-004, CR-005.
+- **Phase 2 evidence:** `npm run check` green (727 tests, coverage gates met); contract tests pass against the local backend at `f185fe0` (saved-jobs has no
+  `applications` list); drift check passes (GET on production); Playwright 9/9 job specs incl. 320 px; **Maestro 9/9 on the real Android phone** (6 auth/smoke + 3 job flows).
+  The phone found one real Android bug (job header text collapsed): fixed.
+- **Reference clone `../job` is at `f185fe0`** (fast-forwarded 2026-10-26, D6) = the live commit. `../job-hotfix` unchanged.
+- **Staging server exists (D24):** `apronhanger-staging-api` on Raj's own Render workspace, `https://apronhanger-staging-api.onrender.com`, free plan, dev Neon DB,
+  OTP test mode. Raj's other free service there (SkibidiChat) was paused on his request. Free plan sleeps (~50 s). `app.config.ts` blocks only the live host.
+  The `e2e-test` EAS profile points at staging (`API_URL_OVERRIDE`).
+- **Repo `usecase088-creator/candidate-app` was made public by Raj (2026-10-27)** for free GitHub runner minutes. It contains `staging-backend/` (a copy of the client's backend) and the
+  docs: Raj was told; open question whether to move staging to a private repo. A scratch file `r.tmp.json` (a GitHub API response, no secrets) was committed by mistake in `0d4bad4`; removed in the next commit, still in history.
+
+## iPhone status (the one open item of Phase 2)
+
+- EAS iOS simulator build `5abe96e6` (free). GitHub workflow `ios-e2e` (manual). Run 40401476071: the app **starts, signs in against staging and shows the real jobs** on an iPhone SE (iOS 26.2);
+  `smoke` passes. Scripted flows fail on iOS differences in the scripts, not the app: Maestro `hideKeyboard` is unsupported (now `_common/hideKeyboard.yaml`: Return on iOS),
+  Return on the password field already submits, and iOS shows a "Save Password?" sheet.
+- **Committed locally but NOT pushed (Raj: no pushes overnight): `2e6efb6` (iOS flow fixes + summary) and the cleanup commit after it.** Push, then dispatch the workflow with ONE flow first:
+  `POST /repos/usecase088-creator/candidate-app/actions/workflows/ios-e2e.yml/dispatches {"ref":"main","inputs":{"flows":"e2e/maestro/auth-login.yaml"}}` (GitHub token in `.env.local`), then
+  `jobs-browse-save`, then the whole folder. Reseed first (`npm run backend:local -- --no-start`: it frees the signup number and clears saved jobs; staging shares the dev database).
+- Suggested push: add `env: MAESTRO_DRIVER_STARTUP_TIMEOUT: 180000` to the Maestro step (run 40398859835 failed with "iOS driver not ready in time"; one run waited 15 min for a runner and was cancelled by GitHub).
+- Minutes: runs 1 and 2 were on the private repo (about 8 macOS minutes, ×10). Later runs are free (public). EAS: 1 free iOS build.
+
+## How to run the phone flows (Android)
+
+`npm run backend:local` (restart before each full run: it clears the test candidate's saved jobs and frees signup numbers), `npx expo start`, `adb reverse tcp:3000 tcp:3000`,
+`adb reverse tcp:8081 tcp:8081`, `maestro test e2e/maestro` (about 15 min). If Metro picks 8082 because 8081 is taken, `adb reverse tcp:8081 tcp:8082`.
+If the backend cannot reach the database ("Can't reach database server"): IPv6 problem, switch network (SETUP.md).
+
+## Small things to know
+
+- Jest prints "A worker process has failed to exit gracefully" after a few login-screen tests. All tests pass; not investigated.
+- The Jest mutation cache timer (`gcTime`) is disabled in the test client (`src/test/render.tsx`), otherwise Jest never exits.
+- Phase 4 TODO from Phase 2: the "Build my CV" / "Fill the form" buttons; "Apply Now" shows a placeholder until Phase 3.
+- Playwright and `docs/` scratch: `*.tmp.json`, `ios-out/`, `ios[0-9]/` are git-ignored.
 
 ## Hotfix status
 
@@ -21,51 +46,28 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 | --- | --- |
 | A1 saved-jobs leak | Done, live (PR 1) |
 | A4 recruiter email in public list | Done, live (PR 1) |
-| A3 unfiltered profile save | Done, live (PR 2) |
-| **A5** public Cloudinary links; recruiters see candidates' documents in search | **PARKED.** Fix before the week-4 backend work and before store submission. Waiting for the client's answer: should recruiters see documents in search at all? (CR-003; private links = CR-002) |
-| A2 self-verify | Untouched. Product decision pending (admin-only, or leave) |
+| A3 unfiltered profile save | Done, live (PR 2). Live commit on Render `f185fe0` (service `job`, branch `conflict-resolution1`, Auto-Deploy on) |
+| **A5** public Cloudinary links; recruiters see candidates' documents in search | **PARKED.** Fix before the week-4 backend work and before store submission. Waiting for the client's answer (CR-003; private links = CR-002). Note: the repo is public and contains the code in `staging-backend/` |
+| A2 self-verify | Untouched. Product decision pending |
 | B8 profile phone replaces login phone | Untouched |
-| Group B additions (19–21): profile + CV link together returns 500 (dormant), avatar id client-controlled, offer-letter link any text | Listed in the triage, not fixed |
+| Group B additions (19–21) | Listed in the triage, not fixed |
 
 ## Rules in force
 
-- `../job` is **read-only**: never edit, commit, push, stash, checkout, reset there.
-- Backend changes are made **only in `../job-hotfix`, on a branch**, only after Raj says so. **Raj merges and deploys.** Never push to
-  `conflict-resolution1`. Branch from the commit that is actually live on Render (check with the read-only Render API, `RENDER_API`, GET only).
-- **Never create or change anything on Render** (services, deploys, settings, env vars). GET on services/deploys/logs only.
-- **Never use the production database URL again**, not even read-only, unless Raj says so. D22 was a one-time exception and is **closed**.
-  `../job/backend/.env.txt` holds production secrets: do not open it.
-- Scope guard: build only what is in `docs/PLAN.md`; extras go to `docs/CHANGE-REQUESTS.md` with a day estimate; **security holes found while
-  reading go to `docs/client/ISSUES-TRIAGE.md` first, nothing is fixed without Raj's OK.**
-- `docs/client/` is git-ignored on purpose (triage, issues list, PR bodies, SQL checks): local only, never commit it.
-- Never commit secrets. Tokens pasted in chat earlier (Expo, GitHub, Render staging) should be revoked by Raj.
+- `../job` is **read-only**: never edit, commit, push, stash, checkout, reset there (a `git fetch` + `merge --ff-only` was done once with Raj's OK).
+- Backend changes are made **only in `../job-hotfix`, on a branch**, only after Raj says so. **Raj merges and deploys.** Never push to `conflict-resolution1`.
+- **Render:** the production service (`RENDER_API`) is GET only. The staging service in Raj's own workspace (`RENDER_STAGING_API`) may be changed by `npm run staging:deploy` when Raj asks.
+- **Never use the production database URL again**, not even read-only, unless Raj says so (D22 closed). `../job/backend/.env.txt`: do not open it.
+- Scope guard: build only what is in `docs/PLAN.md`; extras go to `docs/CHANGE-REQUESTS.md`; security holes found while reading go to `docs/client/ISSUES-TRIAGE.md` first.
+- `docs/client/` is git-ignored on purpose: local only, never commit it. **The repo is public now: never commit client data, secrets or `.env*`.**
+- Commit or push only when Raj asks. Tokens pasted in chat earlier (Expo, GitHub, Render) should be revoked by Raj.
 
 ## Open items for Raj
 
-1. **Sentry DSN**: Raj gives it; it goes into `.env.local` (`EXPO_PUBLIC_SENTRY_DSN`) and an EAS environment variable (preview + production), never committed.
-   Then one test event from a dev build, checked for personal data.
-2. **Staging backend in Raj's own Render account** (not the client's workspace, D4). Needed by week 3. Until then the app uses the local backend
-   (`npm run backend:local`) and no staging exists; `npm run staging:deploy` stays unused.
-3. **Tell the client** about A1, A3 and A5, and ask the A5 question (documents in search: keep or hide?). The triage and CR-003 have the text.
-4. **Production on a paid always-on Render instance before store submission** (week 7). Free plan sleeps, ~50 s cold start. Client's cost (PLAN.md, D4).
-5. **Read-only Neon role** (created by Raj) if a production check is ever needed again.
-6. Questions for Raj: are candidates `56ef4dbe-…` and `6399cd5d-…` his own test accounts (closes the legacy `matchPercent` note)?
-   Decide A2 (admin-only or leave) and B8. Ask whether to commit/convert `docs/PHASE-1-SUMMARY.md`.
-
-## Next step: Phase 2 (steps in this order)
-
-1. **Triage update**: confirm the triage status table is current (A5 parked) and that nothing new from the hotfix is missing.
-2. **Reference sync**: bring the reference (`../job`, read-only, still `3fa6885`) and `docs/reference/API.md` in line with live `f185fe0`
-   (saved-jobs now returns only `applicants`, public job list has no `postedBy.email`, `PUT /api/candidates/me` ignores unknown keys). Ask Raj before
-   updating `../job` (a pull there is a write); `../job-hotfix` already has the code.
-3. **Write `docs/PHASE-2.md` and show it to Raj before building.** Same rules as Phase 1 (TDD, `npm run check`, small commits), plus Raj's additions:
-   iOS simulator runs the auth flows and the new job flows; the email is sent exactly as typed;
-   saved jobs uses the fixed response (`{ savedAt, job }` with `applicants`, no `applications`); staging is created by Raj in his own Render account later.
-   Do not send `profile` + `cvUrl` together in one `PUT /api/candidates/me` (group B 19).
-   Then build.
-
-## Phase 2 in progress (2026-10-26, interim note, replaced when the phase closes)
-
-- Built and unit/screen-tested: Tasks 1-9 of `docs/PHASE-2.md` (jobs API + schemas, filter/match logic, saved jobs optimistic, Home, Search, Job details, Saved, Gov, Intl). `npm run check` green (727 tests). Playwright: 9/9 job specs incl. 320 px. Contract tests pass (saved-jobs has no `applications`).
-- Maestro on the phone: `jobs-browse-save`, `jobs-search-filters`, `jobs-gov-intl` written. Run 1 on the phone found and fixed a real Android bug (job header text collapsed). The phone disconnected before the last re-run; **re-run all three after reconnecting**: `npm run backend:local` (restart each time: it clears saved jobs), `npx expo start`, `adb reverse tcp:3000 tcp:3000`, `adb reverse tcp:8081 tcp:8081`, `maestro test e2e/maestro` (the existing auth flows also need a re-run: Home text changed).
-- Not done yet: iOS simulator run (needs a backend the GitHub runner can reach; plan: in-repo stub backend), `PHASE-2-SUMMARY.md`, CR/decision entries (D23: categories from real data, optimistic save, steppers instead of sliders), `CLAUDE.md` current phase.
+1. **Accept Phase 2** (or list changes). Then Phase 3: write `docs/PHASE-3.md`, show it to Raj, build.
+2. **OK to push** the local commits, and decide: keep the repo public, or move `staging-backend/` and client docs to a private repo.
+3. **Sentry DSN** (`.env.local` `EXPO_PUBLIC_SENTRY_DSN` and an EAS variable), then one test event checked for personal data.
+4. **Tell the client** about A1, A3 and A5 and ask the A5 question.
+5. **Production on a paid always-on Render instance before store submission** (week 7). Client's cost.
+6. **Read-only Neon role** if a production check is ever needed again. Separate Neon branch for staging (D4) is still open: staging shares the dev database.
+7. Decide A2 and B8; the two legacy test candidates question; CR-004 and CR-005.

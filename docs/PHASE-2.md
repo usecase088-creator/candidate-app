@@ -43,58 +43,58 @@ Source of truth: the website (`../job/candidates/src`, now at `f185fe0`), `docs/
 
 ## Task 1 — Schemas, fixtures, endpoints (TDD)
 
-- [ ] `src/api/schemas/jobs.ts`: full `Job` (everything the screens show: category, city, experienceMin/Max, experience,
+- [x] `src/api/schemas/jobs.ts`: full `Job` (everything the screens show: category, city, experienceMin/Max, experience,
       postedDays, tags, description, responsibilities, requirements, perks, hospitalLogoUrl, hospitalVerified, hospitalAbout,
       applicants, status, matchPercent?), `.loose()`. `SavedJob = { savedAt, job }`; `SavedJobList`; gov and intl with
       `createdAt`, `experience`, `qualification`, `license`. Unit tests with fixtures, including a missing required field.
-- [ ] `src/features/jobs/jobsApi.ts`: `list`, `get(id)`, `similar(category, excludeId)` (`?category=&excludeId=&limit=4`),
+- [x] `src/features/jobs/jobsApi.ts`: `list`, `get(id)`, `similar(category, excludeId)` (`?category=&excludeId=&limit=4`),
       `savedList`, `save(jobId)`, `unsave(jobId)`, `govList`, `intlList`. MSW tests for URL, query and parsing.
-- [ ] Candidate profile for matching: `GET /api/candidates/me` parsed loosely (role, yearsExperience, city, state,
+- [x] Candidate profile for matching: `GET /api/candidates/me` parsed loosely (role, yearsExperience, city, state,
       preferredLocations, skills, completeness, cvSource); a minimal profile for uploaded CVs like the website.
-- [ ] Contract tests (local backend): jobs list (with and without token: `matchPercent`), `GET /api/jobs/:id`, similar,
+- [x] Contract tests (local backend): jobs list (with and without token: `matchPercent`), `GET /api/jobs/:id`, similar,
       save → list → unsave, gov, intl. **Saved-jobs response has no `applications` list and no `postedBy`** (A1 regression).
       Public list has no `postedBy.email` (A4 regression).
 
 ## Task 2 — Pure logic (TDD, `src/features/jobs/logic/`)
 
-- [ ] `format.ts`: `formatLPA`, `formatExp`, `postedLabel` ("Today" / "{n}d ago"), same output as the website.
-- [ ] `filter.ts`: `jobMatchesSearch` (role, specialty, hospital, location, city, category, type, tags, description with HTML
+- [x] `format.ts`: `formatLPA`, `formatExp`, `postedLabel` ("Today" / "{n}d ago"), same output as the website.
+- [x] `filter.ts`: `jobMatchesSearch` (role, specialty, hospital, location, city, category, type, tags, description with HTML
       stripped; city matches `city + location`; lower-case `includes`), filters (cities, minExp, minSalary, types), category,
       sort (latest by `postedDays`, salary by `salaryMax`, relevance by `matchPercent`), `activeFilterCount`, `DEFAULT_FILTERS`.
-- [ ] `match.ts`: port of `rolesMatch`, `scoreJobMatch`, `isLocationMatch`, `computeJobMatches` (top 5, ≥ 55, location rule;
+- [x] `match.ts`: port of `rolesMatch`, `scoreJobMatch`, `isLocationMatch`, `computeJobMatches` (top 5, ≥ 55, location rule;
       without a profile ≥ 20% it uses the server's `matchPercent`).
-- [ ] `deadline.ts` for gov and intl: `formatDate` (en-IN), `daysLeft`, `isExpired`; amber at ≤ 7 days, red when expired.
-- [ ] `govFilter.ts` / `intlFilter.ts`: search and country list. Visa badge colours.
+- [x] `deadline.ts` for gov and intl: `formatDate` (en-IN), `daysLeft`, `isExpired`; amber at ≤ 7 days, red when expired.
+- [x] `govFilter.ts` / `intlFilter.ts`: search and country list. Visa badge colours.
 
 ## Task 3 — Data hooks (TDD)
 
-- [ ] TanStack Query hooks: `useJobs`, `useJob(id)`, `useSimilarJobs`, `useSavedJobs`, `useGovJobs`, `useIntlJobs`, `useMyProfile`.
-- [ ] `useToggleSave`: optimistic update of the saved list, rollback on error, toast text, 409/404 rule, no double taps.
-- [ ] Filter state in a Zustand store (`filterStore`) so search text, city, filters, sort and category stay when switching tabs
+- [x] TanStack Query hooks: `useJobs`, `useJob(id)`, `useSimilarJobs`, `useSavedJobs`, `useGovJobs`, `useIntlJobs`, `useMyProfile`.
+- [x] `useToggleSave`: optimistic update of the saved list, rollback on error, toast text, 409/404 rule, no double taps.
+- [x] Filter state in a Zustand store (`filterStore`) so search text, city, filters, sort and category stay when switching tabs
       and are reset on sign-out.
 
 ## Task 4 — Components (TDD, in `src/features/jobs/components/` and `src/components/ui/`)
 
-- [ ] `JobCard` (logo via expo-image or building icon, hospital, verified badge, location, save icon, role, specialty, 3 pills,
+- [x] `JobCard` (logo via expo-image or building icon, hospital, verified badge, location, save icon, role, specialty, 3 pills,
       posted, match ring, "View Details"), `MatchRing` (no new native library), `SaveButton` (icon and button variants),
       `JobCardSkeleton`, `VerifiedBadge`, `FilterSheet`, `CategoryChips`, `RecommendedRail`.
-- [ ] Every pressable has a `testID` and `accessibilityLabel`; layouts checked at 320 pt width and font scale 2.0.
+- [x] Every pressable has a `testID` and `accessibilityLabel`; layouts checked at 320 pt width and font scale 2.0.
 
 ## Task 5 — Home (TDD)
 
-- [ ] Home tab: greeting search bar (opens Search), recommended rail, categories rail, "All Opportunities" /
+- [x] Home tab: greeting search bar (opens Search), recommended rail, categories rail, "All Opportunities" /
       "Showing {n} of {total} verified roles", links to Saved, Government and International jobs. FlashList.
-- [ ] States: skeleton loading, error + "Try Again", empty ("No open positions yet" / "No matches"), offline (banner + cached
+- [x] States: skeleton loading, error + "Try Again", empty ("No open positions yet" / "No matches"), offline (banner + cached
       data kept), pull to refresh.
 
 ## Task 6 — Search (TDD)
 
-- [ ] Search tab: text and city fields, filter sheet (cities, experience, salary, job types, sort, reset, "n active"),
+- [x] Search tab: text and city fields, filter sheet (cities, experience, salary, job types, sort, reset, "n active"),
       category chip, results list with the same counts and empty texts. Filters kept across tabs.
 
 ## Task 7 — Job details and similar jobs (TDD)
 
-- [ ] Route `job/[id]`: all sections of the website (header, tags, About the role with HTML shown as plain formatted text,
+- [x] Route `job/[id]`: all sections of the website (header, tags, About the role with HTML shown as plain formatted text,
       Responsibilities, Requirements, Perks & benefits, About {hospital}, Compensation card, Match insights, applicants line),
       "Apply Now" (arrives in Phase 3: shown disabled with the website's label only when closed, otherwise opens nothing yet:
       see note below), Save button, Similar opportunities (up to 4). "Job not found" + "Browse opportunities".
@@ -103,29 +103,29 @@ Source of truth: the website (`../job/candidates/src`, now at `f185fe0`), `docs/
 
 ## Task 8 — Saved jobs (TDD)
 
-- [ ] Route `saved-jobs`: title, count ("{n} role(s) bookmarked for later"), "Browse opportunities →", list, empty
+- [x] Route `saved-jobs`: title, count ("{n} role(s) bookmarked for later"), "Browse opportunities →", list, empty
       ("No saved jobs yet" / "Tap the bookmark icon on any job to save it here." / "Find opportunities"), error, offline.
       Unsaving from the list removes the card at once (optimistic) and rolls back on error.
 
 ## Task 9 — Government and international jobs (TDD)
 
-- [ ] Routes `gov-jobs` and `intl-jobs`: hero text, stats, search, country chips (intl), cards instead of the website's wide
+- [x] Routes `gov-jobs` and `intl-jobs`: hero text, stats, search, country chips (intl), cards instead of the website's wide
       table, deadline styling, visa badges, "View / Apply" and "Apply" open the outside link in `expo-web-browser`;
       disabled when expired; only http(s) links are opened. Empty, no-match, error, offline.
 
 ## Task 10 — End-to-end
 
-- [ ] Maestro on the real phone (local backend): `jobs-browse-save.yaml` (home → open job → save → saved list → unsave),
+- [x] Maestro on the real phone (local backend): `jobs-browse-save.yaml` (home → open job → save → saved list → unsave),
       `jobs-search-filters.yaml` (search text, filters, sort, category), `jobs-gov-intl.yaml` (lists open, link opens the browser).
       Seed: enough jobs for filters, a gov and an intl listing (`scripts/backend-local/overlay/app-scripts/seedData.ts`).
-- [ ] Playwright (Chromium, API mocked): home list, search with filter, job details, save with rollback.
-- [ ] Whole existing Maestro suite still passes.
-- [ ] iPhone simulator (GitHub macOS runner), once at the end: auth flows and the new job flows. See "iOS" below.
+- [x] Playwright (Chromium, API mocked): home list, search with filter, job details, save with rollback.
+- [x] Whole existing Maestro suite still passes.
+- [ ] iPhone simulator (GitHub macOS runner): the app starts, signs in against staging and shows the real jobs (run 40401476071). The iOS flow fixes are committed locally, not pushed; a full iOS flow pass is open (see HANDOFF).
 
 ## Task 11 — Close the phase
 
-- [ ] Parity checklist with the website job screens (below), `npm run check` green, coverage gates met.
-- [ ] `docs/PHASE-2-SUMMARY.md` (plain language + technical appendix + screen recording plan), `HANDOFF.md`, `CLAUDE.md`
+- [x] Parity checklist with the website job screens (below), `npm run check` green, coverage gates met.
+- [x] `docs/PHASE-2-SUMMARY.md` (plain language + technical appendix + screen recording plan), `HANDOFF.md`, `CLAUDE.md`
       "Current phase", `docs/DECISIONS.md` (D23+), `docs/CHANGE-REQUESTS.md`.
 
 ## iOS (once, at the end)
@@ -146,10 +146,10 @@ count 10x; the number used is reported at the end.
 
 ## Phase 2 exit checklist
 
-- [ ] All tasks ticked; `npm run check` green; coverage gates met
-- [ ] Contract tests pass (incl. saved-jobs has no `applications`); drift check passes on production (GET only)
-- [ ] Maestro: all auth flows and the 3 job flows pass on the real Android phone
-- [ ] Playwright job specs pass
-- [ ] iPhone simulator run reported (or the blocker, with options)
-- [ ] Parity checklist with the website done; `HANDOFF.md`, `CLAUDE.md`, `DECISIONS.md`, `CHANGE-REQUESTS.md` updated
-- [ ] Screen recording plan written (`docs/PHASE-2-SUMMARY.md`)
+- [x] All tasks ticked; `npm run check` green; coverage gates met
+- [x] Contract tests pass (incl. saved-jobs has no `applications`); drift check passes on production (GET only)
+- [x] Maestro: all auth flows and the 3 job flows pass on the real Android phone
+- [x] Playwright job specs pass
+- [ ] iPhone simulator: all flows green (open: needs Raj's OK to push the iOS flow fixes)
+- [x] Parity checklist with the website done; `HANDOFF.md`, `CLAUDE.md`, `DECISIONS.md`, `CHANGE-REQUESTS.md` updated
+- [x] Screen recording plan written (`docs/PHASE-2-SUMMARY.md`)
