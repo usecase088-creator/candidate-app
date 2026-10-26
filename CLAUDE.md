@@ -5,7 +5,8 @@ candidate website, same backend and database. Built with Expo (React Native).
 Goal: live on Play Store and App Store, no crashes, passes store review first time.
 
 - Master plan: `docs/PLAN.md`
-- Current phase: `docs/PHASE-1.md`  <- update this line when the phase changes
+- Current phase: **Phase 2** (`docs/PHASE-2.md`, not written yet: write it first and show it to Raj before building)  <- update this line when the phase changes
+- Handoff / current state: `docs/HANDOFF.md` (read it first in a new session)
 - Decisions log: `docs/DECISIONS.md`
 - Machine setup: `docs/SETUP.md`
 
@@ -22,23 +23,26 @@ Goal: live on Play Store and App Store, no crashes, passes store review first ti
   - Colours and radius: `../job/candidates/src/styles.css` (oklch, convert to hex)
 - If the app and the website behave differently, the website wins, unless
   `docs/DECISIONS.md` says otherwise.
-- Backend changes happen only in Phase 4, on a separate branch of the job repo,
-  and only after Raj says so. **One exception: the security hotfix (D21, below).**
+- Backend changes are made only in the separate clone `../job-hotfix`, on a branch, and only after Raj says so
+  (see "Backend and production rules" below). Raj merges and deploys.
 
-## Security hotfix exception (D21): only for this hotfix
+## Backend and production rules (in force in every session; origin: security hotfix D21, closed D22)
 
-Raj built the website, so security/privacy bugs in it are fixed for free, with his approval, and nothing else is.
+State on 2026-10-26: hotfix PR 1 and PR 2 are live on Render (live commit `f185fe0`); see `docs/HANDOFF.md`.
 
-- `../job` stays READ-ONLY. The hotfix is done in a **separate clone, `../job-hotfix`**, never in `../job`.
-- Branch from the commit that is **actually deployed on Render**. Ask Raj for it first (he checks Render → Events).
-  If it is not the head of the deployed branch (`conflict-resolution1`, no hyphen before the 1), stop and tell him.
-- Working branch: `hotfix/saved-jobs-privacy`. Never push to the deployed branch, never merge, never deploy, never
-  touch production data. Raj reviews, merges and deploys.
-- No Render API writes at all while this exception is open: never create or change a Render service (this suspends the
-  staging service of D20 too; `npm run staging:deploy` stays unused until Raj says so).
-- Fix only the issues Raj approved from `docs/client/ISSUES-TRIAGE.md` (group A: security/privacy).
-- When Raj confirms the hotfix is live, this exception ends and the rules above apply again.
-- D22: one-off exception, read-only production DB check (SELECT only, counts/IDs only) for `docs/client/A3-production-checks.sql`. Nothing else uses the production DB URL.
+- `../job` stays READ-ONLY. Backend changes (fixes, new endpoints) are made **only in the separate clone `../job-hotfix`, on a
+  branch**, and only after Raj says so. Never push to the deployed branch (`conflict-resolution1`, no hyphen before the 1), never merge,
+  never deploy. **Raj reviews, merges and deploys** (merge into `conflict-resolution1` = deploy, Auto-Deploy is on).
+- Branch from the commit that is **actually live on Render** (check with the read-only Render API; if it is not the head of
+  `conflict-resolution1`, stop and tell Raj). Each PR description has: what changed, tests, Raj's deploy steps, Rollback
+  (Render → Deploys → previous deploy → Rollback). Failing test first, then the smallest fix, then a before/after replay.
+- **Never create or change anything on Render** (services, deploys, settings, env vars). Only GET calls on services, deploys and logs.
+  Staging is created by Raj in his own Render account later (D4); `npm run staging:deploy` stays unused.
+- **Never use the production database URL again**, not even read-only, unless Raj says so. D22 was a one-time exception (SELECT-only
+  A3 abuse check) and is **closed**. `../job/backend/.env.txt` holds production secrets: do not open it. A future production check
+  needs a read-only Neon role created by Raj.
+- Fix only the security issues Raj approved from `docs/client/ISSUES-TRIAGE.md` (group A). A5 is PARKED; A2 and B8 are untouched.
+- `docs/client/` is git-ignored on purpose (triage, issues list, PR bodies, SQL): local only, never commit it.
 
 ## Scope guard
 
@@ -128,10 +132,9 @@ A flow is "done" only when its Maestro flow passes on Android.
 
 - Render (live backend, real users) is **read-only**: `RENDER_API` in `.env.local` is used only for GET requests
   on services and deploys. Never deploy, restart, suspend, change settings or read env vars there.
-  Nothing is pushed to `apronhanger/job` either (the hotfix branch in `../job-hotfix` is the one exception, D21).
-- A **separate** Render workspace for staging (`RENDER_STAGING_API` in `.env.local`) may be changed: it only ever holds
-  the test backend (dev database, OTP test mode). Only the production build talks to the live server (D20).
-  Suspended while the D21 hotfix exception is open.
+  Nothing is pushed to `apronhanger/job` either, except hotfix branches from `../job-hotfix` (never the deployed branch).
+- No staging service exists yet. It will be created by Raj in his own Render account, not the client's workspace (D4).
+  Until then no Render writes at all. Only the production build talks to the live server (D20).
 - Never call the production API from tests or E2E. The only exception is `npm run drift-check`
   (GET requests on public endpoints).
 - Never commit secrets or personal data. `.env*` is gitignored (except `.env.local.example`).

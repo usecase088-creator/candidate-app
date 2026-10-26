@@ -147,7 +147,7 @@ non-production variant pointed at the live server; preview/development allow pla
 Android, production stays https-only. The first preview APK (EAS build 7a176915, 2026-10-25) pointed at the live
 server: do not install or share it. (Raj)
 
-## D21 — Security hotfix on the live website backend (decided 2026-10-25)
+## D21 — Security hotfix on the live website backend (decided 2026-10-25; status 2026-10-26: PR 1 and PR 2 live, A5 parked)
 
 Raj built the website, so security and privacy bugs in it (someone can see or change data they shouldn't) are fixed
 **for free**, with his approval, before Phase 2. Bugs that expose nothing and improvements are not free: bugs are listed
@@ -159,10 +159,19 @@ Rule change, only for this hotfix (see CLAUDE.md): `../job` stays read-only; the
 merge, no deploy, no production data, no Render API writes. Raj reviews, merges and deploys. The exception ends when Raj
 confirms the hotfix is live. Which issues are fixed: those he approves from `docs/client/ISSUES-TRIAGE.md` group A. (Raj)
 
-## D22 — One-off read-only production DB check for the A3 abuse check (2026-10-26, Raj)
+**Status (2026-10-26):** PR 1 (A1 saved-jobs leak, A4 recruiter email; fix `08cd1ea`, merged `5b569f1`) and PR 2 (A3 unfiltered
+profile save; fix `1373342`, merged `f185fe0`) are live on Render. A5 (public files, documents in recruiter search) is PARKED
+until the client answers; A2 and B8 are untouched. The working method (separate clone `../job-hotfix`, branch, Raj merges and
+deploys) stays in force for any backend change; see CLAUDE.md and `docs/HANDOFF.md`.
+
+## D22 — One-off read-only production DB check for the A3 abuse check (2026-10-26, Raj) — CLOSED
 
 Exception to D13. Raj explicitly allowed using the production database URL from `../job/backend/.env.txt`
 (file is git-ignored in the job repo, never copied, never printed) **read-only**, once, for the SELECT statements in
 `docs/client/A3-production-checks.sql`. How: every connection runs inside `SET TRANSACTION READ ONLY`, only statements that
 start with SELECT are sent, output is counts and IDs only (no names, emails, phones), the URL and credentials are never
 printed or logged. Nothing else may use that URL. The exception ends when the A3 results are delivered; D13 applies again.
+
+**Final status: CLOSED (2026-10-26).** Used twice, both times on Raj's explicit request the same day, same SELECT file, read-only
+transactions, counts and IDs only (result: clean, see `docs/client/ISSUES-TRIAGE.md` status table). The production URL is never used
+again, not even read-only, unless Raj says so. If a production check is ever needed again: a read-only Neon role, created by Raj.
