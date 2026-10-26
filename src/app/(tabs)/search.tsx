@@ -1,6 +1,3 @@
-import { PlaceholderScreen } from '@/components/PlaceholderScreen';
+import { SearchScreen } from '@/features/jobs/screens/SearchScreen';
 
-// Placeholder: search comes in Phase 2.
-export default function Search() {
-  return <PlaceholderScreen testID="search.screen" title="Search" note="Job search arrives in Phase 2." />;
-}
+export default SearchScreen;

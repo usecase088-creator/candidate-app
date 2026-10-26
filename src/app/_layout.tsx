@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { api } from '@/api/client';
 import { ToastProvider } from '@/components/ui/Toast';
 import { useSession } from '@/features/auth/sessionStore';
+import { useFilterStore } from '@/features/jobs/filterStore';
 import { getEnv } from '@/lib/env';
 import { appQueryClient, setupFocusManager, setupOnlineManager } from '@/lib/queryClient';
 import { initSentry, reportApiError } from '@/lib/sentry';
@@ -24,9 +25,12 @@ export default function RootLayout() {
     void useSession.getState().restore();
     const stopOnline = setupOnlineManager();
     const stopFocus = setupFocusManager();
-    // Sign-out (button, expired token, 401): drop every cached query of that user.
+    // Sign-out (button, expired token, 401): drop every cached query and the search state of that user.
     const stopClearing = useSession.subscribe((state, prev) => {
-      if (prev.status === 'signedIn' && state.status === 'signedOut') appQueryClient.clear();
+      if (prev.status === 'signedIn' && state.status === 'signedOut') {
+        appQueryClient.clear();
+        useFilterStore.getState().resetAll();
+      }
     });
     return () => {
       stopOnline();
