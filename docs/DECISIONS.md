@@ -179,3 +179,15 @@ printed or logged. Nothing else may use that URL. The exception ends when the A3
 **Final status: CLOSED (2026-10-26).** Used twice, both times on Raj's explicit request the same day, same SELECT file, read-only
 transactions, counts and IDs only (result: clean, see `docs/client/ISSUES-TRIAGE.md` status table). The production URL is never used
 again, not even read-only, unless Raj says so. If a production check is ever needed again: a read-only Neon role, created by Raj.
+
+## D23 — Phase 2 follows the website, with five deliberate differences (2026-10-26)
+
+1. **Categories rail from real data.** The website never renders its category rail and its ids could not match real jobs (`Job.category` holds the recruiter's role type). The app builds the rail from the distinct `category` values of the loaded jobs, with "All Roles" first.
+2. **Save is optimistic** (PLAN.md): the bookmark changes at once and goes back with the website's error text if the server refuses. `409 Job already saved` and `404 Saved job not found` mean the wanted state is already true, so they are not rolled back.
+3. **Steppers instead of sliders** for experience (0-15) and salary (0-50, step 2): same ranges, no new native library, easier to hit on small phones.
+4. **Match score on job details**: the app sends the token, so "Your profile matches {n}% ..." shows when the server has a score (the website's job page never sends the token).
+5. **Failed lists show "Something went wrong" + Try Again**; the website shows an empty list. The "Build my CV" buttons wait for Phase 4; "Apply Now" says it arrives in the next update until Phase 3.
+
+## D24 — Staging server exists (2026-10-27, Raj)
+
+`apronhanger-staging-api` on **Raj's own Render workspace** (free plan, Singapore, `https://apronhanger-staging-api.onrender.com`), created with `npm run staging:deploy` and the staging key. Deploys `staging-backend/` from `main` of the app repo (synced to reference `f185fe0`), NODE_ENV=staging, own JWT secret, OTP test mode on, **the dev Neon database** (shared with `backend:local`; a separate Neon branch is still open). Raj paused his other free service on that workspace first (free instance hours are per workspace). `app.config.ts` now blocks only the live host (`job-ojsr.onrender.com`, apronhanger.work), so test builds may use staging. The `e2e-test` EAS profile points at staging, so the iPhone simulator run can reach a backend. The free plan sleeps (~50 s): the workflow wakes it first.

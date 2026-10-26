@@ -16,25 +16,25 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: search.query
 - inputText: CARDIO
-- hideKeyboard
+- runFlow: _common/hideKeyboard.yaml
 - assertVisible: Showing 1 of 4 verified roles
 - assertVisible: Consultant Cardiologist
 - tapOn:
     id: search.query
 - eraseText: 20
-- hideKeyboard
+- runFlow: _common/hideKeyboard.yaml
 - assertVisible: Showing 4 of 4 verified roles
 
 # City or state.
 - tapOn:
     id: search.city
 - inputText: karnataka
-- hideKeyboard
+- runFlow: _common/hideKeyboard.yaml
 - assertVisible: Showing 2 of 4 verified roles
 - tapOn:
     id: search.city
 - eraseText: 20
-- hideKeyboard
+- runFlow: _common/hideKeyboard.yaml
 
 # Filter sheet: city, then job type.
 - tapOn:

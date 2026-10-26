@@ -27,7 +27,7 @@ appId: work.apronhanger.candidate.dev
 # Keyboard "next" moves to the password field, as a user would (the field is under the keyboard here).
 - pressKey: Enter
 - inputText: Secret@123
-- hideKeyboard
+- runFlow: _common/hideKeyboard.yaml
 - scrollUntilVisible:
     element:
       id: signup.privacy
@@ -47,7 +47,7 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: signup.otp
 - inputText: '123456'
-- hideKeyboard
+- runFlow: _common/hideKeyboard.yaml
 - tapOn:
     id: signup.submit
 - extendedWaitUntil:

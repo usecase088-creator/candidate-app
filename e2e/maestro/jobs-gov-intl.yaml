@@ -37,13 +37,13 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: gov.search
 - inputText: esic
-- hideKeyboard
+- runFlow: _common/hideKeyboard.yaml
 - assertVisible: Specialist Walk-in (Test, no deadline)
 - assertNotVisible: AIIMS
 - tapOn:
     id: gov.search
 - eraseText: 10
-- hideKeyboard
+- runFlow: _common/hideKeyboard.yaml
 
 # "View / Apply" opens the outside link in the in-app browser, away from the app; Back returns.
 - scrollUntilVisible:

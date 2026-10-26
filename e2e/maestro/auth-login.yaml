@@ -16,7 +16,7 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: login.password
 - inputText: Test@1234
-- hideKeyboard
+- runFlow: _common/hideKeyboard.yaml
 - tapOn:
     id: login.submit
 - extendedWaitUntil:
