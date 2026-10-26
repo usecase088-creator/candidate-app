@@ -72,3 +72,36 @@ export const intlJob = {
   lastDate: null,
   createdAt: '2026-10-01T00:00:00.000Z',
 };
+
+/** One item of GET /api/saved-jobs after the hotfix (PR 1): `applicants` only, no `applications`, no `postedBy`. */
+export const savedJobItem = {
+  savedAt: '2026-10-26T09:00:00.000Z',
+  job: (() => {
+    const { postedBy: _postedBy, ...job } = publicJob;
+    return job;
+  })(),
+};
+
+/** Candidate row of GET /api/candidates/me (only what job matching reads). */
+export const candidateMe = {
+  id: 'c1',
+  name: 'Test Candidate',
+  role: null,
+  experienceYears: 0,
+  location: null,
+  cvSource: null,
+  profile: null,
+  preferredLocations: [],
+};
+
+/** A built-in-form profile (`profile` of GET /api/candidates/me, website `Profile`). */
+export const formProfile = {
+  role: 'Nursing Professionals & Paramedics',
+  yearsExperience: 3,
+  city: 'Kolkata',
+  state: 'West Bengal',
+  preferredLocations: ['Kolkata'],
+  clinicalSkills: ['GNM'],
+  technicalSkills: [],
+  completeness: 80,
+};
