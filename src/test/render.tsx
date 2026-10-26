@@ -14,7 +14,7 @@ export function createTestQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: { retry: false, gcTime: Infinity },
-      mutations: { retry: false },
+      mutations: { retry: false, gcTime: Infinity },
     },
   });
 }

@@ -111,7 +111,7 @@
       }
     },
     "transformIgnorePatterns": [
-      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/.*|native-base|standard-navigation|msw|@msw|@mswjs|@open-draft|rettime|until-async|outvariant|headers-polyfill|is-node-process|strict-event-emitter|@bundled-es-modules|cookie|tough-cookie|tldts|tldts-core|@inquirer|graphql))",
+      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/.*|@shopify/flash-list|native-base|standard-navigation|msw|@msw|@mswjs|@open-draft|rettime|until-async|outvariant|headers-polyfill|is-node-process|strict-event-emitter|@bundled-es-modules|cookie|tough-cookie|tldts|tldts-core|@inquirer|graphql))",
       "/node_modules/react-native-reanimated/plugin/",
       "/node_modules/@react-native/babel-preset/"
     ],

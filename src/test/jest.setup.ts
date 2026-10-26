@@ -1,3 +1,5 @@
+import '@shopify/flash-list/jestSetup';
+
 import { server } from './msw/server';
 
 // The native manifest is empty in Jest. Give every test the development variant's `extra` (app.config.ts),
