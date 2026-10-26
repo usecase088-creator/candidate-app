@@ -63,3 +63,9 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
    saved jobs uses the fixed response (`{ savedAt, job }` with `applicants`, no `applications`); staging is created by Raj in his own Render account later.
    Do not send `profile` + `cvUrl` together in one `PUT /api/candidates/me` (group B 19).
    Then build.
+
+## Phase 2 in progress (2026-10-26, interim note, replaced when the phase closes)
+
+- Built and unit/screen-tested: Tasks 1-9 of `docs/PHASE-2.md` (jobs API + schemas, filter/match logic, saved jobs optimistic, Home, Search, Job details, Saved, Gov, Intl). `npm run check` green (727 tests). Playwright: 9/9 job specs incl. 320 px. Contract tests pass (saved-jobs has no `applications`).
+- Maestro on the phone: `jobs-browse-save`, `jobs-search-filters`, `jobs-gov-intl` written. Run 1 on the phone found and fixed a real Android bug (job header text collapsed). The phone disconnected before the last re-run; **re-run all three after reconnecting**: `npm run backend:local` (restart each time: it clears saved jobs), `npx expo start`, `adb reverse tcp:3000 tcp:3000`, `adb reverse tcp:8081 tcp:8081`, `maestro test e2e/maestro` (the existing auth flows also need a re-run: Home text changed).
+- Not done yet: iOS simulator run (needs a backend the GitHub runner can reach; plan: in-repo stub backend), `PHASE-2-SUMMARY.md`, CR/decision entries (D23: categories from real data, optimistic save, steppers instead of sliders), `CLAUDE.md` current phase.
