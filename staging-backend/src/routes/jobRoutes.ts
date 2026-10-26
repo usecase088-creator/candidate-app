@@ -246,7 +246,8 @@ router.get('/', async (req: Request, res: Response) => {
       jobs = jobs.filter((j) => !getHospitalValidity(j.hospital).isLocked);
     }
 
-    res.json(jobs.map((j) => formatJob(j, profile)));
+    // The recruiter's email is only for the owning recruiter; the public list (and the detail route) never show it.
+    res.json(jobs.map((j) => formatJob(j, profile, { redactPosterEmail: !recruiterOwnHospital })));
   } catch (error) {
     logger.error(error);
     res.status(500).json({ error: 'Internal server error' });

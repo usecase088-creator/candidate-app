@@ -2,7 +2,7 @@ import logger from '../lib/logger';
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requireRole, AuthRequest } from '../middleware/auth';
-import { formatCandidate, formatLockedCandidate, ensureUsageReset, getSearchLimit, syncFormProfile } from '../lib/helpers';
+import { formatCandidate, formatLockedCandidate, ensureUsageReset, getSearchLimit, syncFormProfile, buildSearchBlob } from '../lib/helpers';
 import { DEFAULT_PLAN_TIER } from '../config/plans';
 import { validateCandidateOwnsCv } from '../lib/validateCandidateCvOwnership';
 
@@ -397,6 +397,9 @@ router.get('/me', requireAuth, requireRole('CANDIDATE'), async (req: AuthRequest
   }
 });
 
+/** Top-level keys of PUT /api/candidates/me, exactly what candidates/src/lib/applications.ts syncCandidateProfile sends. */
+const PUT_ME_ALLOWED_KEYS = new Set(['profile', 'cvUrl', 'cvCloudinaryId', 'cvName', 'cvMime', 'supportingDocuments']);
+
 // PUT /api/candidates/me
 router.put('/me', requireAuth, requireRole('CANDIDATE'), async (req: AuthRequest, res: Response) => {
   try {
@@ -406,7 +409,25 @@ router.put('/me', requireAuth, requireRole('CANDIDATE'), async (req: AuthRequest
       return;
     }
     
-    const { profile, profileJson, cvUrl, cvCloudinaryId, cvName, cvMime, supportingDocuments, ...rest } = req.body;
+    // Only the keys the candidate website sends are read. Anything else in the body (user, role, hospitalId,
+    // verified, matchPercent, userId, email, relation writes, ...) is ignored, never written, and logged by name only.
+    const body = (req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>;
+    const ignoredKeys = Object.keys(body).filter((key) => !PUT_ME_ALLOWED_KEYS.has(key));
+    if (ignoredKeys.length > 0) {
+      logger.warn(
+        'PUT /api/candidates/me ignored unknown keys for user %s: %s',
+        req.user!.id,
+        ignoredKeys.slice(0, 20).map((key) => key.slice(0, 40)).join(', '),
+      );
+    }
+    const { profile, cvUrl, cvCloudinaryId, cvName, cvMime, supportingDocuments } = body as {
+      profile?: any;
+      cvUrl?: string;
+      cvCloudinaryId?: string;
+      cvName?: string;
+      cvMime?: string;
+      supportingDocuments?: any[];
+    };
 
     if (cvUrl || cvCloudinaryId) {
       const cvCheck = validateCandidateOwnsCv(candidateId, cvUrl, cvCloudinaryId);
@@ -435,11 +456,8 @@ router.put('/me', requireAuth, requireRole('CANDIDATE'), async (req: AuthRequest
       return;
     }
 
-    // Fallback direct update
-    const data: any = { ...rest };
-    if (profileJson !== undefined) {
-      data.profileJson = profileJson;
-    }
+    // Fallback update (no `profile`): only the CV link fields, never the rest of the body.
+    const data: any = {};
     if (cvUrl) data.cvUrl = String(cvUrl);
     if (cvCloudinaryId) data.cvCloudinaryId = String(cvCloudinaryId);
     
@@ -450,7 +468,6 @@ router.put('/me', requireAuth, requireRole('CANDIDATE'), async (req: AuthRequest
 
     const existingCandidate = await prisma.candidate.findUnique({ where: { id: candidateId } });
     const mergedForBlob = { ...existingCandidate, ...data };
-    const { buildSearchBlob } = require('../lib/helpers');
     data.searchBlob = buildSearchBlob(mergedForBlob);
 
     const updated = await prisma.candidate.update({

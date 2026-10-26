@@ -16,7 +16,7 @@ router.get('/', requireAuth, requireRole('CANDIDATE'), async (req: AuthRequest, 
     }
     const savedJobs = await prisma.savedJob.findMany({
       where: { candidateId },
-      include: { job: { include: { hospital: true, applications: true } } },
+      include: { job: { include: { hospital: true, _count: { select: { applications: true } } } } },
       orderBy: { savedAt: 'desc' },
     });
     res.json(savedJobs.map(sj => ({
@@ -40,7 +40,7 @@ router.post('/', requireAuth, requireRole('CANDIDATE'), async (req: AuthRequest,
   try {
     const saved = await prisma.savedJob.create({
       data: { candidateId, jobId: String(jobId) },
-      include: { job: { include: { hospital: true, applications: true } } },
+      include: { job: { include: { hospital: true, _count: { select: { applications: true } } } } },
     });
     res.status(201).json({ savedAt: saved.savedAt, job: formatJob(saved.job) });
   } catch (error: any) {
