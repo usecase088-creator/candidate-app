@@ -28,6 +28,8 @@ export const colors = {
   /** The website's --success is blue (THEME.md note ²). */
   success: '#398AD6',
   warning: '#DEA143',
+  /** Amber text for "7 days or fewer left" (website #d97706 is 3.2:1 on white; this is 5.0:1, like D15). */
+  warningText: '#B45309',
   border: '#D4DAE1',
   input: '#D4DAE1',
   ring: '#326AD9',
