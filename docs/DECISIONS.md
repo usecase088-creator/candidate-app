@@ -59,6 +59,10 @@ Live candidate website: **apronhanger.work** (Raj). Email links on this domain c
 - Our reference clone is `3fa6885` (2026-10-08), 2 commits ahead. Those 2 commits change **website files only**;
   `backend/` is identical, so `docs/reference/API.md` matches the live backend.
 - Backend work in Phase 4 branches from the live commit at that time (check again via the Render API, read-only).
+- **Reference synced 2026-10-26 (start of Phase 2, Raj):** `../job` was brought from `3fa6885` to **`f185fe0`** (the live commit,
+  = head of `origin/conflict-resolution1`) with `git fetch` + `git merge --ff-only` and nothing else. The only backend changes are the
+  hotfix PR 1 and PR 2 (saved-jobs `applicants` instead of `applications`, no `postedBy.email` in the public job list, allow-listed
+  `PUT /api/candidates/me`). Contract tests re-run against `f185fe0`.
 
 ## D7 — Account for app services (decided)
 
