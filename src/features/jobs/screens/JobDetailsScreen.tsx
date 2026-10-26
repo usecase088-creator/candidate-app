@@ -273,7 +273,7 @@ function Meta({
   return (
     <View style={styles.metaItem}>
       <SymbolView name={{ ...icon, web: icon.android }} tintColor={colors.mutedForeground} size={12} />
-      <AppText variant="caption" color="mutedForeground" style={styles.flex}>
+      <AppText variant="caption" color="mutedForeground" style={styles.shrink}>
         {text}
       </AppText>
     </View>
@@ -313,6 +313,8 @@ const styles = StyleSheet.create({
   stack: { gap: spacing['4'] },
   center: { alignItems: 'center', gap: spacing['4'], padding: spacing['6'] },
   flex: { flex: 1, flexShrink: 1 },
+  // In a content-sized row `flex: 1` collapses the text to zero width on Android; shrink only.
+  shrink: { flexShrink: 1 },
   gap: { height: spacing['2'] },
   card: {
     gap: spacing['3'],

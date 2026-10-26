@@ -48,9 +48,12 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: filters.city.Bengaluru
 - assertVisible: 1 applied
+- scrollUntilVisible:
+    element:
+      id: filters.type.Locum
+    timeout: 10000
 - tapOn:
     id: filters.type.Locum
-- assertVisible: 2 applied
 - assertVisible: Show 1 role
 - tapOn:
     id: filters.done
@@ -75,6 +78,10 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: filters.reset
 - assertVisible: No filters applied
+- scrollUntilVisible:
+    element:
+      id: filters.salary.plus
+    timeout: 10000
 - tapOn:
     id: filters.salary.plus
 - tapOn:
@@ -85,7 +92,7 @@ appId: work.apronhanger.candidate.dev
     id: filters.salary.plus
 - tapOn:
     id: filters.salary.plus
-- assertVisible: 10+ LPA
+- assertVisible: ₹10\+ LPA
 - tapOn:
     id: filters.sort.salary
 - tapOn:

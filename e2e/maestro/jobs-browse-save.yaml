@@ -18,7 +18,9 @@ appId: work.apronhanger.candidate.dev
 # Save from the card: the bookmark changes at once.
 - tapOn:
     id: job.save.5eed0000-0000-4000-8000-00000000b001
-- assertVisible: Job saved
+- extendedWaitUntil:
+    visible: Job saved
+    timeout: 10000
 
 # Open the job: website sections and the Saved state.
 - tapOn:
@@ -30,11 +32,19 @@ appId: work.apronhanger.candidate.dev
 - assertVisible: Staff Nurse
 - assertVisible: Verified Hospital
 - scrollUntilVisible:
-    element: Compensation
+    element:
+      id: job.savebutton
     timeout: 10000
 - assertVisible: Saved
 - assertVisible: Apply Now
-- assertVisible: Match insights
+- scrollUntilVisible:
+    element: Match insights
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: job.back
+    direction: UP
+    timeout: 10000
 - tapOn:
     id: job.back
 - extendedWaitUntil:

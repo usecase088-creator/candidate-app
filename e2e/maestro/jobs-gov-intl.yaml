@@ -46,6 +46,10 @@ appId: work.apronhanger.candidate.dev
 - hideKeyboard
 
 # "View / Apply" opens the outside link in the in-app browser, away from the app; Back returns.
+- scrollUntilVisible:
+    element:
+      id: gov.apply.5eed0000-0000-4000-8000-00000000c001
+    timeout: 15000
 - tapOn:
     id: gov.apply.5eed0000-0000-4000-8000-00000000c001
 - extendedWaitUntil:
@@ -59,6 +63,11 @@ appId: work.apronhanger.candidate.dev
     timeout: 15000
 
 # International jobs
+- scrollUntilVisible:
+    element:
+      id: gov.back
+    direction: UP
+    timeout: 15000
 - tapOn:
     id: gov.back
 - extendedWaitUntil:
@@ -87,6 +96,10 @@ appId: work.apronhanger.candidate.dev
     element: Pharmacist \(Test\)
     timeout: 10000
 - assertNotVisible: Staff Nurse \(Test\)
+- scrollUntilVisible:
+    element:
+      id: intl.apply.5eed0000-0000-4000-8000-00000000d002
+    timeout: 15000
 - tapOn:
     id: intl.apply.5eed0000-0000-4000-8000-00000000d002
 - extendedWaitUntil:
