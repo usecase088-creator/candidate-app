@@ -14,8 +14,14 @@ appId: work.apronhanger.candidate.dev
     id: login.password
 - inputText: Test@1234
 - runFlow: _common/hideKeyboard.yaml
-- tapOn:
-    id: login.submit
+# iOS: Return on the password field already submits the form, so only tap Sign in if it is still there.
+- runFlow:
+    when:
+      visible:
+        id: login.submit
+    commands:
+      - tapOn:
+          id: login.submit
 - extendedWaitUntil:
     visible: 'This email is registered as a recruiter account. Please sign in on the Recruiter Portal instead.'
     timeout: 20000

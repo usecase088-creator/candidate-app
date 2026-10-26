@@ -15,8 +15,14 @@ appId: work.apronhanger.candidate.dev
     id: login.password
 - inputText: Test@1234
 - runFlow: hideKeyboard.yaml
-- tapOn:
-    id: login.submit
+# iOS: Return on the password field already submits the form, so only tap Sign in if it is still there.
+- runFlow:
+    when:
+      visible:
+        id: login.submit
+    commands:
+      - tapOn:
+          id: login.submit
 - extendedWaitUntil:
     notVisible:
       id: login.screen
@@ -28,9 +34,17 @@ appId: work.apronhanger.candidate.dev
     optional: true
 - runFlow:
     when:
+      platform: Android
       visible: 'Save password.*'
     commands:
       - back
+# iOS: the system "Save Password?" sheet. Never tap "Save".
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Save Password.*'
+    commands:
+      - tapOn: Not Now
 - extendedWaitUntil:
     visible:
       id: home.screen

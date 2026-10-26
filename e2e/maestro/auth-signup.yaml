@@ -60,9 +60,17 @@ appId: work.apronhanger.candidate.dev
     optional: true
 - runFlow:
     when:
+      platform: Android
       visible: 'Save password.*'
     commands:
       - back
+# iOS: the system "Save Password?" sheet. Never tap "Save".
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Save Password.*'
+    commands:
+      - tapOn: Not Now
 - extendedWaitUntil:
     visible:
       id: home.screen
