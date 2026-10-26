@@ -56,7 +56,16 @@ appId: work.apronhanger.candidate.dev
     notVisible:
       id: gov.screen
     timeout: 15000
-- back
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: Done
 - extendedWaitUntil:
     visible:
       id: gov.screen
@@ -106,7 +115,16 @@ appId: work.apronhanger.candidate.dev
     notVisible:
       id: intl.screen
     timeout: 15000
-- back
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: Done
 - extendedWaitUntil:
     visible:
       id: intl.screen

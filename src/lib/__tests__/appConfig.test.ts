@@ -61,6 +61,12 @@ describe('which backend each build talks to (D20)', () => {
     ).toBe('https://staging.example.com');
   });
 
+  it('allows the staging server on Render (a different host from the live one)', () => {
+    const url = 'https://apronhanger-staging-api.onrender.com';
+    expect(configFor({ APP_VARIANT: 'development', API_URL_OVERRIDE: url }).extra?.apiUrl).toBe(url);
+    expect(configFor({ APP_VARIANT: 'preview', PREVIEW_API_URL: url }).extra?.apiUrl).toBe(url);
+  });
+
   it.each([
     ['preview', { PREVIEW_API_URL: 'https://job-ojsr.onrender.com' }],
     ['preview', { API_URL_OVERRIDE: 'https://job-ojsr.onrender.com' }],

@@ -46,7 +46,8 @@
       "distribution": "internal",
       "withoutCredentials": true,
       "env": {
-        "APP_VARIANT": "development"
+        "APP_VARIANT": "development",
+        "API_URL_OVERRIDE": "https://apronhanger-staging-api.onrender.com"
       },
       "android": {
         "buildType": "apk"

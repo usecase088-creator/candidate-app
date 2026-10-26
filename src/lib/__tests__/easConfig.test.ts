@@ -51,6 +51,12 @@ it('e2e-test never points at production: development variant (local API), no cre
   expect(p.ios?.simulator).toBe(true);
 });
 
+it('e2e-test talks to the staging server (cloud runners cannot reach a laptop), never the live one', () => {
+  const url = profile('e2e-test').env?.API_URL_OVERRIDE;
+  expect(url).toBe('https://apronhanger-staging-api.onrender.com');
+  expect(url).not.toMatch(/job-ojsr|apronhanger.work/);
+});
+
 it('test and internal builds are internal, never store builds', () => {
   for (const name of ['development', 'preview', 'e2e-test'])
     expect(profile(name).distribution).toBe('internal');

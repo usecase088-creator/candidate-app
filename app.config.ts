@@ -13,7 +13,8 @@ const PRODUCTION_API_URL = 'https://job-ojsr.onrender.com'; // live backend used
 /** Local reference backend (Task 4): the dev database, reached from the phone through `adb reverse tcp:3000 tcp:3000`. */
 const LOCAL_API_URL = 'http://localhost:3000';
 /** D20: only the production (store) build may talk to the live server. */
-const LIVE_SERVER = /onrender.com|apronhanger.work/;
+// Only the real production host: the staging server (D4) is also on onrender.com but is a test backend.
+const LIVE_SERVER = /job-ojsr.onrender.com|apronhanger.work/;
 
 const VARIANTS: Record<Variant, { name: string; idSuffix: string; scheme: string; apiUrl: string }> = {
   development: {

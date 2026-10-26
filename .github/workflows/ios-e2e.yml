@@ -14,7 +14,7 @@ on:
       flows:
         description: Maestro flow files (space separated)
         required: false
-        default: e2e/maestro/smoke.yaml
+        default: e2e/maestro
 
 jobs:
   # Cheap Linux job (1x minutes): the project's app.config.ts needs its packages installed for eas-cli to read it.
@@ -79,6 +79,15 @@ jobs:
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      # The staging server (Render free plan) sleeps: wake it up, or the first sign-in would time out after 20 s.
+      - name: Wake the staging server
+        run: |
+          for i in $(seq 1 24); do
+            if curl -sf -m 20 https://apronhanger-staging-api.onrender.com/health; then echo; exit 0; fi
+            sleep 5
+          done
+          echo 'staging did not answer'; exit 1
 
       - name: Run Maestro flows (with screen recording)
         run: |
