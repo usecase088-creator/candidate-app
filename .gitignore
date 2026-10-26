@@ -50,3 +50,9 @@ recordings/
 
 # Local-only documents for Raj (issue lists, triage): never committed
 docs/client/
+
+# scratch files from API checks
+*.tmp.json
+*.tmp.txt
+ios-out/
+ios[0-9]/
