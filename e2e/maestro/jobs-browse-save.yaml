@@ -1,0 +1,62 @@
+# Browse -> open a job -> save -> see it in Saved jobs -> remove it. Local backend, seeded candidate.
+# Needs: npm run backend:local (each run of the seed clears the candidate's saved jobs) and Metro.
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/login.yaml
+
+# Home: the headline, the recommended rail (the server scores every job for a signed-in candidate) and the list.
+- assertVisible: Your next clinical role, curated for you.
+- scrollUntilVisible:
+    element:
+      id: recommended.rail
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: job.open.5eed0000-0000-4000-8000-00000000b001
+    timeout: 30000
+
+# Save from the card: the bookmark changes at once.
+- tapOn:
+    id: job.save.5eed0000-0000-4000-8000-00000000b001
+- assertVisible: Job saved
+
+# Open the job: website sections and the Saved state.
+- tapOn:
+    id: job.open.5eed0000-0000-4000-8000-00000000b001
+- extendedWaitUntil:
+    visible:
+      id: job.screen
+    timeout: 15000
+- assertVisible: Staff Nurse
+- assertVisible: Verified Hospital
+- scrollUntilVisible:
+    element: Compensation
+    timeout: 10000
+- assertVisible: Saved
+- assertVisible: Apply Now
+- assertVisible: Match insights
+- tapOn:
+    id: job.back
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 10000
+
+# Saved jobs lists it; removing it empties the list.
+- scrollUntilVisible:
+    element:
+      id: home.link.saved
+    direction: UP
+    timeout: 20000
+- tapOn:
+    id: home.link.saved
+- extendedWaitUntil:
+    visible:
+      id: saved.screen
+    timeout: 10000
+- assertVisible: 1 role bookmarked for later
+- assertVisible: Staff Nurse
+- tapOn:
+    id: job.save.5eed0000-0000-4000-8000-00000000b001
+- assertVisible: No saved jobs yet
+- assertVisible: Tap the bookmark icon on any job to save it here.

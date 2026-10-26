@@ -3,7 +3,7 @@ import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 
 import { useSession } from '@/features/auth/sessionStore';
-import { colors, fonts, fontSizes } from '@/theme/tokens';
+import { colors, fonts } from '@/theme/tokens';
 
 type Tab = { name: string; title: string; testID: string; ios: SFSymbol; android: AndroidSymbol };
 
@@ -39,7 +39,9 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.brand,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: fontSizes.xs.fontSize },
+        // 4 tabs at 320 pt: "Applications" must not be cut off, so 11 pt and no side padding.
+        tabBarItemStyle: { paddingHorizontal: 0 },
+        tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 11 },
       }}
     >
       {TABS.map((tab) => (

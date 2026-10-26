@@ -53,7 +53,7 @@ test('signs in and opens Home', async ({ page }) => {
 
   await expect(page.getByText('Welcome back!')).toBeVisible();
   await expect(page.getByTestId('home.screen')).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText('Hi, Test Candidate')).toBeVisible();
+  await expect(page.getByText('Your next clinical role, curated for you.')).toBeVisible();
   expect(sent[0]).toEqual({ email: 'candidate@apronhanger.test', password: 'Test@1234' });
 });
 

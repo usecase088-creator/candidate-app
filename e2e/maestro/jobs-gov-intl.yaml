@@ -1,0 +1,100 @@
+# Government and international listings: lists, deadline styling, search, country chips, outside links in the browser.
+# Local backend with the seeded listings (scripts/backend-local/overlay/app-scripts/seedData.ts).
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/login.yaml
+
+# Government jobs
+- scrollUntilVisible:
+    element:
+      id: home.link.gov
+    timeout: 20000
+- tapOn:
+    id: home.link.gov
+- extendedWaitUntil:
+    visible:
+      id: gov.screen
+    timeout: 10000
+- assertVisible: 🏛️ Government Jobs & Exams
+- assertVisible: Total Listings
+- scrollUntilVisible:
+    element: AIIMS
+    timeout: 10000
+- assertVisible: 3d left
+- scrollUntilVisible:
+    element: 'Expired · .*'
+    timeout: 10000
+- scrollUntilVisible:
+    element: No deadline
+    timeout: 10000
+
+# Search narrows the list.
+- scrollUntilVisible:
+    element:
+      id: gov.search
+    direction: UP
+    timeout: 10000
+- tapOn:
+    id: gov.search
+- inputText: esic
+- hideKeyboard
+- assertVisible: Specialist Walk-in (Test, no deadline)
+- assertNotVisible: AIIMS
+- tapOn:
+    id: gov.search
+- eraseText: 10
+- hideKeyboard
+
+# "View / Apply" opens the outside link in the in-app browser, away from the app; Back returns.
+- tapOn:
+    id: gov.apply.5eed0000-0000-4000-8000-00000000c001
+- extendedWaitUntil:
+    notVisible:
+      id: gov.screen
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    visible:
+      id: gov.screen
+    timeout: 15000
+
+# International jobs
+- tapOn:
+    id: gov.back
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: home.link.intl
+    timeout: 20000
+- tapOn:
+    id: home.link.intl
+- extendedWaitUntil:
+    visible:
+      id: intl.screen
+    timeout: 10000
+- assertVisible: 🌍 International Healthcare Jobs
+- assertVisible: Countries
+- scrollUntilVisible:
+    element:
+      id: intl.country.UAE
+    timeout: 10000
+- tapOn:
+    id: intl.country.UAE
+- scrollUntilVisible:
+    element: Pharmacist \(Test\)
+    timeout: 10000
+- assertNotVisible: Staff Nurse \(Test\)
+- tapOn:
+    id: intl.apply.5eed0000-0000-4000-8000-00000000d002
+- extendedWaitUntil:
+    notVisible:
+      id: intl.screen
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    visible:
+      id: intl.screen
+    timeout: 15000

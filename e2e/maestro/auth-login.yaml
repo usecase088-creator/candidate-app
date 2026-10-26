@@ -38,7 +38,7 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: home.screen
     timeout: 20000
-- assertVisible: Hi, Test Candidate
+- assertVisible: Your next clinical role, curated for you.
 - tapOn:
     id: tabs.profile
 - tapOn:

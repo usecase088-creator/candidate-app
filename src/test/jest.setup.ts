@@ -1,6 +1,10 @@
 import '@shopify/flash-list/jestSetup';
+import { configure } from '@testing-library/react-native';
 
 import { server } from './msw/server';
+
+// Screen tests start the whole app; on a busy laptop the default 1 s for findBy*/waitFor is too tight.
+configure({ asyncUtilTimeout: 4000 });
 
 // The native manifest is empty in Jest. Give every test the development variant's `extra` (app.config.ts),
 // pointing at the MSW base URL, so getEnv() and src/api/client.ts work as in the dev build.

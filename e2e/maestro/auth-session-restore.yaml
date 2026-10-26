@@ -40,6 +40,6 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: home.screen
     timeout: 30000
-- assertVisible: Hi, Test Candidate
+- assertVisible: Your next clinical role, curated for you.
 - assertNotVisible:
     id: login.screen

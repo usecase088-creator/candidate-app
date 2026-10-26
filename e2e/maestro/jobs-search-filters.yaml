@@ -1,0 +1,103 @@
+# Search tab: text, city, filters, sort, and filters kept when switching tabs. Local backend, 4 seeded jobs
+# (Kolkata: Staff Nurse Full-time 3-4.5 LPA, Consultant Cardiologist Full-time 30-45 LPA;
+#  Bengaluru: Radiology Technician Part-time, Locum Dental Surgeon Locum 6-8 LPA).
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/login.yaml
+- tapOn:
+    id: tabs.search
+- extendedWaitUntil:
+    visible:
+      id: search.screen
+    timeout: 10000
+- assertVisible: Showing 4 of 4 verified roles
+
+# Text: live, case-insensitive.
+- tapOn:
+    id: search.query
+- inputText: CARDIO
+- hideKeyboard
+- assertVisible: Showing 1 of 4 verified roles
+- assertVisible: Consultant Cardiologist
+- tapOn:
+    id: search.query
+- eraseText: 20
+- hideKeyboard
+- assertVisible: Showing 4 of 4 verified roles
+
+# City or state.
+- tapOn:
+    id: search.city
+- inputText: karnataka
+- hideKeyboard
+- assertVisible: Showing 2 of 4 verified roles
+- tapOn:
+    id: search.city
+- eraseText: 20
+- hideKeyboard
+
+# Filter sheet: city, then job type.
+- tapOn:
+    id: search.filters
+- extendedWaitUntil:
+    visible:
+      id: filters.sheet
+    timeout: 5000
+- assertVisible: Premium filters
+- assertVisible: No filters applied
+- tapOn:
+    id: filters.city.Bengaluru
+- assertVisible: 1 applied
+- tapOn:
+    id: filters.type.Locum
+- assertVisible: 2 applied
+- assertVisible: Show 1 role
+- tapOn:
+    id: filters.done
+- assertVisible: Showing 1 of 4 verified roles
+- assertVisible: Locum Dental Surgeon
+
+# Filters stay when the user switches tabs and comes back.
+- tapOn:
+    id: tabs.home
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 10000
+- tapOn:
+    id: tabs.search
+- assertVisible: Showing 1 of 4 verified roles
+- assertVisible: 'Filters, 2 active'
+
+# Reset, then salary (+ moves 2 LPA) and sort.
+- tapOn:
+    id: search.filters
+- tapOn:
+    id: filters.reset
+- assertVisible: No filters applied
+- tapOn:
+    id: filters.salary.plus
+- tapOn:
+    id: filters.salary.plus
+- tapOn:
+    id: filters.salary.plus
+- tapOn:
+    id: filters.salary.plus
+- tapOn:
+    id: filters.salary.plus
+- assertVisible: 10+ LPA
+- tapOn:
+    id: filters.sort.salary
+- tapOn:
+    id: filters.done
+- assertVisible: Showing 1 of 4 verified roles
+- assertVisible: Consultant Cardiologist
+
+# Opening a result shows the job.
+- tapOn:
+    id: job.open.5eed0000-0000-4000-8000-00000000b002
+- extendedWaitUntil:
+    visible:
+      id: job.screen
+    timeout: 15000
+- assertVisible: Consultant Cardiologist

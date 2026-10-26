@@ -149,6 +149,73 @@ export function buildSeedData(env: Env, now: Date) {
     },
   ];
 
+  // Phase 2 E2E: listings in every deadline state the gov and international screens style. Fixed ids (upserts).
+  // Dates are relative to the seed run, so the states stay true. Links are example.org: never a real site.
+  const DAY = 24 * 60 * 60 * 1000;
+  const daysFromNow = (n: number) => new Date(now.getTime() + n * DAY);
+  const govJobs = [
+    {
+      id: '5eed0000-0000-4000-8000-00000000c001',
+      examAuthority: 'AIIMS',
+      name: 'Nursing Officer Recruitment (Test)',
+      lastDate: daysFromNow(30),
+      link: 'https://example.org/gov/aiims-nursing-officer',
+    },
+    {
+      id: '5eed0000-0000-4000-8000-00000000c002',
+      examAuthority: 'UPSC',
+      name: 'Medical Officer Combined Exam (Test)',
+      lastDate: daysFromNow(3),
+      link: 'https://example.org/gov/upsc-medical-officer',
+    },
+    {
+      id: '5eed0000-0000-4000-8000-00000000c003',
+      examAuthority: 'State PSC',
+      name: 'Staff Nurse Exam (Test, closed)',
+      lastDate: daysFromNow(-10),
+      link: 'https://example.org/gov/state-psc-staff-nurse',
+    },
+    {
+      id: '5eed0000-0000-4000-8000-00000000c004',
+      examAuthority: 'ESIC',
+      name: 'Specialist Walk-in (Test, no deadline)',
+      lastDate: null,
+      link: 'https://example.org/gov/esic-specialist',
+    },
+  ];
+  const intlJobs = [
+    {
+      id: '5eed0000-0000-4000-8000-00000000d001',
+      jobPosition: 'Staff Nurse (Test)',
+      specialty: 'ICU',
+      city: 'London',
+      country: 'United Kingdom',
+      countryFlag: '🇬🇧',
+      payscale: '£30k–£38k',
+      experience: '2+ yrs',
+      qualification: 'B.Sc Nursing',
+      license: 'NMC',
+      visaSponsorship: 'Sponsorship',
+      applyLink: 'https://example.org/intl/uk-staff-nurse',
+      lastDate: daysFromNow(40),
+    },
+    {
+      id: '5eed0000-0000-4000-8000-00000000d002',
+      jobPosition: 'Pharmacist (Test)',
+      specialty: 'Retail',
+      city: 'Dubai',
+      country: 'UAE',
+      countryFlag: '🇦🇪',
+      payscale: 'AED 8k–12k',
+      experience: '1+ yrs',
+      qualification: 'B.Pharm',
+      license: 'DHA',
+      visaSponsorship: 'Employer',
+      applyLink: 'https://example.org/intl/uae-pharmacist',
+      lastDate: null,
+    },
+  ];
+
   const candidateName = 'Test Candidate';
   const candidate = {
     email: SEED_CANDIDATE_EMAIL,
@@ -169,5 +236,5 @@ export function buildSeedData(env: Env, now: Date) {
   /** Free for signup tests: seedApp deletes candidate accounts on these numbers each run, so signup E2E can repeat. */
   const signupNumbers = numbers.slice(1);
 
-  return { candidate, recruiter, hospitals, jobs, signupNumbers };
+  return { candidate, recruiter, hospitals, jobs, govJobs, intlJobs, signupNumbers };
 }

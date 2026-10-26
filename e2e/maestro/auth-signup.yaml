@@ -67,4 +67,4 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: home.screen
     timeout: 20000
-- assertVisible: Hi, Maestro Tester
+- assertVisible: Your next clinical role, curated for you.

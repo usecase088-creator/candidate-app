@@ -100,3 +100,38 @@ describe('signup test numbers', () => {
     expect(buildSeedData(env, now).signupNumbers).toEqual(['9000000002', '9000000003']);
   });
 });
+
+describe('seed government and international listings (Phase 2 E2E)', () => {
+  it('have fixed unique ids, so re-running the seed updates instead of duplicating', () => {
+    const a = buildSeedData(env, now);
+    const b = buildSeedData(env, new Date(now.getTime() + DAY));
+    expect(a.govJobs.map((j) => j.id)).toEqual(b.govJobs.map((j) => j.id));
+    expect(a.intlJobs.map((j) => j.id)).toEqual(b.intlJobs.map((j) => j.id));
+    expect(new Set(a.govJobs.map((j) => j.id)).size).toBe(a.govJobs.length);
+    expect(new Set(a.intlJobs.map((j) => j.id)).size).toBe(a.intlJobs.length);
+  });
+
+  it('links are https on example.org, never a real site', () => {
+    const { govJobs, intlJobs } = buildSeedData(env, now);
+    for (const link of [...govJobs.map((j) => j.link), ...intlJobs.map((j) => j.applyLink)]) {
+      expect(link).toMatch(/^https:\/\/example\.org\//);
+    }
+  });
+
+  it('cover every deadline state the screens style: open, ending soon, expired, none', () => {
+    const { govJobs, intlJobs } = buildSeedData(env, now);
+    const left = (d: Date | null) => (d ? (d.getTime() - now.getTime()) / DAY : null);
+    const states = govJobs.map((j) => left(j.lastDate));
+    expect(states.some((d) => d !== null && d > 7)).toBe(true);
+    expect(states.some((d) => d !== null && d > 0 && d <= 7)).toBe(true);
+    expect(states.some((d) => d !== null && d < 0)).toBe(true);
+    expect(states).toContain(null);
+    expect(intlJobs.some((j) => j.lastDate && j.lastDate > now)).toBe(true);
+  });
+
+  it('international listings span two countries, so the country chips and filter can be tested', () => {
+    const { intlJobs } = buildSeedData(env, now);
+    expect(new Set(intlJobs.map((j) => j.country)).size).toBeGreaterThanOrEqual(2);
+    for (const j of intlJobs) expect(j.countryFlag).toBeTruthy();
+  });
+});
