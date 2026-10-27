@@ -4,19 +4,24 @@ import type { Breadcrumb, ErrorEvent } from '@sentry/react-native';
 
 const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 const JWT = /\beyJ[\w-]+\.[\w-]+\.[\w-]+/g;
+// Phase 4: the phone's Expo push token and the long-lived refresh token (backend PR 8) never leave the phone in a report.
+const PUSH_TOKEN = /Expo(?:nent)?PushToken\[[^\]]*\]/g;
+const REFRESH_TOKEN = /\brt_[\w-]{20,}/g;
 const BEARER = /Bearer\s+[^\s"',;]+/g;
 // Indian mobile numbers as people type them: 9876543210, 98765 43210, +91 98765 43210, 919876543210.
 // Not inside longer words or numbers, so UUIDs, timestamps and ids survive.
 const PHONE = /(?<![\w-])(?:\+?91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}(?![\w-])/g;
 
 const SENSITIVE_KEYS =
-  /^(password|new_?password|token|signup_token|reset_token|otp|mobile|phone|email|name|full_?name|username|authorization|cookie)$/i;
+  /^(password|new_?password|token|refresh_?token|push_?token|signup_token|reset_token|otp|mobile|phone|email|name|full_?name|username|authorization|cookie)$/i;
 const BODY_KEYS = /^(body|data|request_body|response_body)$/i;
 const MAX_DEPTH = 8;
 
 export function scrubText(text: string): string {
   return text
     .replace(JWT, '[token]')
+    .replace(PUSH_TOKEN, '[push-token]')
+    .replace(REFRESH_TOKEN, '[token]')
     .replace(BEARER, 'Bearer [token]')
     .replace(EMAIL, '[email]')
     .replace(PHONE, '[phone]');

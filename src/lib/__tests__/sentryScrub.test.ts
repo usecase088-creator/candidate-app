@@ -13,6 +13,8 @@ describe('scrubText', () => {
     ['a 91-prefixed mobile', 'mobile 919876543210', 'mobile [phone]'],
     ['a JWT', `token ${JWT} end`, 'token [token] end'],
     ['a bearer header value', 'Bearer abc.def-123', 'Bearer [token]'],
+    ['an Expo push token', 'registered ExponentPushToken[abcDEF123_-xyz] ok', 'registered [push-token] ok'],
+    ['a refresh token', 'refresh rt_Zm9vYmFyX2Jhel8xMjM0NTY3ODkw failed', 'refresh [token] failed'],
   ])('removes %s', (_label, input, expected) => {
     expect(scrubText(input)).toBe(expected);
   });
@@ -24,6 +26,21 @@ describe('scrubText', () => {
     ['API paths', 'GET /api/jobs/5eed0000-0000-4000-8000-00000000b001'],
   ])('keeps %s', (_label, input) => {
     expect(scrubText(input)).toBe(input);
+  });
+});
+
+describe('scrubEvent: sensitive keys added in Phase 4', () => {
+  it('filters refresh tokens and passwords wherever they appear in extra data', () => {
+    const event = scrubEvent({
+      type: undefined,
+      extra: { refreshToken: 'rt_secret', password: 'x', pushToken: 'ExponentPushToken[a]', ok: 'fine' },
+    } as never) as { extra: Record<string, unknown> };
+    expect(event.extra).toEqual({
+      refreshToken: '[filtered]',
+      password: '[filtered]',
+      pushToken: '[filtered]',
+      ok: 'fine',
+    });
   });
 });
 
