@@ -6,10 +6,10 @@ import { http, HttpResponse } from 'msw';
 import type { Application } from '@/api/schemas/applications';
 import { type ApplicationFixture, application } from '@/test/fixtures/applications';
 
-const fieldNames = (form: unknown) => [...new Set([...(form as { keys(): Iterable<string> }).keys()])];
-
 import { API } from './handlers';
 import { server } from './server';
+
+const fieldNames = (form: unknown) => [...new Set([...(form as { keys(): Iterable<string> }).keys()])];
 
 export type ApplicationsBackend = {
   /** Newest first, like the real list. */
