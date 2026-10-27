@@ -30,6 +30,15 @@ export const colors = {
   warning: '#DEA143',
   /** Amber text for "7 days or fewer left" (website #d97706 is 3.2:1 on white; this is 5.0:1, like D15). */
   warningText: '#B45309',
+  /** Application status pills (website applicationStatus.ts: indigo, amber, emerald, sky at 15 percent on white). */
+  indigoSoft: '#EBEBFD',
+  indigoText: '#4338CA',
+  amberSoft: '#FEF4E0',
+  amberText: '#78350F',
+  emeraldSoft: '#E6F8F1',
+  emeraldText: '#047857',
+  skySoft: '#E8F4FD',
+  skyText: '#075985',
   border: '#D4DAE1',
   input: '#D4DAE1',
   ring: '#326AD9',

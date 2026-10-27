@@ -39,7 +39,15 @@ const FINAL = [
 ];
 
 export function installApplicationsBackend(initial: Partial<ApplicationsBackend> = {}): ApplicationsBackend {
-  const b: ApplicationsBackend = { apps: [], calls: [], bodies: [], forms: [], ...initial };
+  // Rows are copied: an answer changes the status in place, and a shared fixture must not leak into the next test.
+  const b: ApplicationsBackend = {
+    apps: [],
+    calls: [],
+    bodies: [],
+    forms: [],
+    ...initial,
+  };
+  b.apps = b.apps.map((row) => structuredClone(row));
   const note = (method: string, url: string) => b.calls.push(`${method} ${new URL(url).pathname}`);
 
   server.use(

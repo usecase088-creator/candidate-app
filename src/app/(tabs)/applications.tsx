@@ -1,12 +1,5 @@
-import { PlaceholderScreen } from '@/components/PlaceholderScreen';
+import { ApplicationsScreen } from '@/features/applications/screens/ApplicationsScreen';
 
-// Placeholder: the applications list comes in a later phase. Website title: "My Applications".
 export default function Applications() {
-  return (
-    <PlaceholderScreen
-      testID="applications.screen"
-      title="My Applications"
-      note="Your applications will show here."
-    />
-  );
+  return <ApplicationsScreen />;
 }

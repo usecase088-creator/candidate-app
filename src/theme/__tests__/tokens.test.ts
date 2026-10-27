@@ -47,6 +47,10 @@ describe('colours (docs/reference/THEME.md)', () => {
     ['error text in the error box', 'errorText', 'destructiveSoft'],
     ['primary button text', 'primaryForeground', 'primary'],
     ['brand button text', 'brandForeground', 'brand'],
+    ['interview pill', 'indigoText', 'indigoSoft'],
+    ['document pill', 'amberText', 'amberSoft'],
+    ['offer and joining pill', 'emeraldText', 'emeraldSoft'],
+    ['reviewed pill', 'skyText', 'skySoft'],
   ] as const)('%s meets WCAG AA for small text (4.5:1)', (_label, fg, bg) => {
     expect(contrast(colors[fg], colors[bg])).toBeGreaterThanOrEqual(4.5);
   });
