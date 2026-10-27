@@ -68,7 +68,6 @@ const MAX_NAME_LENGTH = 100;
 
 /** A display and upload name: no folders, no control characters, at most 100 characters, extension kept. */
 export function cleanFileName(raw: string): string {
-  // eslint-disable-next-line no-control-regex
   const base = (raw.split(/[\\/]/).pop() ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim();
   if (!base) return 'file';
   if (base.length <= MAX_NAME_LENGTH) return base;
