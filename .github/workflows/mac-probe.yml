@@ -1,0 +1,21 @@
+# Which macOS runner labels does GitHub give us right now, and do they have the Xcode and iOS simulator the app needs?
+# Manual and tiny (a few seconds per label). Used to diagnose iOS E2E runs that wait for a runner.
+name: mac-probe
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    strategy:
+      fail-fast: false
+      matrix:
+        label: [macos-15, macos-26, macos-latest, macos-15-large]
+    runs-on: ${{ matrix.label }}
+    timeout-minutes: 5
+    steps:
+      - run: |
+          echo "label: ${{ matrix.label }}"
+          sw_vers
+          xcodebuild -version
+          xcrun simctl list runtimes | grep -i ios || true
+          xcrun simctl list devices available | grep -i "iphone se" | head -3 || true
