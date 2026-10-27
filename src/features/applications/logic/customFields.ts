@@ -33,3 +33,23 @@ export function visibleChoice(value: unknown): 'Yes' | 'No' | undefined {
   if (value === undefined) return undefined;
   return value ? 'Yes' : 'No';
 }
+
+/**
+ * The answers as sent: only the job's own questions, empty ones left out, number boxes as numbers (the form keeps what
+ * was typed, so "1." and "-" can be typed on the way). An unreadable number is sent as typed so the server names it.
+ */
+export function answersForSubmit(fields: CustomField[], answers: CustomFieldResponses): CustomFieldResponses {
+  const out: CustomFieldResponses = {};
+  for (const f of fields) {
+    const raw = answers[f.id];
+    if (raw === undefined || raw === null) continue;
+    if (typeof raw === 'string' && raw.trim() === '') continue;
+    if (f.type === 'number' && typeof raw === 'string') {
+      const n = Number(raw);
+      out[f.id] = Number.isNaN(n) ? raw : n;
+    } else {
+      out[f.id] = raw;
+    }
+  }
+  return out;
+}

@@ -1,6 +1,6 @@
 import type { CustomField } from '@/api/schemas/applications';
 
-import { numberAnswer, validateAnswers, visibleChoice } from '../customFields';
+import { answersForSubmit, numberAnswer, validateAnswers, visibleChoice } from '../customFields';
 
 const field = (over: Partial<CustomField> & { id: string }): CustomField => ({
   label: `Question ${over.id}`,
@@ -80,5 +80,41 @@ describe('visibleChoice', () => {
     expect(visibleChoice(true)).toBe('Yes');
     expect(visibleChoice(false)).toBe('No');
     expect(visibleChoice(undefined)).toBeUndefined();
+  });
+});
+
+describe('answersForSubmit (what is sent to the server)', () => {
+  const fields = [
+    field({ id: 't', type: 'text' }),
+    field({ id: 'n', type: 'number' }),
+    field({ id: 's', type: 'select', options: ['a', 'b'] }),
+    field({ id: 'c', type: 'checkbox' }),
+  ];
+
+  it('sends numbers as numbers, text as typed, and keeps No (false)', () => {
+    expect(answersForSubmit(fields, { t: ' CT scanner ', n: '12', s: 'a', c: false })).toEqual({
+      t: ' CT scanner ',
+      n: 12,
+      s: 'a',
+      c: false,
+    });
+  });
+
+  it('leaves out empty answers', () => {
+    expect(answersForSubmit(fields, { t: '', n: '', s: undefined as never })).toEqual({});
+    expect(answersForSubmit(fields, { t: '   ' })).toEqual({});
+  });
+
+  it('sends a number that cannot be read as it is, so the server can name the question', () => {
+    expect(answersForSubmit(fields, { n: 'many' })).toEqual({ n: 'many' });
+  });
+
+  it('ignores answers to questions the job does not have', () => {
+    expect(answersForSubmit(fields, { gone: 'x', t: 'y' })).toEqual({ t: 'y' });
+  });
+
+  it('decimals and negatives stay numbers', () => {
+    expect(answersForSubmit(fields, { n: '1.5' })).toEqual({ n: 1.5 });
+    expect(answersForSubmit(fields, { n: '-4' })).toEqual({ n: -4 });
   });
 });

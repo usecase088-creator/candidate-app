@@ -8,6 +8,9 @@ import Applications from '@/app/(tabs)/applications';
 import Home from '@/app/(tabs)/index';
 import Profile from '@/app/(tabs)/profile';
 import Search from '@/app/(tabs)/search';
+import ApplyChooser from '@/app/apply/[jobId]/index';
+import ApplyForm from '@/app/apply/[jobId]/form';
+import ApplyUpload from '@/app/apply/[jobId]/upload';
 import GovJobs from '@/app/gov-jobs';
 import IntlJobs from '@/app/intl-jobs';
 import JobDetails from '@/app/job/[id]';
@@ -25,6 +28,9 @@ export const appRoutes = {
   '(tabs)/search': Search,
   '(tabs)/applications': Applications,
   '(tabs)/profile': Profile,
+  'apply/[jobId]/index': ApplyChooser,
+  'apply/[jobId]/form': ApplyForm,
+  'apply/[jobId]/upload': ApplyUpload,
   'job/[id]': JobDetails,
   'saved-jobs': SavedJobs,
   'gov-jobs': GovJobs,

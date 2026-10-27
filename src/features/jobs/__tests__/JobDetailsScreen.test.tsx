@@ -195,11 +195,11 @@ describe('Job details: content (website wording)', () => {
 });
 
 describe('Job details: Apply Now and Save', () => {
-  it('Apply Now is there and tells the candidate it is coming (the apply flow is Phase 3)', async () => {
+  it('Apply Now opens the apply screen of this job (Phase 3)', async () => {
     installJobsBackend({ jobs: [full] });
     await open();
     await fireEvent.press(await screen.findByTestId('job.apply'));
-    expect(await screen.findByText('Applying from the app arrives in the next update.')).toBeOnTheScreen();
+    expect(await screen.findByTestId('apply.screen')).toBeOnTheScreen();
   });
 
   it('a closed job shows a disabled "Position closed"', async () => {

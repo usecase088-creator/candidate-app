@@ -10,7 +10,6 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Screen } from '@/components/ui/Screen';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { AppText } from '@/components/ui/Text';
-import { useToast } from '@/components/ui/Toast';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import { HospitalLogo } from '../components/HospitalLogo';
@@ -87,7 +86,7 @@ export function JobDetailsScreen() {
 }
 
 function Details({ job }: { job: Job }) {
-  const toast = useToast();
+  const router = useRouter();
   const savedIds = useSavedIdSet();
   const { toggle } = useToggleSave();
   const openJob = useOpenJob();
@@ -183,7 +182,7 @@ function Details({ job }: { job: Job }) {
           testID="job.apply"
           label={closed ? 'Position closed' : 'Apply Now'}
           disabled={closed}
-          onPress={() => toast.show('Applying from the app arrives in the next update.', { variant: 'info' })}
+          onPress={() => router.push({ pathname: '/apply/[jobId]', params: { jobId: job.id } })}
         />
         <SaveButton
           testID="job.savebutton"
