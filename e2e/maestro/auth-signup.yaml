@@ -25,6 +25,7 @@ appId: work.apronhanger.candidate.dev
     id: signup.email
 # A .test address: never a real-looking inbox.
 - inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
+- assertVisible: 'maestro\+.*@apronhanger.test'
 # Keyboard "next" moves to the password field, as a user would (the field is under the keyboard here).
 - pressKey: Enter
 - waitForAnimationToEnd
