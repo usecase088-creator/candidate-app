@@ -21,10 +21,14 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 - EAS iOS simulator build `5abe96e6` (free). GitHub workflow `ios-e2e` (manual). Run 40401476071: the app **starts, signs in against staging and shows the real jobs** on an iPhone SE (iOS 26.2);
   `smoke` passes. Scripted flows fail on iOS differences in the scripts, not the app: Maestro `hideKeyboard` is unsupported (now `_common/hideKeyboard.yaml`: Return on iOS),
   Return on the password field already submits, and iOS shows a "Save Password?" sheet.
-- **Committed locally but NOT pushed (Raj: no pushes overnight): `2e6efb6` (iOS flow fixes + summary) and the cleanup commit after it.** Push, then dispatch the workflow with ONE flow first:
-  `POST /repos/usecase088-creator/candidate-app/actions/workflows/ios-e2e.yml/dispatches {"ref":"main","inputs":{"flows":"e2e/maestro/auth-login.yaml"}}` (GitHub token in `.env.local`), then
-  `jobs-browse-save`, then the whole folder. Reseed first (`npm run backend:local -- --no-start`: it frees the signup number and clears saved jobs; staging shares the dev database).
-- Suggested push: add `env: MAESTRO_DRIVER_STARTUP_TIMEOUT: 180000` to the Maestro step (run 40398859835 failed with "iOS driver not ready in time"; one run waited 15 min for a runner and was cancelled by GitHub).
+- **Raj said "push" on 2026-10-27; everything is pushed.** Flow fixes found on the iPhone (all in the scripts, none in the app): `hideKeyboard` is not supported (Return instead);
+  Return on a password / mobile field submits the form; the "Save Password?" sheet covers messages (tap "Not Now"); the card title button hides its text (assert by `job.title.<id>`);
+  `clearState` does not clear the iOS keychain (the workflow now reinstalls the app and resets the keychain before every flow); on the sign-up form the email field sits behind the keyboard
+  (Return to the mobile field, then swipe up before tapping the email).
+- **Result by flow (run in several runs, each flow on a clean app):** `smoke`, `auth-login`, `auth-session-restore`, `auth-forgot-password`, `auth-role-rejected`, `auth-signup`,
+  `jobs-browse-save`, `jobs-search-filters`, `jobs-gov-intl` all passed at least once on the iPhone simulator. One whole-folder run (all nine in a row) is the last check: the first attempt
+  hit the workflow's 30-minute limit (now 75 minutes). See the end of this section for its outcome if it was recorded.
+- Each flow run saves a screenshot and the UI hierarchy (`end-<flow>.png`, `hierarchy-<flow>.json`) in the artifact: look there first when a flow fails.
 - Minutes: runs 1 and 2 were on the private repo (about 8 macOS minutes, ×10). Later runs are free (public). EAS: 1 free iOS build.
 
 ## How to run the phone flows (Android)

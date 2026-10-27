@@ -51,7 +51,7 @@ jobs:
   ios-simulator:
     needs: find-build
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
