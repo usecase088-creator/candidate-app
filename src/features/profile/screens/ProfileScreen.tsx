@@ -10,7 +10,18 @@ import { queryView } from '@/features/jobs/hooks/queryView';
 import { useSession } from '@/features/auth/sessionStore';
 import { spacing } from '@/theme/tokens';
 
+import { AvatarSection } from '../components/AvatarSection';
 import { useCandidateMe } from '../hooks/useCandidateMe';
+
+function initialsOf(name: string, given?: string | null) {
+  if (given) return given;
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('');
+}
 
 /** Profile tab: who you are, how complete the profile is, and the way to Settings. Sign out stays one tap away. */
 export function ProfileScreen() {
@@ -39,6 +50,7 @@ export function ProfileScreen() {
         )}
         {view === 'ready' && me && (
           <View style={styles.card}>
+            <AvatarSection avatarUrl={me.avatarUrl} initials={initialsOf(String(name), me.initials)} />
             <AppText testID="profile.name" variant="heading">
               {String(name)}
             </AppText>

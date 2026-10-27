@@ -64,6 +64,17 @@ export function validateDocumentFiles(files: PickedFile[]): string | undefined {
   return undefined;
 }
 
+const AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+/** Profile picture: JPG, PNG or WebP, 5 MB (API.md §23, website wording). */
+export function validateAvatarFile(file: PickedFile): string | undefined {
+  const mime = effectiveMime(file);
+  if (!mime || !AVATAR_TYPES.has(mime))
+    return 'Unsupported file format. Please upload a JPG, PNG, or WEBP image.';
+  if (file.size != null && file.size > DOCUMENT_MAX_BYTES) return 'Profile picture must be less than 5MB.';
+  return undefined;
+}
+
 const MAX_NAME_LENGTH = 100;
 
 /** A display and upload name: no folders, no control characters, at most 100 characters, extension kept. */

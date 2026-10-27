@@ -55,13 +55,13 @@ function fromPhotos(res: ImagePicker.ImagePickerResult): PickResult {
   };
 }
 
-export async function pickGalleryPhotos(): Promise<PickResult> {
+export async function pickGalleryPhotos(multiple = true): Promise<PickResult> {
   try {
     return fromPhotos(
       await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         quality: PHOTO_QUALITY,
-        allowsMultipleSelection: true,
+        allowsMultipleSelection: multiple,
         exif: false,
       }),
     );

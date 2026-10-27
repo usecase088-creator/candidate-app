@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { api } from '@/api/client';
 import { ApiError } from '@/api/errors';
 
-import { uploadApplicationDocuments, uploadCv } from '../uploadsApi';
+import { deleteAvatar, uploadApplicationDocuments, uploadAvatar, uploadCv } from '../uploadsApi';
 
 type Part = { field: string; value: unknown };
 
@@ -160,5 +160,36 @@ describe('uploadApplicationDocuments', () => {
       status: 400,
       serverMessage: 'Invalid file type: text/plain. Only PDF, JPEG, PNG, and WebP are allowed.',
     });
+  });
+});
+
+describe('uploadAvatar / deleteAvatar', () => {
+  it('POSTs one picture in the field "avatar" to /api/upload/avatar', async () => {
+    const { parts, upload } = capture();
+    upload.mockResolvedValueOnce({ url: 'https://res.example.test/a.jpg', publicId: 'avatars/a' } as never);
+    await expect(
+      uploadAvatar({ uri: 'file:///cache/me.jpg', name: 'me.jpg', size: 1000, mime: 'image/jpeg' }),
+    ).resolves.toEqual({ url: 'https://res.example.test/a.jpg', publicId: 'avatars/a' });
+    expect(upload).toHaveBeenCalledWith(
+      '/api/upload/avatar',
+      expect.any(FormData),
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(parts).toEqual([
+      { field: 'avatar', value: { uri: 'file:///cache/me.jpg', name: 'me.jpg', type: 'image/jpeg' } },
+    ]);
+  });
+  it('does not send a file the website would refuse', async () => {
+    const { upload } = capture();
+    await expect(
+      uploadAvatar({ uri: 'file:///c/cv.pdf', name: 'cv.pdf', size: 10, mime: 'application/pdf' }),
+    ).rejects.toThrow('Unsupported file format');
+    expect(upload).not.toHaveBeenCalled();
+  });
+  it('DELETEs /api/upload/avatar', async () => {
+    const del = jest.spyOn(api, 'delete').mockResolvedValueOnce({ success: true } as never);
+    await deleteAvatar();
+    expect(del).toHaveBeenCalledWith('/api/upload/avatar', expect.anything());
   });
 });

@@ -1,4 +1,5 @@
 import {
+  validateAvatarFile,
   cleanFileName,
   formatBytes,
   CV_MAX_BYTES,
@@ -154,5 +155,23 @@ describe('formatBytes', () => {
   it('is empty when the size is not known', () => {
     expect(formatBytes(null)).toBe('');
     expect(formatBytes(undefined)).toBe('');
+  });
+});
+
+describe('validateAvatarFile (website wording)', () => {
+  it('accepts a JPG, PNG or WebP picture up to 5 MB', () => {
+    expect(validateAvatarFile({ name: 'me.jpg', size: 1000 })).toBeUndefined();
+    expect(validateAvatarFile({ name: 'me.png', size: 5 * 1024 * 1024 })).toBeUndefined();
+    expect(validateAvatarFile({ name: 'me.webp', size: null })).toBeUndefined();
+  });
+  it('refuses a PDF', () => {
+    expect(validateAvatarFile({ name: 'cv.pdf', size: 10 })).toBe(
+      'Unsupported file format. Please upload a JPG, PNG, or WEBP image.',
+    );
+  });
+  it('refuses a picture over 5 MB', () => {
+    expect(validateAvatarFile({ name: 'me.jpg', size: 5 * 1024 * 1024 + 1 })).toBe(
+      'Profile picture must be less than 5MB.',
+    );
   });
 });

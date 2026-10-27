@@ -1,6 +1,8 @@
 // Sends files to the backend (docs/reference/API.md §20, §21). Type, size and count are checked first: the server
 // answers 500 for a file that is too big, and a wrong file is better refused on the phone than after the upload.
 // Progress and cancel come from the API client (src/api/createApiClient.ts upload).
+import { z } from 'zod';
+
 import { api, type UploadOptions } from '@/api/client';
 import {
   ApplicationDocumentListSchema,
@@ -13,6 +15,7 @@ import {
   cleanFileName,
   mimeFromName,
   type PickedFile,
+  validateAvatarFile,
   validateCvFile,
   validateDocumentFiles,
 } from './logic/files';
@@ -57,3 +60,17 @@ export async function uploadApplicationDocuments(
     opts,
   );
 }
+
+const AvatarResultSchema = z.object({ url: z.string(), publicId: z.string() }).loose();
+const OkSchema = z.object({ success: z.boolean() }).loose();
+
+/** Sets the profile picture; the server deletes the old one (API.md §23). */
+export async function uploadAvatar(file: PickedAsset, opts: UploadOptions = {}) {
+  const problem = validateAvatarFile(file);
+  if (problem) throw new Error(problem);
+  const form = new FormData();
+  appendFile(form, 'avatar', file);
+  return api.upload('/api/upload/avatar', form, AvatarResultSchema, opts);
+}
+
+export const deleteAvatar = () => api.delete('/api/upload/avatar', OkSchema);
