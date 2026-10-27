@@ -61,6 +61,14 @@ appId: work.apronhanger.candidate.dev
     id: signup.terms
 - tapOn:
     id: signup.privacy
+# iPhone: the number pad is still open and swallows the tap on Send OTP. Its "Next" key closes it.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: Next
+          optional: true
 - scrollUntilVisible:
     element:
       id: signup.submit
