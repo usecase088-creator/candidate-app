@@ -1,0 +1,51 @@
+# Shared steps: start clean, sign in with the demo applicant (filled profile, eight applications) and land on Home. Used with `runFlow`.
+# (Maestro only runs the top-level files of e2e/maestro, so this folder is not run on its own.)
+appId: work.apronhanger.candidate.dev
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 120000
+- tapOn:
+    id: login.email
+- inputText: applicant@apronhanger.test
+- tapOn:
+    id: login.password
+- inputText: Test@1234
+- runFlow: hideKeyboard.yaml
+# iOS: Return on the password field already submits the form, so only tap Sign in if it is still there.
+- runFlow:
+    when:
+      visible:
+        id: login.submit
+    commands:
+      - tapOn:
+          id: login.submit
+- extendedWaitUntil:
+    notVisible:
+      id: login.screen
+    timeout: 20000
+# Android may offer to save the password: wait for it (optional) and close it with Back. Never tap "Never".
+- extendedWaitUntil:
+    visible: 'Save password.*'
+    timeout: 8000
+    optional: true
+- runFlow:
+    when:
+      platform: Android
+      visible: 'Save password.*'
+    commands:
+      - back
+# iOS: the system "Save Password?" sheet. Never tap "Save".
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Save Password.*'
+    commands:
+      - tapOn: Not Now
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 20000

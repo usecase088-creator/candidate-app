@@ -212,3 +212,26 @@ Known exposure, accepted by Raj: `staging-backend/` (a copy of the client's back
 4. **Photo quality:** camera and gallery pictures use the picker's quality setting (about 0.7) before the 5 MB check.
 5. **Part 1 demo account:** a demo candidate with a filled profile (completeness ≥ 30), seeded on the local backend and on staging. No "complete my profile" screen in Phase 3; the structured-form review step comes with the Phase 4 profile builder.
 6. **iPhone:** assume the client's Apple account is not active: simulator build plus screen recording (Raj tells if that changes). Every EAS build is asked first.
+
+## D27 — Phase 3: where the app differs from the website on applications (2026-10-27)
+
+Raj approved the Phase 3 plan on 2026-10-27; these are the deliberate differences found while building it.
+
+1. **Answers live on an application screen, not inside the list.** The website puts the answer card (interview, documents, offer) inside each
+   row. A phone list recycles its rows, so text typed into a reschedule box or files chosen for a document request would be lost on scroll. The list
+   row opens `application/[id]`, which holds the full card. Everything else on the row is the website's.
+2. **"View Offer Letter" opens the letter.** The website's button links to its home page. The app opens the letter in the in-app browser (http(s) only)
+   and adds "Download or share" (download to the cache, share sheet, copy deleted afterwards).
+3. **Confirm before Decline and Reject Offer** (D26). The website has none. Native: the phone's alert; web build: the browser's confirm box
+   (`src/lib/confirm.ts`, `confirm.web.ts`, because `Alert.alert` does nothing on react-native-web).
+4. **Pill colours follow the status, not its label.** The website colours a pill by words in the label, so "Offer Rejected" and "Job Closed" came
+   out green or grey and "Additional Docs Required" lost its amber. Closed states are red; documents are amber.
+5. **A closed job shows its closed message** in the timeline (the website compares against the wrong label and never shows it).
+6. **Job questions use buttons, not a drop-down.** A select shows all its options as buttons and a yes/no question shows Yes and No.
+7. **Requested documents accept PDF, JPG, PNG and WebP only.** The website's picker also offers Word files, which the server then rejects. Size is
+   checked on the phone (5 MB), because the server answers 500 for a file that is too big.
+8. **Errors keep the website sentence as the headline and add the server's reason** when it is a refusal a person can act on ("Failed to update
+   status: Cannot move from ..."). Server errors never show raw server text.
+9. **"Start form" and "Edit & apply" open a page that says the 15-step form arrives with the profile builder (Phase 4).** CV upload and Quick Apply
+   work for candidates whose form profile exists (Raj's answer 1: PLAN.md order).
+10. **The apply chooser waits for the candidate row.** If it cannot be loaded the screen shows Try Again instead of locking Quick Apply by mistake.

@@ -1,12 +1,13 @@
 // Interview Scheduled: date and place, then Accept, Request Reschedule or Decline (website: CandidateActionCard.tsx).
 // Decline asks once more (D26): it is final. Everything waits for the server's answer.
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { Application } from '@/api/schemas/applications';
 import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
+import { confirmAction } from '@/lib/confirm';
 import { useOpenLink } from '@/features/jobs/components/listings/useOpenLink';
 import { type ColorToken, spacing } from '@/theme/tokens';
 
@@ -24,15 +25,14 @@ export function InterviewCard({ application: a }: { application: Application }) 
   const text = cardTextColor('interview');
 
   const send = (status: string, withNote?: string) => respond.mutate({ id: a.id, status, note: withNote });
-  const confirmDecline = () =>
-    Alert.alert(
-      'Decline this interview?',
-      'This cannot be undone. The hospital will be told you are not taking part.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Decline', style: 'destructive', onPress: () => send('InterviewDeclined') },
-      ],
-    );
+  const confirmDecline = async () => {
+    const sure = await confirmAction({
+      title: 'Decline this interview?',
+      message: 'This cannot be undone. The hospital will be told you are not taking part.',
+      confirmLabel: 'Decline',
+    });
+    if (sure) send('InterviewDeclined');
+  };
 
   return (
     <CardFrame tone="interview" title="Interview Scheduled">
@@ -120,7 +120,7 @@ export function InterviewCard({ application: a }: { application: Application }) 
             variant="outline"
             fullWidth={false}
             disabled={busy}
-            onPress={confirmDecline}
+            onPress={() => void confirmDecline()}
           />
         </View>
       )}

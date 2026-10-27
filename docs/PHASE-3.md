@@ -1,6 +1,6 @@
 # Phase 3 — Apply and applications (week 3) → Part 1 delivery
 
-Status: **approved by Raj 2026-10-27, Task 0 in progress.** Raj's answers are in "Decisions" at the end.
+Status: **approved by Raj 2026-10-27. Tasks 0 to 8 built and pushed; Task 9 in progress.** Raj's answers are in "Decisions" at the end.
 
 Goal: a signed-in candidate can apply to a job (quick apply, apply with job questions, apply with their own CV), see all their
 applications with the website's statuses, and answer what the hospital asks: accept / decline / reschedule an interview, upload
@@ -59,80 +59,80 @@ Source of truth: the website (`../job/candidates/src`: `lib/applications.ts`, `l
 
 ## Task 1 — Schemas and endpoints (TDD)
 
-- [ ] `src/api/schemas/applications.ts` (loose objects, defaults for lists): `Application` (status, appliedOn, interview fields,
+- [x] `src/api/schemas/applications.ts` (loose objects, defaults for lists): `Application` (status, appliedOn, interview fields,
       document request list and note, offer letter URL, joining date, `candidateResponseNote`, `customFieldResponses`,
       `applicationDocuments[]`, `job` with `hospital`, `hospitalLogoUrl`, `customApplicationFields`), `ApplicationDocument`,
       upload responses (`{ url, publicId, name, mime }`, list form), `CustomApplicationField` (text / textarea / number / select /
       checkbox). Fixtures recorded from the local backend. A missing required field throws a typed `ApiError`.
-- [ ] `src/features/applications/applicationsApi.ts`: `list`, `quickApply`, `applyWithCv`, `respond(id, status, note?)`,
+- [x] `src/features/applications/applicationsApi.ts`: `list`, `quickApply`, `applyWithCv`, `respond(id, status, note?)`,
       `uploadDocuments(id, files)`, `uploadCv(file)`. MSW tests for URL, body, headers and parsing.
-- [ ] Candidate profile for apply: `GET /api/candidates/me` parsed with the full profile kept as received (`unknown` inside, not
+- [x] Candidate profile for apply: `GET /api/candidates/me` parsed with the full profile kept as received (`unknown` inside, not
       `any`), `cvSource`, `completeness`, `cvUrl`.
-- [ ] Contract tests (local backend, serial like Phase 2): list applications, quick apply, duplicate (409), job closed, custom field
+- [x] Contract tests (local backend, serial like Phase 2): list applications, quick apply, duplicate (409), job closed, custom field
       errors, accept interview, reschedule without a note (400), upload documents, accept offer, and the wrong-transition 400.
 
 ## Task 2 — Pure logic (TDD, `src/features/applications/logic/`)
 
-- [ ] `status.ts`: the 26 labels, legacy `New` → Applied and `Contacted` → Offer Sent, pill colour group, timeline step, last-update
+- [x] `status.ts`: the 26 labels, legacy `New` → Applied and `Contacted` → Offer Sent, pill colour group, timeline step, last-update
       text (`JobClosed`, `Applied`, other), tab membership and counts. Exact website wording (SCREENS.md §11).
-- [ ] `customFields.ts`: `validateCustomResponses` with the website's three messages; `"{label}" is too long` from the server.
-- [ ] `files.ts`: type and size rules per endpoint (CV: PDF/DOC/DOCX ≤ 5 MB; supporting docs ≤ 5 MB; requested documents: PDF,
+- [x] `customFields.ts`: `validateCustomResponses` with the website's three messages; `"{label}" is too long` from the server.
+- [x] `files.ts`: type and size rules per endpoint (CV: PDF/DOC/DOCX ≤ 5 MB; supporting docs ≤ 5 MB; requested documents: PDF,
       JPEG, PNG, WebP ≤ 5 MB) with the website's messages; file name cleanup; at most 15 files.
-- [ ] `interview.ts`: IST date and time, type, link or venue; `canRespond(status)` from the candidate transitions in API.md §19.
-- [ ] `apply.ts`: `hasFormCv(profile)`, `alreadyApplied(applications, jobId)`.
+- [x] `interview.ts`: IST date and time, type, link or venue; `canRespond(status)` from the candidate transitions in API.md §19.
+- [x] `apply.ts`: `hasFormCv(profile)`, `alreadyApplied(applications, jobId)`.
 
 ## Task 3 — Files: pickers and upload (TDD, `src/features/uploads/`)
 
-- [ ] `pickFile` (documents via expo-document-picker) and `pickImage` (gallery) and `takePhoto` (camera) wrappers with the checks of
+- [x] `pickFile` (documents via expo-document-picker) and `pickImage` (gallery) and `takePhoto` (camera) wrappers with the checks of
       Task 2 before anything is sent. Permission denied and cancel are normal outcomes (no error toast on cancel); a denied camera
       permission shows a plain message with a link to the system settings.
-- [ ] Upload with **progress, cancel and retry**. Multipart needs progress events, which `fetch` does not give. Decision proposal
+- [x] Upload with **progress, cancel and retry**. Multipart needs progress events, which `fetch` does not give. Decision proposal
       (D26): the upload function lives in `src/api/createApiClient.ts` next to `fetch`, using `XMLHttpRequest` with the same
       token, base URL, timeout and error mapping, so "no network calls outside the client" still holds. Unit tests with MSW for
       success, server 400/401/500, network error, cancel, retry; the 500-for-oversize case never happens because of the size check.
-- [ ] A reusable `FilePickerField` (shows name, size, progress bar, Remove, Retry) with testIDs and accessibility labels.
+- [x] A reusable `FilePickerField` (shows name, size, progress bar, Remove, Retry) with testIDs and accessibility labels.
 
 ## Task 4 — Data hooks (TDD)
 
-- [ ] `useApplications` (TanStack Query, key shared with the apply chooser), `useQuickApply`, `useApplyWithCv`, `useRespondToApplication`,
+- [x] `useApplications` (TanStack Query, key shared with the apply chooser), `useQuickApply`, `useApplyWithCv`, `useRespondToApplication`,
       `useUploadRequestedDocuments`. After a successful action the applications list is refetched (server is the truth: no
       optimistic update for status changes, unlike saving a job). `409 You have already applied` refreshes the list and shows the
       "Already applied" state. Double taps are ignored while a request runs.
-- [ ] Sign-out clears the applications cache (as the filter store in Phase 2).
+- [x] Sign-out clears the applications cache (as the filter store in Phase 2).
 
 ## Task 5 — Apply chooser and quick apply (TDD)
 
-- [ ] Route `apply/[jobId]` (behind `RequireSession`): "Applying for", "Choose one way to apply", Structured form card, Upload CV card,
+- [x] Route `apply/[jobId]` (behind `RequireSession`): "Applying for", "Choose one way to apply", Structured form card, Upload CV card,
       Quick Apply card, "Already applied" state, job questions block (all five field types), website texts exact. "Start form /
       Edit & apply" shows the Phase 4 note (finding 1). States: loading (skeleton), job not found, error + "Try Again", offline.
-- [ ] "Apply Now" on job details (Phase 2 placeholder) opens this route; disabled when the job is closed, as before.
-- [ ] Quick apply: validation of job questions, "Submitting…", toast "Application submitted!", then My Applications.
+- [x] "Apply Now" on job details (Phase 2 placeholder) opens this route; disabled when the job is closed, as before.
+- [x] Quick apply: validation of job questions, "Submitting…", toast "Application submitted!", then My Applications.
 
 ## Task 6 — Apply with CV upload (TDD)
 
-- [ ] Route `apply/[jobId]/upload`: "Structured Form Required" screen when there is no form CV; otherwise Full name, Email, Phone
+- [x] Route `apply/[jobId]/upload`: "Structured Form Required" screen when there is no form CV; otherwise Full name, Email, Phone
       (website schema and messages), file field "Click to upload your CV" with "PDF or Word (.pdf, .doc, .docx), up to 5MB" (tap
       wording adapted: "Choose your CV"), the three client errors, Submit → `uploadCv` → `applyWithCv`, toast "Application
       submitted with your CV!". Email is sent exactly as typed (no lowercasing).
 
 ## Task 7 — My Applications (TDD)
 
-- [ ] Tab `Applications` (replaces the Phase 1 placeholder): title, count and "fetched at" time, tabs with counts, FlashList of rows
+- [x] Tab `Applications` (replaces the Phase 1 placeholder): title, count and "fetched at" time, tabs with counts, FlashList of rows
       (logo, role, hospital · city, applied date en-IN, status pill, timeline, last update), pull to refresh, empty state with
       "Browse opportunities", error with "Try Again", offline banner, skeletons.
-- [ ] Application details route `application/[id]`: the row plus the action card for the current status (Task 8) and the documents
+- [x] Application details route `application/[id]`: the row plus the action card for the current status (Task 8) and the documents
       the candidate already uploaded. Tapping the role opens the job.
 
 ## Task 8 — Action cards (TDD)
 
-- [ ] `InterviewScheduled`: date and time (IST), type, "Join Meeting" link (opened in expo-web-browser, http(s) only) or venue,
+- [x] `InterviewScheduled`: date and time (IST), type, "Join Meeting" link (opened in expo-web-browser, http(s) only) or venue,
       interviewer; Accept, Request Reschedule (note required, "Submit Request" disabled when empty), Decline.
-- [ ] `DocumentsRequested` / `AdditionalDocumentsRequired`: request text, list, note; choose files (documents, gallery, camera), per file
+- [x] `DocumentsRequested` / `AdditionalDocumentsRequired`: request text, list, note; choose files (documents, gallery, camera), per file
       checks, progress, "Upload Documents"; then the "Documents Submitted" state.
-- [ ] `OfferSent`: "Offer Letter Received", "View Offer Letter" (in-app browser), **download/share** (expo-file-system download to the
+- [x] `OfferSent`: "Offer Letter Received", "View Offer Letter" (in-app browser), **download/share** (expo-file-system download to the
       cache, then expo-sharing; fallback to opening the link), Accept Offer, Reject Offer.
-- [ ] `JoiningConfirmed` / `Joined` / `Onboarded` with a date: "Your joining date is {d MMM yyyy}."
-- [ ] Every action: success toast with the website's text, failure shows "Failed to update status" / "Failed to upload documents" plus
+- [x] `JoiningConfirmed` / `Joined` / `Onboarded` with a date: "Your joining date is {d MMM yyyy}."
+- [x] Every action: success toast with the website's text, failure shows "Failed to update status" / "Failed to upload documents" plus
       the server message, status refreshed after success, buttons disabled while busy.
 
 ## Task 9 — End-to-end

@@ -1,0 +1,52 @@
+# Offer letter: open it, then accept the offer. Demo applicant, seeded applications.
+# Needs: npm run backend:local (the seed resets the applications) and Metro; on iPhone the staging server.
+# NOT YET RUN ON A DEVICE (written 2026-10-27 with no phone attached): run it once with the phone before relying on it.
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- tapOn:
+    id: tabs.applications
+- extendedWaitUntil:
+    visible:
+      id: applications.screen
+    timeout: 20000
+- tapOn:
+    id: applications.tab.offer-sent
+- tapOn:
+    id: application.row.5eed0000-0000-4000-8000-00000000a106
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 15000
+- assertVisible: Offer Letter Received
+- assertVisible: 'Congratulations! The hospital has sent you an offer letter.'
+
+# View Offer Letter opens the in-app browser (example.org); come back.
+- tapOn:
+    id: action.offer.view
+- extendedWaitUntil:
+    notVisible:
+      id: application.screen
+    timeout: 15000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: Done
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 15000
+
+# Accept: no confirm for accepting; the status changes.
+- tapOn:
+    id: action.offer.accept
+- extendedWaitUntil:
+    visible: Response recorded successfully!
+    timeout: 15000
+- assertVisible: 'Status: Offer Accepted'

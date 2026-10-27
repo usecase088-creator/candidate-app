@@ -1,12 +1,13 @@
 // Offer Letter Received and Joining Date (website: CandidateActionCard.tsx). The website's "View Offer Letter" opens the
 // home page; the app opens the letter, and can also download and share it. Reject asks once more (D26): it is final.
 import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { Application } from '@/api/schemas/applications';
 import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/Text';
 import { useToast } from '@/components/ui/Toast';
+import { confirmAction } from '@/lib/confirm';
 import { spacing } from '@/theme/tokens';
 
 import { useRespond } from '../../hooks/useRespond';
@@ -36,19 +37,14 @@ export function OfferCard({ application: a }: { application: Application }) {
     }
   };
 
-  const confirmReject = () =>
-    Alert.alert(
-      'Reject this offer?',
-      'This cannot be undone. The hospital will be told you are not taking the job.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reject offer',
-          style: 'destructive',
-          onPress: () => respond.mutate({ id: a.id, status: 'OfferRejected' }),
-        },
-      ],
-    );
+  const confirmReject = async () => {
+    const sure = await confirmAction({
+      title: 'Reject this offer?',
+      message: 'This cannot be undone. The hospital will be told you are not taking the job.',
+      confirmLabel: 'Reject offer',
+    });
+    if (sure) respond.mutate({ id: a.id, status: 'OfferRejected' });
+  };
 
   return (
     <CardFrame tone="positive" title="Offer Letter Received">
@@ -91,7 +87,7 @@ export function OfferCard({ application: a }: { application: Application }) {
           variant="outline"
           fullWidth={false}
           disabled={busy}
-          onPress={confirmReject}
+          onPress={() => void confirmReject()}
         />
       </View>
     </CardFrame>

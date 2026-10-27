@@ -1,0 +1,70 @@
+# Answer interviews: accept one, ask to reschedule another. Demo applicant, seeded applications.
+# Needs: npm run backend:local (the seed resets the applications) and Metro; on iPhone the staging server.
+# NOT YET RUN ON A DEVICE (written 2026-10-27 with no phone attached): run it once with the phone before relying on it.
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- tapOn:
+    id: tabs.applications
+- extendedWaitUntil:
+    visible:
+      id: applications.screen
+    timeout: 20000
+- assertVisible: My Applications
+
+# The Interview Scheduled tab shows the two seeded interviews.
+- tapOn:
+    id: applications.tab.interview-scheduled
+- assertVisible:
+    id: application.row.5eed0000-0000-4000-8000-00000000a102
+- assertVisible:
+    id: application.row.5eed0000-0000-4000-8000-00000000a103
+
+# Virtual interview: Join Meeting is there, Accept.
+- tapOn:
+    id: application.row.5eed0000-0000-4000-8000-00000000a102
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 15000
+- assertVisible: Interview Scheduled
+- assertVisible: Join Meeting
+- assertVisible: Dr. Seed Interviewer
+- tapOn:
+    id: action.interview.accept
+- extendedWaitUntil:
+    visible: Response recorded successfully!
+    timeout: 15000
+- assertVisible: 'Status: Interview Accepted'
+- tapOn:
+    id: application.back
+- extendedWaitUntil:
+    visible:
+      id: applications.screen
+    timeout: 15000
+
+# In-person interview: ask to reschedule (a note is required).
+- tapOn:
+    id: applications.tab.interview-scheduled
+- tapOn:
+    id: application.row.5eed0000-0000-4000-8000-00000000a103
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 15000
+- assertVisible: Seed Valley Care Centre, 2nd floor, Bengaluru
+- tapOn:
+    id: action.interview.reschedule
+- assertVisible:
+    id: action.interview.reschedule.submit
+    enabled: false
+- tapOn:
+    id: action.interview.note
+- inputText: Free on Friday after 3 pm
+- runFlow: _common/hideKeyboard.yaml
+- tapOn:
+    id: action.interview.reschedule.submit
+- extendedWaitUntil:
+    visible: Response recorded successfully!
+    timeout: 15000
+- assertVisible: 'Status: Reschedule Requested'

@@ -1,0 +1,48 @@
+# Upload the documents a hospital asked for, choosing a photo from the gallery. Demo applicant, seeded applications.
+# Needs: npm run backend:local (the seed resets the applications) and Metro. The upload goes to Cloudinary through the
+# backend, so this flow only passes where the backend has Cloudinary keys (the local copy of the website backend has).
+# NOT YET RUN ON A DEVICE (written 2026-10-27 with no phone attached). The system photo picker is outside our app:
+# if its first photo cannot be tapped on a phone, pick it by hand and let the flow carry on from there.
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- addMedia:
+    - ../../assets/images/icon.png
+- tapOn:
+    id: tabs.applications
+- extendedWaitUntil:
+    visible:
+      id: applications.screen
+    timeout: 20000
+- tapOn:
+    id: applications.tab.documents-requested
+- tapOn:
+    id: application.row.5eed0000-0000-4000-8000-00000000a104
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 15000
+- assertVisible: Document Request
+- assertVisible: '• Medical registration certificate'
+- assertVisible: No files selected
+
+# Gallery: the phone's own photo picker. Pick the first photo (the one added above).
+- scrollUntilVisible:
+    element:
+      id: action.docs.files.pick.gallery
+    timeout: 15000
+- tapOn:
+    id: action.docs.files.pick.gallery
+- extendedWaitUntil:
+    visible:
+      id: action.docs.upload
+    timeout: 90000
+- assertVisible: 1 file(s) selected
+
+# Upload -> "Documents uploaded successfully!" -> the card now says the documents are submitted.
+- tapOn:
+    id: action.docs.upload
+- extendedWaitUntil:
+    visible: Documents uploaded successfully!
+    timeout: 60000
+- assertVisible: Documents Submitted

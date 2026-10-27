@@ -1,0 +1,89 @@
+# Apply from a job with Quick Apply, answering the job's own questions. Demo applicant (filled profile).
+# Needs: npm run backend:local (the seed resets the applicant's applications) and Metro; on iPhone the staging server.
+# NOT YET RUN ON A DEVICE (written 2026-10-27 with no phone attached): run it once with the phone before relying on it.
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+
+# Home -> the Radiology Technician job (the one with five job questions) -> Apply Now.
+- scrollUntilVisible:
+    element:
+      id: job.open.5eed0000-0000-4000-8000-00000000b003
+    timeout: 30000
+- tapOn:
+    id: job.open.5eed0000-0000-4000-8000-00000000b003
+- extendedWaitUntil:
+    visible:
+      id: job.screen
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: job.apply
+    timeout: 15000
+- tapOn:
+    id: job.apply
+
+# The chooser: with a form CV, Quick Apply and CV upload are open.
+- extendedWaitUntil:
+    visible:
+      id: apply.screen
+    timeout: 20000
+- assertVisible: Choose one way to apply
+- assertVisible: Answer these job-specific questions
+
+# A required question left empty: the website message, nothing is sent.
+- scrollUntilVisible:
+    element:
+      id: apply.quick
+    timeout: 15000
+- tapOn:
+    id: apply.quick
+- assertVisible: '"Which imaging machines have you operated?" is required'
+
+# Answer the questions (text, number, choice, yes/no; the optional long text stays empty).
+- scrollUntilVisible:
+    element:
+      id: apply.questions.q_modality
+    direction: UP
+    timeout: 15000
+- tapOn:
+    id: apply.questions.q_modality
+- inputText: 128-slice CT
+- runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: apply.questions.q_scans
+    timeout: 15000
+- tapOn:
+    id: apply.questions.q_scans
+- inputText: '12'
+- runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: apply.questions.q_shift.option.1
+    timeout: 15000
+- tapOn:
+    id: apply.questions.q_shift.option.1
+- scrollUntilVisible:
+    element:
+      id: apply.questions.q_license.yes
+    timeout: 15000
+- tapOn:
+    id: apply.questions.q_license.yes
+
+# Quick Apply -> "Application submitted!" -> My Applications with the new row.
+- scrollUntilVisible:
+    element:
+      id: apply.quick
+    timeout: 15000
+- tapOn:
+    id: apply.quick
+- extendedWaitUntil:
+    visible: Application submitted!
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: applications.screen
+    timeout: 20000
+- assertVisible: Radiology Technician
+- assertVisible: '9 applications.*'
