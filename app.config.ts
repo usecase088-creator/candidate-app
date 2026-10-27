@@ -18,6 +18,20 @@ const STAGING_API_URL = 'https://apronhanger-staging-api.onrender.com';
 // Only the real production host: the staging server (D4) is also on onrender.com but is a test backend.
 const LIVE_SERVER = /job-ojsr.onrender.com|apronhanger.work/;
 
+/** App links (D5). Only the paths the app can open; the router in src/lib/linking.ts maps them to screens. */
+const LINK_HOST = 'apronhanger.work';
+const LINK_PATH_PREFIXES = [
+  '/jobs',
+  '/applications',
+  '/apply',
+  '/profile',
+  '/saved-jobs',
+  '/gov-jobs',
+  '/foreign-jobs',
+  '/cv-preview',
+  '/auth',
+];
+
 const VARIANTS: Record<Variant, { name: string; idSuffix: string; scheme: string; apiUrl: string }> = {
   development: {
     name: 'ApronHanger (Dev)',
@@ -84,9 +98,30 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Only standard HTTPS/TLS: exempt from US export rules, so App Store Connect asks no encryption questions.
       infoPlist: { ITSAppUsesNonExemptEncryption: false },
       icon: './assets/expo.icon',
+      // Phase 4: apronhanger.work links open the app. Store build only: the .dev / .preview ids are not in assetlinks.json.
+      ...(variant === 'production' ? { associatedDomains: [`applinks:${LINK_HOST}`] } : {}),
     },
     android: {
       package: bundleId,
+      // Push (Phase 4): Firebase file from the EAS file variable GOOGLE_SERVICES_JSON. Without it the build still works;
+      // the phone just cannot get a push token (the app handles that).
+      ...(process.env.GOOGLE_SERVICES_JSON ? { googleServicesFile: process.env.GOOGLE_SERVICES_JSON } : {}),
+      ...(variant === 'production'
+        ? {
+            intentFilters: [
+              {
+                action: 'VIEW',
+                autoVerify: true,
+                data: LINK_PATH_PREFIXES.map((pathPrefix) => ({
+                  scheme: 'https',
+                  host: LINK_HOST,
+                  pathPrefix,
+                })),
+                category: ['BROWSABLE', 'DEFAULT'],
+              },
+            ],
+          }
+        : {}),
       adaptiveIcon: {
         backgroundColor: '#E6F4FE',
         foregroundImage: './assets/images/android-icon-foreground.png',
@@ -120,6 +155,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Keeps SecureStore data out of Android auto-backup (a restored backup can't decrypt it anyway).
       // faceIDPermission false: the app uses no biometrics, so the iPhone gets no Face ID usage text.
       ['expo-secure-store', { faceIDPermission: false }],
+      // Push (Phase 4): the plugin adds the Android 13+ notification permission and the iOS push entitlement.
+      ['expo-notifications', { color: '#208AEF' }],
       // Release builds block plain http. Development and preview talk to the http test backend (D20);
       // the store build stays https-only.
       ['expo-build-properties', { android: { usesCleartextTraffic: variant !== 'production' } }],

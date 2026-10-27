@@ -172,3 +172,54 @@ describe('permissions: no biometrics, no screen overlay in store builds', () => 
     expect(blocked('development')).not.toContain('android.permission.SYSTEM_ALERT_WINDOW');
   });
 });
+
+describe('push notifications (Phase 4)', () => {
+  it.each(['development', 'preview', 'production'])('%s has the expo-notifications plugin', (variant) => {
+    expect(pluginNames(configFor({ APP_VARIANT: variant }))).toContain('expo-notifications');
+  });
+
+  it('adds the Firebase file only when one is supplied (EAS file variable)', () => {
+    expect(
+      configFor({ APP_VARIANT: 'production', GOOGLE_SERVICES_JSON: undefined }).android?.googleServicesFile,
+    ).toBeUndefined();
+    expect(
+      configFor({ APP_VARIANT: 'production', GOOGLE_SERVICES_JSON: '/tmp/google-services.json' }).android
+        ?.googleServicesFile,
+    ).toBe('/tmp/google-services.json');
+  });
+
+  it('allows the notification permission that Android 13+ asks for', () => {
+    expect(configFor({ APP_VARIANT: 'production' }).android?.blockedPermissions).not.toContain(
+      'android.permission.POST_NOTIFICATIONS',
+    );
+  });
+});
+
+describe('app links (Phase 4): apronhanger.work opens the app, in the store build only', () => {
+  const filters = (variant: string) => configFor({ APP_VARIANT: variant }).android?.intentFilters ?? [];
+
+  it('production verifies https links for apronhanger.work on the known paths', () => {
+    const f = filters('production');
+    expect(f).toHaveLength(1);
+    expect(f[0]).toMatchObject({ action: 'VIEW', autoVerify: true, category: ['BROWSABLE', 'DEFAULT'] });
+    const data = f[0]?.data as { scheme: string; host: string; pathPrefix: string }[];
+    expect(data.every((d) => d.scheme === 'https' && d.host === 'apronhanger.work')).toBe(true);
+    expect(data.map((d) => d.pathPrefix)).toEqual(
+      expect.arrayContaining(['/jobs', '/applications', '/profile', '/saved-jobs']),
+    );
+  });
+
+  it.each(['development', 'preview'])(
+    '%s claims no web links (its package id is not in assetlinks.json)',
+    (variant) => {
+      expect(filters(variant)).toEqual([]);
+      expect(configFor({ APP_VARIANT: variant }).ios?.associatedDomains).toBeUndefined();
+    },
+  );
+
+  it('production declares the iOS associated domain', () => {
+    expect(configFor({ APP_VARIANT: 'production' }).ios?.associatedDomains).toEqual([
+      'applinks:apronhanger.work',
+    ]);
+  });
+});
