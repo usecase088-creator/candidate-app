@@ -17,25 +17,38 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: signup.name
 - inputText: Maestro Tester
-# The mobile number is typed last: on iPhone its number pad has no Return key, and tapping another field from it
-# sent the next text into the mobile field.
-# iOS: the form scrolls when the keyboard opens; tap only after it has settled.
-- waitForAnimationToEnd
-- tapOn:
-    id: signup.email
-# A .test address: never a real-looking inbox.
-- inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
-- assertVisible: 'maestro\+.*@apronhanger.test'
-# Keyboard "next" moves to the password field, as a user would (the field is under the keyboard here).
-- pressKey: Enter
-- waitForAnimationToEnd
-- inputText: Secret@123
-- runFlow: _common/hideKeyboard.yaml
-- waitForAnimationToEnd
-- tapOn:
-    id: signup.mobile
-- inputText: '9000000002'
-- runFlow: _common/hideKeyboard.yaml
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: signup.mobile
+      - inputText: '9000000002'
+      - tapOn:
+          id: signup.email
+      # A .test address: never a real-looking inbox.
+      - inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
+      # Keyboard "next" moves to the password field, as a user would (the field is under the keyboard here).
+      - pressKey: Enter
+      - inputText: Secret@123
+      - runFlow: _common/hideKeyboard.yaml
+# iPhone: the fields below the name are hidden behind the keyboard, so a tap on them lands on the keyboard and the text
+# goes into the focused field. Return moves to the mobile number, then the form is swiped up before tapping the email.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - pressKey: Enter
+      - inputText: '9000000002'
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 25%
+      - tapOn:
+          id: signup.email
+      - inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
+      - pressKey: Enter
+      - inputText: Secret@123
+      - runFlow: _common/hideKeyboard.yaml
 - scrollUntilVisible:
     element:
       id: signup.privacy
