@@ -26,8 +26,8 @@ Source of truth: the website (`../job/candidates/src`: `lib/applications.ts`, `l
    server uses it to refresh the candidate's record. The app must send back exactly what `GET /api/candidates/me` returned in
    `profile` (plus `cvUrl`, `avatarUrl`, ...), untouched. The completeness number is stored inside the profile; the app does not
    compute it in Phase 3 (the 17-check computation arrives with the wizard in Phase 4).
-3. **Upload-CV apply overwrites the candidate's name, email, phone and the login mobile** from the three fields on that screen
-   (API.md §18; group B item 8). The app copies the website (fields pre-filled from the account) and does not change this.
+3. **Upload-CV apply sends name, email and phone** from the three fields on that screen and the server stores them
+   (API.md §18; side effects in local `docs/client/`). The app copies the website (fields pre-filled from the account).
 4. **Size limits differ by endpoint.** CV and supporting-document uploads: ≤ 5 MB, and a bigger file makes the server answer 500
    instead of 400, so the app checks size before sending. Requested-document upload (`/api/applications/:id/documents`): backend
    allows 10 MB and PDF/JPEG/PNG/WebP only, the website checks 5 MB. App: 5 MB (website), and only the four types the server
@@ -164,7 +164,7 @@ Source of truth: the website (`../job/candidates/src`: `lib/applications.ts`, `l
 - TDD, `npm run check` before each commit, conventional commits, no `any`, no `fetch` outside the API client (uploads: Task 3).
 - Email sent exactly as typed. Tokens only in SecureStore. No personal data (names, files, CV text, offer links) in logs or Sentry:
   file names and URLs of candidate documents are scrubbed like other personal data.
-- `PUT /api/candidates/me` is never called from the app in this phase (group B item 19).
+- `PUT /api/candidates/me` is never called from the app in this phase.
 - 8 GB laptop: never run the emulator, Expo web, Playwright and the backend all at once. Stop what was started.
 - The repo is public: no secrets, no real candidate data, test files in `e2e/` are generated or tiny and made up.
 - The staging server shares the dev database: reseed before every iPhone run.

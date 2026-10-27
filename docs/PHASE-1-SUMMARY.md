@@ -145,15 +145,9 @@ without your laptop. It was postponed on 25 Oct (see section 8).
 While reading the website's code to match it exactly, we found **21 problems in the live website and server**. None came from
 the app. The most important ones in plain terms:
 
-1. **Privacy leak:** a signed-in candidate's "Saved jobs" request also returns **other candidates' applications**:
-   CV links, interview links, interviewer emails, offer-letter links. Anyone can read it with the browser's developer tools.
-2. **Fake verification:** a candidate can mark their own profile "Verified".
-3. **Lost jobs:** only the newest **50** jobs are ever shown; older paid listings disappear once there are more.
-4. **Lost accounts:** an email typed with a capital letter is treated as a different account; phone numbers are stored as
-   typed, so the same person can have several accounts.
-5. **Broken offer button:** "View Offer Letter" opens the home page instead of the letter.
-6. Others: recruiter emails visible in the public jobs list, one shared OTP limit blocking many real users at once
-   (mobile networks share addresses), every job saying "Posted today", missing database setup files, and more.
+Examples: lost job listings once there are more than 50, accounts that differ only by capital letters, a broken
+"View Offer Letter" button, every job saying "Posted today", missing database setup files. The security and privacy
+ones are handled separately with Raj and are not described in this public repository.
 
 Each has a business explanation, a severity, and a rough size in a **separate document** for discussion with the client
 and for proposing paid fixes (they are outside the app contract). It is on Raj's laptop in `docs/client/` and has been

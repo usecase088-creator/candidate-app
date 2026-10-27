@@ -88,10 +88,10 @@ The iPhone version runs on GitHub's cloud iPhone simulator (iPhone SE, iOS 26.2)
 
 | Item | Why |
 | --- | --- |
-| **Repo is now public** (Raj, 2026-10-27) | It makes GitHub's iPhone test minutes free. It also publishes the client's backend copy in `staging-backend/` (including the unfixed file-link weakness A5) and the docs. Options: keep as is, or move staging to a separate private repo. |
+| **Repo is now public** (Raj, 2026-10-27) | It makes GitHub's iPhone test minutes free. It also publishes the client's backend copy in `staging-backend/` and the docs. Decided in D25: stays public; revisit before the store submission. |
 | **CR-004** Jobs kept after a restart with no network | 1 day, app only |
 | **CR-005** Working category filter on the website | 0.5 day, website only |
-| A5 (public document links), A2, B8 | Unchanged from the hand-off |
+| Open security items | Unchanged; tracked in local `docs/client/` |
 
 ---
 

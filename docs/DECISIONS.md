@@ -164,8 +164,8 @@ merge, no deploy, no production data, no Render API writes. Raj reviews, merges 
 confirms the hotfix is live. Which issues are fixed: those he approves from `docs/client/ISSUES-TRIAGE.md` group A. (Raj)
 
 **Status (2026-10-26):** PR 1 (A1 saved-jobs leak, A4 recruiter email; fix `08cd1ea`, merged `5b569f1`) and PR 2 (A3 unfiltered
-profile save; fix `1373342`, merged `f185fe0`) are live on Render. A5 (public files, documents in recruiter search) is PARKED
-until the client answers; A2 and B8 are untouched. The working method (separate clone `../job-hotfix`, branch, Raj merges and
+profile save; fix `1373342`, merged `f185fe0`) are live on Render. A5 is PARKED
+until the client answers; A2 and B8 are untouched (details: local `docs/client/`). The working method (separate clone `../job-hotfix`, branch, Raj merges and
 deploys) stays in force for any backend change; see CLAUDE.md and `docs/HANDOFF.md`.
 
 ## D22 — One-off read-only production DB check for the A3 abuse check (2026-10-26, Raj) — CLOSED
@@ -196,4 +196,4 @@ again, not even read-only, unless Raj says so. If a production check is ever nee
 
 Raj accepted Phase 2 (Android phone 9/9, iPhone simulator 9/9). `usecase088-creator/candidate-app` **stays public** (free GitHub macOS minutes) and Claude may push to `main` of this repo without asking each time.
 This does not change the rules for `../job`, `../job-hotfix`, the deployed branch or Render. Because the repo is public: never commit secrets, `.env*`, `docs/client/`, personal data or client-only material.
-Known exposure, accepted by Raj: `staging-backend/` (a copy of the client's backend at `f185fe0`, including the parked A5 weakness) is public. Revisit before the store submission.
+Known exposure, accepted by Raj: `staging-backend/` (a copy of the client's backend at `f185fe0`, including the open items kept in local `docs/client/`) is public. Revisit before the store submission.

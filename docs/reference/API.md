@@ -133,16 +133,15 @@ mounted on**, so the counts add up across those paths for the same IP.
   summary, verified, cvSource ("form"|"upload"|null), cvUrl, cvCloudinaryId, uploadedCvName, uploadedCvMime,
   avatarUrl, avatarCloudinaryId, profile (parsed profileJson or null), skills[], languages[], procedures[],
   education[], certifications[], experience[], preferredLocations[], supportingDocuments[], expectedSalaryMin/Max,
-  currentSalaryMin/Max, noticePeriod, availabilityStatus, createdAt, updatedAt`. Also contains `searchBlob`,
-  `userId`, `isSuspended`, `deletedAt`.
+  currentSalaryMin/Max, noticePeriod, availabilityStatus, createdAt, updatedAt`. Also contains internal
+  fields (`searchBlob`, `userId`, ...) that the app ignores.
 - Errors: 404 `No candidate profile linked to your account` · 404 `Candidate profile not found` · 500 `Internal server error`.
 - **This is how the website restores a session** (not `/api/auth/me`).
 
 #### 9. `PUT /api/candidates/me` — B: `candidateRoutes.ts:401` · W: `lib/applications.ts:60`
 - Auth: CANDIDATE. Limiter: `searchLimiter`.
 - Body used by the website: `{ profile, cvUrl?, cvCloudinaryId?, cvName?, cvMime?, supportingDocuments? }`.
-  With `profile`, `syncFormProfile` (`B: lib/helpers.ts:249`) rewrites the candidate from the form and, if
-  `profile.phone` is set, **also overwrites `User.mobile`** (the number used for password reset).
+  With `profile`, `syncFormProfile` (`B: lib/helpers.ts:249`) rewrites the candidate from the form (contact data side effects: see `docs/client/`, local only).
 - 200: same shape as GET.
 - Errors: 400 `No candidate profile linked to your account` · 400 `CV does not belong to your account.` /
   `Invalid CV URL.` · 500 `Failed to update candidate profile`.
@@ -215,7 +214,7 @@ mounted on**, so the counts add up across those paths for the same IP.
 - Auth: CANDIDATE. No limiter.
 - Body, form/quick apply: `{ jobId, cvSource: "form", profile, customFieldResponses?, cvUrl?, cvCloudinaryId?, cvName?, cvMime?, supportingDocuments? }`.
 - Body, CV upload: `{ jobId, cvSource: "upload", cvUrl, cvCloudinaryId, cvName, cvMime, uploadedCv: { contact: { name, email, phone } }, customFieldResponses? }`.
-  Upload path **overwrites candidate name/email/phone and `User.mobile`** from `contact`.
+  Upload path updates the candidate's contact data from `contact` (side effects: see `docs/client/`, local only).
 - 201: `formatApp`. Notifies hospital recruiters ("New Application").
 - Errors: 400 `No candidate profile linked to your account` · 400 `jobId is required` · 404 `Job not found` ·
   403 `This position is no longer accepting applications.` · 400 `This job is no longer accepting applications` ·
@@ -304,18 +303,16 @@ mounted on**, so the counts add up across those paths for the same IP.
 ## Notes for the app
 
 1. **Shared OTP limiter, per IP, 5 per 15 min.** Signup uses 2 calls (send + verify) and forgot-password
-   uses 3. A user who mistypes the OTP twice during forgot-password is blocked for 15 minutes. On Jio/Airtel
-   CGNAT, many users share one IP, so this will hit real users. The app must show the 429 message clearly.
-   Phase 4 item 3 (per-user limits) is important.
+   uses 3. On mobile networks many users share one IP, so real users can hit it. The app must show the 429 message
+   clearly. Phase 4 item 3 (per-user limits) is important.
 2. **Login and register share `authLimiter`** (20 per IP per 15 min).
 3. **No resend for signup OTP.** The website has no resend button; the user goes back and presses
    "Send OTP" again (another send-otp call). `resend-otp` only works for existing accounts.
 4. **Mobile is not normalised.** Signup stores `mobile` exactly as typed (`+91 98765 43210`, `9876543210`, ...)
-   and sends it raw to Fast2SMS. Forgot-password tries 6 variants. Profile save and CV-upload apply can
-   **overwrite `User.mobile`** with the profile phone, which changes the number used for password reset.
+   and sends it raw to Fast2SMS. Forgot-password tries 6 variants. Some saves also touch the stored number (see `docs/client/`, local only).
 5. **Session restore**: website uses `GET /api/candidates/me` (`searchLimiter`, heavy). The app plans
    `/api/auth/me`, which exists and works for candidates, but the website does not use it. See `DECISIONS.md`.
-6. **Logout is client-only**: no endpoint revokes a token. A JWT stays valid for 15 days unless the password is reset.
+6. **Logout is client-only**: there is no server call (token lifetime: see `docs/client/`, local only).
 7. **Role check**: login can only return CANDIDATE or RECRUITER. Admins use a different table and endpoint.
 8. **Errors from Fast2SMS** are passed through raw on forgot-password verify; wording is not under our control.
 9. **Oversized CV/document upload → 500**, not 400. The app must check size (≤ 5 MB) before uploading.
@@ -324,14 +321,9 @@ mounted on**, so the counts add up across those paths for the same IP.
 11. **`postedDays` is always 0** (set once at creation, never updated). The website therefore shows
     "Posted today" for every job and its "newest" sort does nothing. `postedOn` is the real date.
 12. **`q` search is case-sensitive** on Postgres. The website avoids it by filtering on the device.
-13. **Privacy (backend, report to Raj, do not fix in Phase 1–3):**
-    - FIXED 2026-10-26 (PR 1, live `5b569f1`): `GET /api/jobs` (list) used to return `postedBy.email` to anyone; it now
-      returns only `postedBy {id, name}` unless the caller is the owning recruiter (same as the detail route).
-    - FIXED 2026-10-26 (PR 1): `GET/POST /api/saved-jobs` used to include `job.applications` (other candidates' IDs,
-      statuses, CV URLs, interview data). They now return only the applicant count.
-    - `GET /api/candidates/me` returns `searchBlob`, `isSuspended`, `deletedAt`, `userId` (own data, low risk).
-    - `syncFormProfile` copies `profile.verified` from the request, so a candidate can mark themselves **verified**.
-    - `PUT /api/candidates/me` without `profile` spreads the rest of the body into a Prisma update (mass assignment).
+13. **Privacy and security notes for the backend are kept outside this public repository** (`docs/client/`, local only).
+    Already fixed and live: saved-jobs no longer returns other candidates' applications (PR 1, `5b569f1`); the public job
+    list no longer returns the recruiter's email (PR 1); profile save only accepts allow-listed fields (PR 2, `f185fe0`).
 14. **No paging anywhere** except `?page=` on applications. Gov/intl jobs return all rows.
 15. **Status labels** come from `candidates/src/lib/applicationStatus.ts` (26 statuses) — copy exactly. See SCREENS.md.
 16. Response shapes include many extra fields. Our Zod schemas must use `.passthrough()` and only require what we use.

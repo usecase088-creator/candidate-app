@@ -142,7 +142,7 @@ count 10x; the number used is reported at the end.
 - Saved jobs use the fixed response (`{ savedAt, job }`, `job.applicants`, no `applications`).
 - 8 GB laptop: never run the emulator, Expo web, Playwright and the backend all at once. Stop what was started.
 - No personal data in logs or Sentry; job text is public data but candidate data is not.
-- Never `PUT /api/candidates/me` in this phase (group B 19 does not come up).
+- Never `PUT /api/candidates/me` in this phase.
 
 ## Phase 2 exit checklist
 

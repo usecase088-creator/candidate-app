@@ -42,15 +42,9 @@ If the backend cannot reach the database ("Can't reach database server"): IPv6 p
 
 ## Hotfix status
 
-| Item | Status |
-| --- | --- |
-| A1 saved-jobs leak | Done, live (PR 1) |
-| A4 recruiter email in public list | Done, live (PR 1) |
-| A3 unfiltered profile save | Done, live (PR 2). Live commit on Render `f185fe0` (service `job`, branch `conflict-resolution1`, Auto-Deploy on) |
-| **A5** public Cloudinary links; recruiters see candidates' documents in search | **PARKED.** Fix before the week-4 backend work and before store submission. Waiting for the client's answer (CR-003; private links = CR-002). Note: the repo is public and contains the code in `staging-backend/` |
-| A2 self-verify | Untouched. Product decision pending |
-| B8 profile phone replaces login phone | Untouched |
-| Group B additions (19–21) | Listed in the triage, not fixed |
+PR 1 and PR 2 are live on Render (live commit `f185fe0`, service `job`, branch `conflict-resolution1`, Auto-Deploy on). The list of
+remaining open items (what is parked, what is untouched, and why) is kept outside this public repository in `docs/client/`
+(local only): read `docs/client/ISSUES-TRIAGE.md` and `docs/client/OPEN-WEAKNESSES.md` first in a new session.
 
 ## Rules in force
 
@@ -67,7 +61,7 @@ If the backend cannot reach the database ("Can't reach database server"): IPv6 p
 1. ~~Accept Phase 2~~ done (D25). Phase 3: write `docs/PHASE-3.md`, show it to Raj, build.
 2. ~~Push / public repo~~ decided (D25): public, push allowed. Revisit `staging-backend/` exposure before store submission.
 3. ~~Sentry DSN~~ done 2026-10-27: project `apronhanger-candidate-app` in org `rajendra-3g` (react-native). DSN is in `.env.local` and the EAS variable `EXPO_PUBLIC_SENTRY_DSN` (development, preview, production). A test event arrived (issue APRONHANGER-CANDIDATE-APP-1, no user data). Still to do: send one real app event from a build and check it for personal data (the scrubber is unit-tested). Sentry MCP is in the local `.mcp.json` (not committed).
-4. **Tell the client** about A1, A3 and A5 and ask the A5 question.
+4. **Client conversation** about the security fixes and the open question: see `docs/client/` (local only).
 5. **Production on a paid always-on Render instance before store submission** (week 7). Client's cost.
 6. **Read-only Neon role** if a production check is ever needed again. Separate Neon branch for staging (D4) is still open: staging shares the dev database.
-7. Decide A2 and B8; the two legacy test candidates question; CR-004 and CR-005.
+7. Open decisions: see `docs/client/`; the two legacy test candidates question; CR-004 and CR-005.
