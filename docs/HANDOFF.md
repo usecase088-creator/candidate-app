@@ -4,10 +4,10 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
 
-- **Phase 1 accepted. Phase 2 (Jobs) is built and waiting for Raj's acceptance.** Summary and screen recording plan: `docs/PHASE-2-SUMMARY.md`; plan and
+- **Phase 1 accepted. Phase 2 (Jobs) is built, verified on Android and iPhone, and waiting for Raj's acceptance.** Summary and screen recording plan: `docs/PHASE-2-SUMMARY.md`; plan and
   checklist: `docs/PHASE-2.md`; decisions D23 (differences from the website) and D24 (staging server); change requests CR-004, CR-005.
 - **Phase 2 evidence:** `npm run check` green (727 tests, coverage gates met); contract tests pass against the local backend at `f185fe0` (saved-jobs has no
-  `applications` list); drift check passes (GET on production); Playwright 9/9 job specs incl. 320 px; **Maestro 9/9 on the real Android phone** (6 auth/smoke + 3 job flows).
+  `applications` list); drift check passes (GET on production); Playwright 9/9 job specs incl. 320 px; **Maestro 9/9 on the real Android phone** and **9/9 on the iPhone simulator** (6 auth/smoke + 3 job flows each).
   The phone found one real Android bug (job header text collapsed): fixed.
 - **Reference clone `../job` is at `f185fe0`** (fast-forwarded 2026-10-26, D6) = the live commit. `../job-hotfix` unchanged.
 - **Staging server exists (D24):** `apronhanger-staging-api` on Raj's own Render workspace, `https://apronhanger-staging-api.onrender.com`, free plan, dev Neon DB,
@@ -16,18 +16,14 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 - **Repo `usecase088-creator/candidate-app` was made public by Raj (2026-10-27)** for free GitHub runner minutes. It contains `staging-backend/` (a copy of the client's backend) and the
   docs: Raj was told; open question whether to move staging to a private repo. A scratch file `r.tmp.json` (a GitHub API response, no secrets) was committed by mistake in `0d4bad4`; removed in the next commit, still in history.
 
-## iPhone status (the one open item of Phase 2)
+## iPhone status (done: 9/9)
 
-- EAS iOS simulator build `5abe96e6` (free). GitHub workflow `ios-e2e` (manual). Run 40401476071: the app **starts, signs in against staging and shows the real jobs** on an iPhone SE (iOS 26.2);
-  `smoke` passes. Scripted flows fail on iOS differences in the scripts, not the app: Maestro `hideKeyboard` is unsupported (now `_common/hideKeyboard.yaml`: Return on iOS),
-  Return on the password field already submits, and iOS shows a "Save Password?" sheet.
+- EAS iOS simulator build `5abe96e6` (free). GitHub workflow `ios-e2e` (manual, 75-minute limit, one clean app per flow). The app starts, signs in against staging and shows the real jobs on an iPhone SE (iOS 26.2).
 - **Raj said "push" on 2026-10-27; everything is pushed.** Flow fixes found on the iPhone (all in the scripts, none in the app): `hideKeyboard` is not supported (Return instead);
   Return on a password / mobile field submits the form; the "Save Password?" sheet covers messages (tap "Not Now"); the card title button hides its text (assert by `job.title.<id>`);
-  `clearState` does not clear the iOS keychain (the workflow now reinstalls the app and resets the keychain before every flow); on the sign-up form the email field sits behind the keyboard
-  (Return to the mobile field, then swipe up before tapping the email).
-- **Result by flow (run in several runs, each flow on a clean app):** `smoke`, `auth-login`, `auth-session-restore`, `auth-forgot-password`, `auth-role-rejected`, `auth-signup`,
-  `jobs-browse-save`, `jobs-search-filters`, `jobs-gov-intl` all passed at least once on the iPhone simulator. One whole-folder run (all nine in a row) is the last check: the first attempt
-  hit the workflow's 30-minute limit (now 75 minutes). See the end of this section for its outcome if it was recorded.
+  `clearState` does not clear the iOS keychain (the workflow now reinstalls the app and resets the keychain before every flow); on the sign-up form the email and password fields sit behind the keyboard and the
+  strong-password suggestion swallows typing (the iOS path fills email and password first with "Show" switched on, then name and mobile, then closes the number pad with "Next").
+- **Result: all 9 flows pass on the iPhone simulator in ONE run (run 40495255859, 2026-10-27).** Phase 2 is fully verified on both platforms.
 - Each flow run saves a screenshot and the UI hierarchy (`end-<flow>.png`, `hierarchy-<flow>.json`) in the artifact: look there first when a flow fails.
 - Minutes: runs 1 and 2 were on the private repo (about 8 macOS minutes, ×10). Later runs are free (public). EAS: 1 free iOS build.
 

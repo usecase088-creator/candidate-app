@@ -1,7 +1,6 @@
 # ApronHanger candidate app: Phase 2 summary
 
-**Phase:** 2 of 5, "Jobs" · **Dates:** 26–27 October 2026 · **Status:** built and tested on Android; iPhone: app runs, flow scripts need one more round
-(see section 5) · **Prepared for:** Raj and the ApronHanger client
+**Phase:** 2 of 5, "Jobs" · **Dates:** 26–27 October 2026 · **Status:** built and tested on Android (9/9 phone flows) and on the iPhone simulator (9/9 flows) · **Prepared for:** Raj and the ApronHanger client
 
 ---
 
@@ -70,20 +69,18 @@ Nothing was added beyond the agreed scope. Two small extras went to the change l
 
 ## 5. iPhone
 
-The iPhone version runs on GitHub's cloud iPhone simulator (iPhone SE, iOS 26.2) against the new test server (section 7).
+The iPhone version runs on GitHub's cloud iPhone simulator (iPhone SE, iOS 26.2) against the test server (section 7).
 
-- **Works:** the app starts, the sign-in screen is correct, signing in works, and Home shows the real jobs from the test
-  server. The smoke flow passes (screenshot in the artifact of run 40401476071).
-- **Not yet green:** the scripted flows. Two differences between Android and iPhone stopped them, both in the test scripts
-  and not in the app: the test tool cannot close the keyboard on iPhone (the scripts now press Return instead), and
-  pressing Return on the password field already signs in. iPhone also shows its own "Save Password?" sheet, which the
-  scripts now dismiss.
-- **These script fixes are committed but not pushed** (Raj asked for no pushes overnight). After one push, run
-  `auth-login` first, then `jobs-browse-save`, then the whole folder.
-- GitHub minutes: runs 1 and 2 ran while the repo was private (about 8 macOS minutes, counted 10x, so about 80 of the
-  2,000 free minutes). After the repo became public the runs are free. Two runs were lost to GitHub problems (a runner that
-  never came, and the test driver not starting in time).
-- Cost on EAS: 1 free iOS simulator build.
+- **All 9 flows pass in one run** (run 40495255859, about 25 minutes of test time): sign in, sign up, forgot password, recruiter
+  account rejected, session restore, browse and save a job, search and filters, government and international links, and the smoke check.
+- **What it took:** every problem was a difference between Android and iPhone in the test scripts, not in the app. The test tool
+  cannot close the iPhone keyboard (the scripts press Return instead); Return on a password field already signs in; iPhone shows its
+  own "Save Password?" sheet and a strong-password suggestion that swallows typing; the iPhone keychain survives a reinstall
+  (each flow now starts on a freshly installed app with an empty keychain); a few fields hide behind the keyboard.
+  The app itself needed no change.
+- **GitHub minutes:** the first runs ran while the repo was private (about 8 macOS minutes, counted 10x, so about 80 of the 2,000
+  free minutes). After the repo became public every run is free.
+- **Cost on EAS:** 1 free iOS simulator build.
 
 ---
 

@@ -120,7 +120,7 @@ Source of truth: the website (`../job/candidates/src`, now at `f185fe0`), `docs/
       Seed: enough jobs for filters, a gov and an intl listing (`scripts/backend-local/overlay/app-scripts/seedData.ts`).
 - [x] Playwright (Chromium, API mocked): home list, search with filter, job details, save with rollback.
 - [x] Whole existing Maestro suite still passes.
-- [ ] iPhone simulator (GitHub macOS runner): the app starts, signs in against staging and shows the real jobs (run 40401476071). The iOS flow fixes are committed locally, not pushed; a full iOS flow pass is open (see HANDOFF).
+- [x] iPhone simulator (GitHub macOS runner): all 9 flows pass in one run (run 40495255859, iPhone SE, iOS 26.2, against staging).
 
 ## Task 11 — Close the phase
 
@@ -150,6 +150,6 @@ count 10x; the number used is reported at the end.
 - [x] Contract tests pass (incl. saved-jobs has no `applications`); drift check passes on production (GET only)
 - [x] Maestro: all auth flows and the 3 job flows pass on the real Android phone
 - [x] Playwright job specs pass
-- [ ] iPhone simulator: all flows green (open: needs Raj's OK to push the iOS flow fixes)
+- [x] iPhone simulator: all 9 flows green (run 40495255859)
 - [x] Parity checklist with the website done; `HANDOFF.md`, `CLAUDE.md`, `DECISIONS.md`, `CHANGE-REQUESTS.md` updated
 - [x] Screen recording plan written (`docs/PHASE-2-SUMMARY.md`)
