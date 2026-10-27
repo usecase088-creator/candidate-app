@@ -27,3 +27,10 @@ requests below once Raj wants to offer them to the client.
 | CR-003 | Triage (client decision, 2026-10-26) | **Who sees candidate documents.** Question for the client about which documents recruiters may see before a candidate applies. Details in the local notes (`docs/client/`). | **No cost for the decision**; signed links are CR-002 (3 days) | awaiting client answer |
 | CR-004 | Phase 2 (found 2026-10-26) | **Jobs available offline after a restart.** Today cached jobs stay while the app is open; after a restart with no network the lists show "You're offline". Persisting the query cache would keep the last jobs and saved jobs. | **1 day** (app only: persisted cache, size and sign-out clearing, tests) | proposed |
 | CR-005 | Phase 2 (website finding) | **Working category filter on the website.** The website's home page has a category rail component that is never shown and whose ids cannot match real jobs. The app builds its rail from real categories; the website could do the same. Website-only. | **0.5 day** (website) | proposed |
+| CR-006 | Phase 4 plan (2026-10-28) | **Date and place pickers in the profile builder.** Date picker, city/state lookup instead of typed text (website uses plain text). | **1.5 days**, app only, needs one native library (ask first) | proposed |
+| CR-007 | Phase 4 plan | **Push settings by type** (job alerts, application updates) and quiet hours. | **2 days**: backend 1 · app 1 | proposed |
+| CR-008 | Phase 4 plan | **Email/SMS fallback** when a user has no push token. | **1.5 days**, backend | proposed |
+| CR-009 | Phase 4 plan | **Admin screen for app flags and minimum version** (plan: endpoint fed from environment variables). | **2 days** | proposed |
+| CR-010 | Phase 4 plan | **Account deletion with a 30-day undo** (plan: immediate delete with confirm + password). | **1.5 days** | proposed |
+| CR-011 | Phase 4 plan | **"Download my data" export.** Not required by the stores; India's DPDP Act may want it: ask the client. | **2 days** | proposed |
+| CR-012 | Phase 4 plan | **Device list / "log out other devices".** | **1.5 days** | proposed |
