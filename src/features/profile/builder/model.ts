@@ -136,7 +136,7 @@ const rows = <T extends object>(v: unknown): Partial<T>[] =>
 
 /**
  * Saved profile → form. The login phone and email always come from the account, never from the profile JSON:
- * the website lets the profile's phone replace the login phone (B8), so the app never sends a different one.
+ * the app never sends a different one (D28, item B8 in the local notes).
  */
 export function draftFromMe(me: CandidateMe): Draft {
   const p = (me.profile ?? {}) as ProfileJson;

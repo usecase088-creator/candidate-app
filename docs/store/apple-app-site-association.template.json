@@ -1,0 +1,20 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["REPLACE_WITH_APPLE_TEAM_ID.work.apronhanger.candidate"],
+        "components": [
+          { "/": "/jobs/*" },
+          { "/": "/applications*" },
+          { "/": "/apply/*" },
+          { "/": "/profile*" },
+          { "/": "/saved-jobs*" },
+          { "/": "/gov-jobs*" },
+          { "/": "/foreign-jobs*" },
+          { "/": "/cv-preview*" },
+          { "/": "/auth*" }
+        ]
+      }
+    ]
+  }
+}

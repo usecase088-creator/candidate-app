@@ -1,0 +1,48 @@
+# Profile builder: open it from the Profile tab, check step 1 shows the sign-in phone and email read-only, save a step,
+# leave, come back and land on the next step (the step is remembered).
+# Needs: npm run backend:local (or the staging server) and Metro. The demo applicant has a filled profile.
+# NOT YET RUN ON A DEVICE (written 2026-10-28 overnight, no phone attached): run it once with the phone before relying on it.
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- tapOn:
+    id: tabs.profile
+- extendedWaitUntil:
+    visible:
+      id: profile.screen
+    timeout: 20000
+- tapOn:
+    id: profile.edit
+- extendedWaitUntil:
+    visible:
+      id: builder.screen
+    timeout: 20000
+- assertVisible: 'Step 1 of 16'
+- assertVisible: Basic Details
+# The sign-in email and phone are shown as text, not as inputs (B8).
+- assertVisible:
+    id: builder.field.email
+- assertVisible:
+    id: builder.field.phone
+- tapOn:
+    id: builder.next
+- extendedWaitUntil:
+    visible: 'Step 2 of 16'
+    timeout: 30000
+- assertVisible: Medical Work Profile
+# Leave and come back: the builder resumes at step 2.
+- tapOn:
+    id: builder.exit
+- extendedWaitUntil:
+    visible:
+      id: profile.screen
+    timeout: 15000
+- tapOn:
+    id: profile.edit
+- extendedWaitUntil:
+    visible: 'Step 2 of 16'
+    timeout: 20000
+# Going back does not save anything and shows step 1 again.
+- tapOn:
+    id: builder.back
+- assertVisible: 'Step 1 of 16'

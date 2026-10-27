@@ -1,0 +1,50 @@
+# Delete account: only against a THROWAWAY account on the staging/dev server (never a real one).
+# Signs up a fresh candidate, then deletes it from Settings. After this the account no longer exists.
+# Needs: backend PR 9 (POST /api/account/delete) on the server the app talks to, and the signup test numbers.
+# NOT YET RUN ON A DEVICE (written 2026-10-28 overnight, no phone attached): run it once before relying on it.
+appId: work.apronhanger.candidate.dev
+env:
+  PASSWORD: 'Secret@123'
+---
+- runFlow: _common/signupThrowaway.yaml
+- tapOn:
+    id: tabs.profile
+- extendedWaitUntil:
+    visible:
+      id: profile.screen
+    timeout: 20000
+- tapOn:
+    id: profile.settings
+- extendedWaitUntil:
+    visible:
+      id: settings.screen
+    timeout: 15000
+- tapOn:
+    id: settings.delete
+- extendedWaitUntil:
+    visible:
+      id: delete.screen
+    timeout: 15000
+# A wrong password keeps the account.
+- tapOn:
+    id: delete.password
+- inputText: 'definitely-wrong'
+- tapOn:
+    id: delete.submit
+- tapOn: Delete
+- extendedWaitUntil:
+    visible: 'Incorrect password'
+    timeout: 30000
+# The right one deletes it and shows the login screen with the reason.
+- tapOn:
+    id: delete.password
+- eraseText: 30
+- inputText: ${PASSWORD}
+- tapOn:
+    id: delete.submit
+- tapOn: Delete
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 60000
+- assertVisible: 'Your account has been deleted.'

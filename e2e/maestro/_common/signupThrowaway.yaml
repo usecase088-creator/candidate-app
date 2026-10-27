@@ -1,0 +1,140 @@
+# Shared steps: sign up a THROWAWAY candidate (test number 9000000002, OTP 123456, password Secret@123) and land on Home.
+# Same steps as auth-signup.yaml. NOT YET RUN on its own; Android keyboard path only (iPhone needs the iOS path of auth-signup).
+# The backend seed frees the signup test numbers each time it starts.
+appId: work.apronhanger.candidate.dev
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 120000
+- tapOn:
+    id: auth.tab.signup
+- extendedWaitUntil:
+    visible:
+      id: signup.screen
+    timeout: 10000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: signup.name
+      - inputText: Maestro Tester
+      - tapOn:
+          id: signup.mobile
+      - inputText: '9000000002'
+      - tapOn:
+          id: signup.email
+      # A .test address: never a real-looking inbox.
+      - inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
+      # Keyboard "next" moves to the password field, as a user would (the field is under the keyboard here).
+      - pressKey: Enter
+      - inputText: Secret@123
+      - runFlow: _common/hideKeyboard.yaml
+# iPhone: with the keyboard up, the email and password fields sit behind it and a tap lands on the keyboard. So they are
+# filled first, while the keyboard is down; then the name and the mobile number (the number pad has no Return key).
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      # "Show" first (keyboard still down): iOS offers a strong password on hidden fields and that swallows the typed text.
+      - tapOn:
+          id: signup.password.toggle
+      - tapOn:
+          id: signup.email
+      - inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
+      - pressKey: Enter
+      - retry:
+          maxRetries: 3
+          commands:
+            - eraseText: 30
+            - inputText: Secret@123
+            - assertVisible: Secret@123
+      - scrollUntilVisible:
+          element:
+            id: signup.name
+          direction: UP
+          timeout: 10000
+      - tapOn:
+          id: signup.name
+      - inputText: Maestro Tester
+      - pressKey: Enter
+      - inputText: '9000000002'
+- scrollUntilVisible:
+    element:
+      id: signup.privacy
+- tapOn:
+    id: signup.terms
+- tapOn:
+    id: signup.privacy
+# iPhone: the number pad is still open and swallows the tap on Send OTP. Its "Next" key closes it.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: Next
+          optional: true
+- scrollUntilVisible:
+    element:
+      id: signup.submit
+    direction: UP
+- tapOn:
+    id: signup.submit
+# Android: Google Password Manager may ask to save the new password right after the form is sent. It covers the app
+# until it is answered. Close it with Back, like the login helper does: never "Continue" (it would save the test password
+# to the owner's Google account) and never "Never" (it turns the prompt off for good).
+- extendedWaitUntil:
+    visible: 'Save password.*'
+    timeout: 6000
+    optional: true
+- runFlow:
+    when:
+      platform: Android
+      visible: 'Save password.*'
+    commands:
+      - back
+# iPhone: with the number pad still open the first tap can be swallowed; tap again if the OTP step has not appeared.
+- runFlow:
+    when:
+      notVisible: 'Enter the OTP sent to 9000000002.'
+    commands:
+      - tapOn:
+          id: signup.submit
+- extendedWaitUntil:
+    visible: 'Enter the OTP sent to 9000000002.'
+    timeout: 20000
+- tapOn:
+    id: signup.otp
+- inputText: '123456'
+- runFlow: _common/hideKeyboard.yaml
+- tapOn:
+    id: signup.submit
+- extendedWaitUntil:
+    notVisible:
+      id: signup.screen
+    timeout: 30000
+- extendedWaitUntil:
+    visible: 'Save password.*'
+    timeout: 8000
+    optional: true
+- runFlow:
+    when:
+      platform: Android
+      visible: 'Save password.*'
+    commands:
+      - back
+# iOS: the system "Save Password?" sheet. Never tap "Save".
+- runFlow:
+    when:
+      platform: iOS
+      visible: 'Save Password.*'
+    commands:
+      - tapOn: Not Now
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 20000
+- assertVisible: Your next clinical role, curated for you.
