@@ -38,12 +38,19 @@ appId: work.apronhanger.candidate.dev
     when:
       platform: iOS
     commands:
+      # "Show" first (keyboard still down): iOS offers a strong password on hidden fields and that swallows the typed text.
+      - tapOn:
+          id: signup.password.toggle
       - tapOn:
           id: signup.email
       - inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
       - pressKey: Enter
-      - inputText: Secret@123
-      - pressKey: Enter
+      - retry:
+          maxRetries: 3
+          commands:
+            - eraseText: 30
+            - inputText: Secret@123
+            - assertVisible: Secret@123
       - scrollUntilVisible:
           element:
             id: signup.name
