@@ -14,13 +14,13 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: signup.screen
     timeout: 10000
-- tapOn:
-    id: signup.name
-- inputText: Maestro Tester
 - runFlow:
     when:
       platform: Android
     commands:
+      - tapOn:
+          id: signup.name
+      - inputText: Maestro Tester
       - tapOn:
           id: signup.mobile
       - inputText: '9000000002'
@@ -32,23 +32,28 @@ appId: work.apronhanger.candidate.dev
       - pressKey: Enter
       - inputText: Secret@123
       - runFlow: _common/hideKeyboard.yaml
-# iPhone: the fields below the name are hidden behind the keyboard, so a tap on them lands on the keyboard and the text
-# goes into the focused field. Return moves to the mobile number, then the form is swiped up before tapping the email.
+# iPhone: with the keyboard up, the email and password fields sit behind it and a tap lands on the keyboard. So they are
+# filled first, while the keyboard is down; then the name and the mobile number (the number pad has no Return key).
 - runFlow:
     when:
       platform: iOS
     commands:
-      - pressKey: Enter
-      - inputText: '9000000002'
-      - swipe:
-          start: 50%, 60%
-          end: 50%, 25%
       - tapOn:
           id: signup.email
       - inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
       - pressKey: Enter
       - inputText: Secret@123
-      - runFlow: _common/hideKeyboard.yaml
+      - pressKey: Enter
+      - scrollUntilVisible:
+          element:
+            id: signup.name
+          direction: UP
+          timeout: 10000
+      - tapOn:
+          id: signup.name
+      - inputText: Maestro Tester
+      - pressKey: Enter
+      - inputText: '9000000002'
 - scrollUntilVisible:
     element:
       id: signup.privacy

@@ -63,6 +63,10 @@ appId: work.apronhanger.candidate.dev
 - assertVisible: Show 1 role
 - tapOn:
     id: filters.done
+- scrollUntilVisible:
+    element: 'Showing 1 of 4 verified roles'
+    direction: UP
+    timeout: 10000
 - assertVisible: Showing 1 of 4 verified roles
 - assertVisible:
     id: job.title.5eed0000-0000-4000-8000-00000000b004
@@ -76,6 +80,10 @@ appId: work.apronhanger.candidate.dev
     timeout: 10000
 - tapOn:
     id: tabs.search
+- scrollUntilVisible:
+    element: 'Showing 1 of 4 verified roles'
+    direction: UP
+    timeout: 10000
 - assertVisible: Showing 1 of 4 verified roles
 - assertVisible: 'Filters, 2 active'
 
@@ -109,6 +117,10 @@ appId: work.apronhanger.candidate.dev
     id: filters.sort.salary
 - tapOn:
     id: filters.done
+- scrollUntilVisible:
+    element: 'Showing 1 of 4 verified roles'
+    direction: UP
+    timeout: 10000
 - assertVisible: Showing 1 of 4 verified roles
 - assertVisible:
     id: job.title.5eed0000-0000-4000-8000-00000000b002
