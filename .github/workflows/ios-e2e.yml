@@ -95,9 +95,18 @@ jobs:
           xcrun simctl io "$UDID" recordVideo --codec=h264 output/run.mp4 &
           REC=$!
           set +e
-          maestro --device "$UDID" test ${{ inputs.flows }} --format junit --output output/report.xml \
-            --debug-output output/maestro
-          RESULT=$?
+          # One Maestro run per flow: `clearState` does not clear the iOS keychain (where the login token lives), so
+          # every flow starts from a freshly reinstalled app and an empty keychain.
+          if [ -d "${{ inputs.flows }}" ]; then FLOWS=$(ls ${{ inputs.flows }}/*.yaml); else FLOWS="${{ inputs.flows }}"; fi
+          RESULT=0
+          for f in $FLOWS; do
+            n=$(basename "$f" .yaml)
+            xcrun simctl terminate "$UDID" work.apronhanger.candidate.dev 2>/dev/null
+            xcrun simctl uninstall "$UDID" work.apronhanger.candidate.dev 2>/dev/null
+            xcrun simctl keychain "$UDID" reset 2>/dev/null
+            xcrun simctl install "$UDID" "$APP"
+            maestro --device "$UDID" test "$f" --format junit --output "output/report-$n.xml"               --debug-output "output/maestro-$n" || RESULT=1
+          done
           set -e
           sleep 2
           xcrun simctl io "$UDID" screenshot output/final.png
