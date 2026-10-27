@@ -4,7 +4,7 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
 
-- **Phase 1 accepted. Phase 2 (Jobs) is built, verified on Android and iPhone, and waiting for Raj's acceptance.** Summary and screen recording plan: `docs/PHASE-2-SUMMARY.md`; plan and
+- **Phase 1 accepted. Phase 2 (Jobs) accepted by Raj on 2026-10-27 (D25); the repo stays public and pushes to `main` of this repo are fine.** Next: write `docs/PHASE-3.md` and show it to Raj. Summary and screen recording plan: `docs/PHASE-2-SUMMARY.md`; plan and
   checklist: `docs/PHASE-2.md`; decisions D23 (differences from the website) and D24 (staging server); change requests CR-004, CR-005.
 - **Phase 2 evidence:** `npm run check` green (727 tests, coverage gates met); contract tests pass against the local backend at `f185fe0` (saved-jobs has no
   `applications` list); drift check passes (GET on production); Playwright 9/9 job specs incl. 320 px; **Maestro 9/9 on the real Android phone** and **9/9 on the iPhone simulator** (6 auth/smoke + 3 job flows each).
@@ -64,8 +64,8 @@ If the backend cannot reach the database ("Can't reach database server"): IPv6 p
 
 ## Open items for Raj
 
-1. **Accept Phase 2** (or list changes). Then Phase 3: write `docs/PHASE-3.md`, show it to Raj, build.
-2. **OK to push** the local commits, and decide: keep the repo public, or move `staging-backend/` and client docs to a private repo.
+1. ~~Accept Phase 2~~ done (D25). Phase 3: write `docs/PHASE-3.md`, show it to Raj, build.
+2. ~~Push / public repo~~ decided (D25): public, push allowed. Revisit `staging-backend/` exposure before store submission.
 3. **Sentry DSN** (`.env.local` `EXPO_PUBLIC_SENTRY_DSN` and an EAS variable), then one test event checked for personal data.
 4. **Tell the client** about A1, A3 and A5 and ask the A5 question.
 5. **Production on a paid always-on Render instance before store submission** (week 7). Client's cost.

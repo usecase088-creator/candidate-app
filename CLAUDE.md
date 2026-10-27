@@ -5,7 +5,7 @@ candidate website, same backend and database. Built with Expo (React Native).
 Goal: live on Play Store and App Store, no crashes, passes store review first time.
 
 - Master plan: `docs/PLAN.md`
-- Current phase: **Phase 2 built, waiting for Raj's acceptance** (`docs/PHASE-2.md`, summary `docs/PHASE-2-SUMMARY.md`). Phase 3 is next: write `docs/PHASE-3.md` first and show it to Raj before building  <- update this line when the phase changes
+- Current phase: **Phase 3** (`docs/PHASE-3.md`, not written yet: write it first and show it to Raj before building). Phase 2 accepted 2026-10-27 (`docs/PHASE-2-SUMMARY.md`)  <- update this line when the phase changes
 - Handoff / current state: `docs/HANDOFF.md` (read it first in a new session)
 - Decisions log: `docs/DECISIONS.md`
 - Machine setup: `docs/SETUP.md`

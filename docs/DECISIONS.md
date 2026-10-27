@@ -191,3 +191,9 @@ again, not even read-only, unless Raj says so. If a production check is ever nee
 ## D24 — Staging server exists (2026-10-27, Raj)
 
 `apronhanger-staging-api` on **Raj's own Render workspace** (free plan, Singapore, `https://apronhanger-staging-api.onrender.com`), created with `npm run staging:deploy` and the staging key. Deploys `staging-backend/` from `main` of the app repo (synced to reference `f185fe0`), NODE_ENV=staging, own JWT secret, OTP test mode on, **the dev Neon database** (shared with `backend:local`; a separate Neon branch is still open). Raj paused his other free service on that workspace first (free instance hours are per workspace). `app.config.ts` now blocks only the live host (`job-ojsr.onrender.com`, apronhanger.work), so test builds may use staging. The `e2e-test` EAS profile points at staging, so the iPhone simulator run can reach a backend. The free plan sleeps (~50 s): the workflow wakes it first.
+
+## D25 — Phase 2 accepted; repo stays public (2026-10-27, Raj)
+
+Raj accepted Phase 2 (Android phone 9/9, iPhone simulator 9/9). `usecase088-creator/candidate-app` **stays public** (free GitHub macOS minutes) and Claude may push to `main` of this repo without asking each time.
+This does not change the rules for `../job`, `../job-hotfix`, the deployed branch or Render. Because the repo is public: never commit secrets, `.env*`, `docs/client/`, personal data or client-only material.
+Known exposure, accepted by Raj: `staging-backend/` (a copy of the client's backend at `f185fe0`, including the parked A5 weakness) is public. Revisit before the store submission.
