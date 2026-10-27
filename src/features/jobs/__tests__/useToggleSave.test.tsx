@@ -124,7 +124,7 @@ describe('useToggleSave', () => {
   it('unsave: removed at once; toast "Removed from saved jobs"', async () => {
     backend([job]);
     const { result } = await mount();
-    expect(result.current.ids.has(job.id)).toBe(true);
+    await waitFor(() => expect(result.current.ids.has(job.id)).toBe(true));
     result.current.toggle(job);
     await waitFor(() => expect(result.current.ids.has(job.id)).toBe(false));
     expect(await screen.findByText('Removed from saved jobs')).toBeTruthy();
@@ -140,7 +140,7 @@ describe('useToggleSave', () => {
     const { result } = await mount();
     result.current.toggle(job);
     expect(await screen.findByText('Failed to remove saved job')).toBeTruthy();
-    expect(result.current.ids.has(job.id)).toBe(true);
+    await waitFor(() => expect(result.current.ids.has(job.id)).toBe(true));
   });
 
   it('409 "Job already saved" is not rolled back: the job is saved, which is what the user wanted', async () => {
@@ -154,7 +154,7 @@ describe('useToggleSave', () => {
     const { result } = await mount();
     result.current.toggle(job);
     expect(await screen.findByText('Job saved')).toBeTruthy();
-    expect(result.current.ids.has(job.id)).toBe(true);
+    await waitFor(() => expect(result.current.ids.has(job.id)).toBe(true));
   });
 
   it('404 "Saved job not found" on unsave stays removed', async () => {
