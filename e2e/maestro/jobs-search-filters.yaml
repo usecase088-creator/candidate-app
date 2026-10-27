@@ -38,6 +38,11 @@ appId: work.apronhanger.candidate.dev
 - runFlow: _common/hideKeyboard.yaml
 
 # Filter sheet: city, then job type.
+- scrollUntilVisible:
+    element:
+      id: search.filters
+    direction: UP
+    timeout: 10000
 - tapOn:
     id: search.filters
 - extendedWaitUntil:
@@ -75,6 +80,11 @@ appId: work.apronhanger.candidate.dev
 - assertVisible: 'Filters, 2 active'
 
 # Reset, then salary (+ moves 2 LPA) and sort.
+- scrollUntilVisible:
+    element:
+      id: search.filters
+    direction: UP
+    timeout: 10000
 - tapOn:
     id: search.filters
 - tapOn:

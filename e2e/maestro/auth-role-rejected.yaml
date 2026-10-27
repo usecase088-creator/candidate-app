@@ -22,6 +22,18 @@ appId: work.apronhanger.candidate.dev
     commands:
       - tapOn:
           id: login.submit
+# iOS: the system "Save Password?" sheet covers the error message. Never tap "Save".
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Save Password.*'
+          timeout: 20000
+          optional: true
+      - tapOn:
+          text: Not Now
+          optional: true
 - extendedWaitUntil:
     visible: 'This email is registered as a recruiter account. Please sign in on the Recruiter Portal instead.'
     timeout: 20000
