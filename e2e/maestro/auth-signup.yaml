@@ -19,14 +19,18 @@ appId: work.apronhanger.candidate.dev
 - inputText: Maestro Tester
 # The mobile number is typed last: on iPhone its number pad has no Return key, and tapping another field from it
 # sent the next text into the mobile field.
+# iOS: the form scrolls when the keyboard opens; tap only after it has settled.
+- waitForAnimationToEnd
 - tapOn:
     id: signup.email
 # A .test address: never a real-looking inbox.
 - inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
 # Keyboard "next" moves to the password field, as a user would (the field is under the keyboard here).
 - pressKey: Enter
+- waitForAnimationToEnd
 - inputText: Secret@123
 - runFlow: _common/hideKeyboard.yaml
+- waitForAnimationToEnd
 - tapOn:
     id: signup.mobile
 - inputText: '9000000002'
