@@ -1,5 +1,6 @@
-// GET /api/candidates/me, only the fields job matching reads (website: lib/hydrate.ts, lib/matchJobs.ts).
-// The profile builder (Phase 4) widens this.
+// GET /api/candidates/me: the fields job matching reads (website: lib/hydrate.ts, lib/matchJobs.ts) and the ones the
+// website adds to the profile before it sends it back with an application (Phase 3). The profile builder (Phase 4)
+// widens this. The profile object is loose on purpose: whatever the server sent must go back unchanged.
 import { z } from 'zod';
 
 /** The website's `Profile` (JSON the candidate saved from the form), matching fields only. */
@@ -26,6 +27,11 @@ export const CandidateMeSchema = z
     location: z.string().nullish(),
     /** "form" | "upload" | null */
     cvSource: z.string().nullish(),
+    cvUrl: z.string().nullish(),
+    avatarUrl: z.string().nullish(),
+    avatarCloudinaryId: z.string().nullish(),
+    uploadedCvName: z.string().nullish(),
+    uploadedCvData: z.string().nullish(),
     profile: MatchProfileSchema.nullish(),
   })
   .loose();

@@ -15,6 +15,8 @@ export function contractClient() {
 export const SEED = {
   password: 'Test@1234',
   candidateEmail: 'candidate@apronhanger.test',
+  /** Phase 3 demo account: filled profile and one application per state (seedData.ts). */
+  applicantEmail: 'applicant@apronhanger.test',
   recruiterEmail: 'recruiter@apronhanger.test',
   candidateMobile: '9000000001',
   /** Freed by every seed; the Maestro signup flow uses 9000000002. */

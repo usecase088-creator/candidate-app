@@ -3,6 +3,8 @@
 // Also used by the contract tests and `npm run drift-check` to catch backend shape changes early.
 import { z } from 'zod';
 
+import { CustomFieldSchema } from './applications';
+
 const stringList = z.array(z.string()).default([]);
 
 /** One item of GET /api/jobs (formatJob, ../job/backend/src/lib/helpers.ts). Salaries are LPA. */
@@ -40,6 +42,11 @@ export const JobSchema = z
     applicants: z.number().nullish(),
     /** 52-98, only when a valid candidate token was sent. */
     matchPercent: z.number().nullish(),
+    /** Job-specific questions asked when applying (Phase 3). */
+    customApplicationFields: z
+      .array(CustomFieldSchema)
+      .nullish()
+      .transform((v) => v ?? []),
   })
   .loose();
 
