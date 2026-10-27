@@ -7,6 +7,7 @@ import { isApiError } from '@/api/errors';
 import type { CustomFieldResponses, UploadedFile } from '@/api/schemas/applications';
 import type { CandidateMe } from '@/api/schemas/candidate';
 import { useToast } from '@/components/ui/Toast';
+import { askPushAfterApply } from '@/features/push/pushService';
 import { useUploadTask } from '@/features/uploads/hooks/useUploadTask';
 import { uploadCv, type PickedAsset } from '@/features/uploads/uploadsApi';
 
@@ -29,6 +30,7 @@ export function useQuickApply() {
     onSuccess: () => {
       toast.show('Application submitted!', { variant: 'success' });
       void refresh();
+      void askPushAfterApply();
     },
     onError: (error) => {
       toast.show(failureText(error, 'Failed to submit application', { reasonOnly: true }), {
@@ -94,6 +96,7 @@ export function useApplyWithCv() {
       if (run.ok) {
         toast.show('Application submitted with your CV!', { variant: 'success' });
         void client.invalidateQueries({ queryKey: APPLICATIONS_KEY });
+        void askPushAfterApply();
         return { ok: true };
       }
       if (!run.cancelled && isConflict(run.error))

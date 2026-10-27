@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { api } from '@/api/client';
 import { ToastProvider } from '@/components/ui/Toast';
+import { PushListener } from '@/features/push/PushListener';
 import { UpdateGate } from '@/features/appConfig/UpdateGate';
 import { useSession } from '@/features/auth/sessionStore';
 import { useFilterStore } from '@/features/jobs/filterStore';
@@ -51,6 +52,7 @@ export default function RootLayout() {
             {/* PLAN.md §2 "Auth": the (tabs) and (auth) layouts redirect by session status, deep links included.
                 While restoring they render nothing and the splash stays on top. */}
             <UpdateGate>
+              <PushListener />
               <Stack screenOptions={{ headerShown: false }} />
             </UpdateGate>
           </ToastProvider>

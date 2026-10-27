@@ -5,6 +5,7 @@ import { create } from 'zustand';
 import { api } from '@/api/client';
 import { isApiError } from '@/api/errors';
 import { type AuthUser, AuthUserSchema, MeResponseSchema } from '@/api/schemas/auth';
+import { disablePush } from '@/features/push/pushService';
 import { secureStorage } from '@/lib/secureStorage';
 
 export const TOKEN_KEY = 'auth.token';
@@ -91,6 +92,11 @@ export const useSession = create<SessionState>()((set, get) => ({
   },
 
   async signOut(reason = 'user', message) {
+    // This phone stops getting this person's notifications. Only when they chose to sign out (the token is still
+    // valid) and never for longer than a moment: signing out must work offline.
+    if (reason === 'user') {
+      await Promise.race([disablePush(), new Promise<void>((resolve) => setTimeout(resolve, 3000))]);
+    }
     api.setAuthToken(null);
     set({ status: 'signedOut', user: null, signOutReason: reason, signOutMessage: message });
     await clearStorage();

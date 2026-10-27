@@ -62,6 +62,13 @@ describe('requests', () => {
     expect(seen[0].headers.get('content-type')).toBeNull();
   });
 
+  it('deleteJson sends a JSON body with DELETE', async () => {
+    const seen = capture('delete', '/api/things', () => HttpResponse.json({ ok: true }));
+    await expect(makeClient().deleteJson('/api/things', { token: 'x' }, Ok)).resolves.toEqual({ ok: true });
+    expect(seen[0].headers.get('content-type')).toBe('application/json');
+    expect(await seen[0].json()).toEqual({ token: 'x' });
+  });
+
   it('accepts an empty success body when the schema allows it', async () => {
     capture('delete', '/api/things/1', () => new HttpResponse(null, { status: 204 }));
     await expect(makeClient().delete('/api/things/1', z.undefined())).resolves.toBeUndefined();

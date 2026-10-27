@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { AppText } from '@/components/ui/Text';
+import { PushSettings } from '@/features/push/PushSettings';
 import { useSession } from '@/features/auth/sessionStore';
 import { PRIVACY_URL, TERMS_URL } from '@/lib/site';
 import { spacing } from '@/theme/tokens';
@@ -28,6 +29,7 @@ export function SettingsScreen() {
         <AppText variant="title" accessibilityRole="header">
           Settings
         </AppText>
+        <PushSettings />
         <Button
           testID="settings.privacy"
           label="Privacy Policy"

@@ -237,6 +237,9 @@ export function createApiClient(config: ApiClientConfig) {
       request('PATCH', path, schema, body, opts),
     delete: <S extends z.ZodType>(path: string, schema: S, opts?: RequestOptions) =>
       request('DELETE', path, schema, undefined, opts),
+    /** DELETE that names what to delete in a JSON body (push token). */
+    deleteJson: <S extends z.ZodType>(path: string, body: unknown, schema: S, opts?: RequestOptions) =>
+      request('DELETE', path, schema, body, opts),
   };
 }
 
