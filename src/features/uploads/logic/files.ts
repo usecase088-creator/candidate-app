@@ -74,3 +74,10 @@ export function cleanFileName(raw: string): string {
   const ext = /\.[a-z0-9]{1,8}$/i.exec(base)?.[0] ?? '';
   return base.slice(0, MAX_NAME_LENGTH - ext.length) + ext;
 }
+
+/** "340 KB", "2.0 MB". Empty when the size is not known. */
+export function formatBytes(bytes: number | null | undefined): string {
+  if (bytes == null) return '';
+  if (bytes >= MB) return `${(bytes / MB).toFixed(1)} MB`;
+  return `${Math.max(bytes === 0 ? 0 : 1, Math.round(bytes / 1024))} KB`;
+}

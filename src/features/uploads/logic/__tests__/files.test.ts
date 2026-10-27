@@ -1,5 +1,6 @@
 import {
   cleanFileName,
+  formatBytes,
   CV_MAX_BYTES,
   DOCUMENT_MAX_BYTES,
   MAX_DOCUMENT_FILES,
@@ -138,5 +139,20 @@ describe('cleanFileName', () => {
     const cleaned = cleanFileName(long);
     expect(cleaned.length).toBeLessThanOrEqual(100);
     expect(cleaned.endsWith('.pdf')).toBe(true);
+  });
+});
+
+describe('formatBytes', () => {
+  it('writes sizes people can read', () => {
+    expect(formatBytes(0)).toBe('0 KB');
+    expect(formatBytes(512)).toBe('1 KB');
+    expect(formatBytes(120_000)).toBe('117 KB');
+    expect(formatBytes(1024 * 1024)).toBe('1.0 MB');
+    expect(formatBytes(3.456 * 1024 * 1024)).toBe('3.5 MB');
+  });
+
+  it('is empty when the size is not known', () => {
+    expect(formatBytes(null)).toBe('');
+    expect(formatBytes(undefined)).toBe('');
   });
 });

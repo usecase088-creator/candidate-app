@@ -8,11 +8,31 @@ type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Query = Record<string, string | number | boolean | null | undefined>;
 export type RequestOptions = { query?: Query; signal?: AbortSignal };
 
+/** One multipart upload, ready to send. The transport adds the multipart Content-Type (with its boundary) itself. */
+export type UploadRequest = {
+  url: string;
+  headers: Record<string, string>;
+  body: FormData;
+  timeoutMs: number;
+  signal?: AbortSignal;
+  /** Bytes sent and total bytes, only when the total is known. */
+  onProgress?: (sent: number, total: number) => void;
+};
+export type UploadResponse = { status: number; text: string };
+/** Sends the request and resolves with whatever the server answered (any status). Rejects with an ApiError for a
+ *  network failure or a timeout, and with an AbortError when cancelled. */
+export type UploadTransport = (req: UploadRequest) => Promise<UploadResponse>;
+export type UploadOptions = { signal?: AbortSignal; onProgress?: (sent: number, total: number) => void };
+
 export type ApiClientConfig = {
   baseUrl: string | (() => string);
   appVersion: string;
   platform: string;
   timeoutMs?: number;
+  /** Uploads of files take longer than normal calls. Default 60 s. */
+  uploadTimeoutMs?: number;
+  /** How multipart uploads are sent. The app passes the XMLHttpRequest one (progress); Node tools pass none. */
+  uploadTransport?: UploadTransport;
   /** Called once when a signed-in request gets 401; armed again by the next setAuthToken(token). */
   onSessionExpired?: () => void;
   /** Receives parse errors (backend shape changed) for Sentry. */
@@ -20,6 +40,7 @@ export type ApiClientConfig = {
 };
 
 const DEFAULT_TIMEOUT_MS = 20_000;
+const DEFAULT_UPLOAD_TIMEOUT_MS = 60_000;
 
 function zodIssues(error: z.ZodError): string[] {
   // Paths and messages only: Zod messages name the expected/received types, never the values.
@@ -28,6 +49,7 @@ function zodIssues(error: z.ZodError): string[] {
 
 export function createApiClient(config: ApiClientConfig) {
   const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const uploadTimeoutMs = config.uploadTimeoutMs ?? DEFAULT_UPLOAD_TIMEOUT_MS;
   let token: string | null = null;
   let expiryReported = false;
   let onSessionExpired = config.onSessionExpired;
@@ -98,6 +120,18 @@ export function createApiClient(config: ApiClientConfig) {
       opts.signal?.removeEventListener('abort', abortFromCaller);
     }
 
+    return handleResponse(status, ok, text, path, schema, sentToken);
+  }
+
+  /** Same for every call: error statuses become ApiErrors, a 401 ends the session once, the body is parsed. */
+  function handleResponse<S extends z.ZodType>(
+    status: number,
+    ok: boolean,
+    text: string,
+    path: string,
+    schema: S,
+    sentToken: string | null,
+  ): z.output<S> {
     let json: unknown;
     let isJson = true;
     try {
@@ -117,6 +151,47 @@ export function createApiClient(config: ApiClientConfig) {
     const parsed = schema.safeParse(json);
     if (!parsed.success) fail(ApiError.parse(status, path, zodIssues(parsed.error)));
     return parsed.data;
+  }
+
+  /** One multipart upload. Never repeated by itself (a retry could store the file twice). */
+  async function upload<S extends z.ZodType>(
+    path: string,
+    body: FormData,
+    schema: S,
+    opts: UploadOptions = {},
+  ): Promise<z.output<S>> {
+    if (!config.uploadTransport) throw new Error('This API client has no upload transport.');
+    const sentToken = token;
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      'X-App-Version': config.appVersion,
+      'X-Platform': config.platform,
+    };
+    if (sentToken) headers.Authorization = `Bearer ${sentToken}`;
+
+    let res: UploadResponse;
+    try {
+      res = await config.uploadTransport({
+        url: buildUrl(path),
+        headers,
+        body,
+        timeoutMs: uploadTimeoutMs,
+        signal: opts.signal,
+        onProgress: opts.onProgress,
+      });
+    } catch (e) {
+      if (e instanceof ApiError) throw e;
+      if (e instanceof Error && e.name === 'AbortError') throw e;
+      throw ApiError.network();
+    }
+    return handleResponse(
+      res.status,
+      res.status >= 200 && res.status < 300,
+      res.text,
+      path,
+      schema,
+      sentToken,
+    );
   }
 
   async function request<S extends z.ZodType>(
@@ -140,6 +215,7 @@ export function createApiClient(config: ApiClientConfig) {
 
   return {
     timeoutMs,
+    upload,
     setAuthToken(next: string | null) {
       token = next;
       expiryReported = false;
