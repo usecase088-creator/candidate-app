@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { type ComponentRef, type ReactNode, useRef } from 'react';
+import { type ComponentRef, type ReactNode, useEffect, useRef } from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet } from 'react-native';
 import { type Edge, SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,6 +17,8 @@ export type ScreenProps = {
   /** Tab screens leave the bottom edge to the tab bar. */
   edges?: Edge[];
   padded?: boolean;
+  /** When this value changes the scroll view jumps back to the top (a new step of a form). */
+  scrollToTopKey?: unknown;
 };
 
 /**
@@ -29,8 +31,12 @@ export function Screen({
   scroll = false,
   edges = ['top', 'bottom'],
   padded = true,
+  scrollToTopKey,
 }: ScreenProps) {
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [scrollToTopKey]);
   const offset = useRef(0);
   useKeyboardScroll(
     (y) => scrollRef.current?.scrollTo({ y, animated: true }),

@@ -77,6 +77,13 @@ describe('Settings', () => {
 });
 
 describe('Profile tab navigation', () => {
+  it('opens the profile builder', async () => {
+    installJobsBackend({ me: applicantMe });
+    await startSignedIn('/profile', 'profile.screen');
+    await fireEvent.press(await screen.findByTestId('profile.edit'));
+    expect(await screen.findByTestId('builder.screen')).toBeOnTheScreen();
+  });
+
   it('opens Settings', async () => {
     installJobsBackend({ me: applicantMe });
     await startSignedIn('/profile', 'profile.screen');

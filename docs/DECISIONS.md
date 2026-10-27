@@ -235,3 +235,16 @@ Raj approved the Phase 3 plan on 2026-10-27; these are the deliberate difference
 9. **"Start form" and "Edit & apply" open a page that says the 15-step form arrives with the profile builder (Phase 4).** CV upload and Quick Apply
    work for candidates whose form profile exists (Raj's answer 1: PLAN.md order).
 10. **The apply chooser waits for the candidate row.** If it cannot be loaded the screen shows Try Again instead of locking Quick Apply by mistake.
+
+## D28 — Phase 4: profile builder and settings (2026-10-28, decided by Claude overnight, Raj to confirm)
+
+Raj was asleep and asked for decisions to be taken and listed. Each can be reverted.
+
+1. **A5 unchanged (Raj).** The app and the document vault follow the website's current behaviour. The question for the client is in local `docs/client/CLIENT-QUESTIONS.md`.
+2. **B8: the builder never changes the sign-in phone or email.** Step 1 shows them read-only, filled from the account (`/api/candidates/me` top-level `phone` and `email`), and the saved profile always carries those two values. Everything else in the profile JSON that the form does not edit is sent back unchanged.
+3. **Dates are typed as YYYY-MM-DD** (the website's date-picker format). No date-picker library (CR-006 would add one).
+4. **Salary ranges are two number boxes each** (0-120 LPA like the website's sliders), not sliders.
+5. **Each step is saved when Next is pressed** (PLAN: save per step), with the whole profile in `PUT /api/candidates/me`. The step reached is kept in SecureStore (`profile.builder.step`, a number). Side effect to know: a half-filled profile can already be saved on the server (the server decides what a profile with low completeness may do).
+6. **Selections are buttons** (single choice and multi choice), as in D27 item 6. Lists (qualifications, experience, ...) have Add and Remove.
+7. **Settings** (Profile tab) holds Privacy Policy, Terms, version and Sign out. Links are `https://apronhanger.work/privacy-policy.html` and the terms PDF (same as the sign-up screen); the privacy URL is assumed to exist on the candidate site.
+

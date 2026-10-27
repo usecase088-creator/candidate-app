@@ -1,5 +1,5 @@
-// The 15-step structured form is the profile builder of Phase 4. Until then this page says so and leads back, so
-// the "Start form" and "Edit & apply" buttons never end in a dead tap. (docs/PHASE-3.md, Raj's answer 1)
+// The structured form is the profile builder (Phase 4). "Start form" and "Edit & apply" lead here; the page sends the
+// user to the builder and back to the chooser, where Quick Apply works once the form is saved.
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -30,9 +30,14 @@ export function ApplyFormScreen() {
               Application form
             </AppText>
             <AppText color="mutedForeground">
-              The 15-step structured form arrives in the next app update. Until then you can apply with Quick
-              Apply (once your form CV exists on the website) or by uploading your CV.
+              Fill in the profile form first. When it is saved, come back here: Quick Apply and apply with
+              your CV will be ready.
             </AppText>
+            <Button
+              testID="apply.form.build"
+              label="Fill in my profile"
+              onPress={() => router.push('/profile-builder')}
+            />
             <Button
               testID="apply.form.choose"
               label="Choose another way to apply"

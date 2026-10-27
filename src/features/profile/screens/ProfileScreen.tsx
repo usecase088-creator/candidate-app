@@ -61,6 +61,11 @@ export function ProfileScreen() {
           </View>
         )}
         <Button
+          testID="profile.edit"
+          label={completeness > 0 ? 'Edit profile' : 'Build my profile'}
+          onPress={() => router.push('/profile-builder')}
+        />
+        <Button
           testID="profile.settings"
           label="Settings"
           variant="outline"
