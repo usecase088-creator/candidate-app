@@ -155,4 +155,6 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: job.screen
     timeout: 15000
-- assertVisible: Consultant Cardiologist
+- extendedWaitUntil:
+    visible: Consultant Cardiologist
+    timeout: 30000

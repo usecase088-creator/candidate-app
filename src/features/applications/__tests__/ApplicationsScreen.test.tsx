@@ -20,6 +20,7 @@ import { server } from '@/test/msw/server';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
 
 import { APPLICATIONS_KEY } from '../hooks/queryKeys';
+import { APPLICATIONS_LIST_PROPS } from '../screens/ApplicationsScreen';
 
 jest.mock('expo-font', () => ({ ...jest.requireActual('expo-font'), useFonts: jest.fn() }));
 jest.mock('expo-splash-screen', () => ({
@@ -165,6 +166,12 @@ describe('My Applications: empty, loading, error, offline', () => {
     await open();
     await act(async () => onlineManager.setOnline(false));
     expect(await screen.findByTestId('applications.offline')).toBeOnTheScreen();
+  });
+
+  it('a new application shows at the top: the list does not hold the old position (found on the phone)', () => {
+    // FlashList keeps the visible rows in place when a row is added above them, which pushed a freshly submitted
+    // application out of sight on the phone. This screen must show the newest application first, so that is off.
+    expect(APPLICATIONS_LIST_PROPS.maintainVisibleContentPosition).toEqual({ disabled: true });
   });
 
   it('pull to refresh loads the list again', async () => {

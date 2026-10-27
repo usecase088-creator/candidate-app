@@ -26,7 +26,7 @@ appId: work.apronhanger.candidate.dev
 - extendedWaitUntil:
     notVisible:
       id: login.screen
-    timeout: 20000
+    timeout: 60000
 # Android may offer to save the password: wait for it (optional) and close it with Back. Never tap "Never".
 - extendedWaitUntil:
     visible: 'Save password.*'
@@ -48,4 +48,4 @@ appId: work.apronhanger.candidate.dev
 - extendedWaitUntil:
     visible:
       id: home.screen
-    timeout: 20000
+    timeout: 60000

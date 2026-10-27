@@ -118,6 +118,18 @@ Plus 2 approved hospitals and 4 active jobs. The other test numbers are for sign
 `e2e/maestro/`, about 10 min). Realme phones may show a "Security test" screen for Maestro's helper app the
 first time: press Back. Flows close Android's "Save password?" sheet with Back; never tap "Never".
 
+**Phone run notes (2026-10-28, Phase 3):**
+- *Security test screen:* Realme shows it over the app after Maestro's helper app is installed or updated. Press Back once, then rerun.
+- *Google Password Manager dialog:* after sign-up (and sometimes at other times) Android asks "Save password to Google Password Manager?" with
+  **Never** and **Continue** (or **Not now**). It covers the app until it is answered, so every flow that may trigger it closes it with Back. Never tap
+  "Continue" (it saves the test password to the owner's Google account) and never "Never" (it switches the prompt off for good).
+- *Slow link:* the laptop's route to the Neon database can be slow (logins of 9 s, lists of 7 s) or drop for a minute ("Can't reach database server").
+  Flows therefore wait up to 60 to 90 s for screens that come from the server. If the backend does not start, run `npm run backend:local` again.
+- *Photo picker:* the document flow opens the phone's own photo picker, which shows the owner's whole library. The flow adds one image first
+  (`addMedia`), which is the newest, and taps **only the first tile**, then **Done**. Never tap other positions.
+- *Stop the backend before a reseed:* `npm run backend:local -- --no-start` fails at `prisma generate` while a backend is running on Windows.
+  Reseed between flows that change the demo applicant's applications (`apply-quick`, `application-*`); the old flows do not need it.
+
 **Network:** Prisma tries IPv6 first. On a network that hands out IPv6 but doesn't route it (seen on one Wi-Fi,
 2026-10-25), every database call fails with "Can't reach database server" even though the host answers on IPv4.
 Check with `curl -6 https://www.google.com`; switch network, or make Windows prefer IPv4 (admin):

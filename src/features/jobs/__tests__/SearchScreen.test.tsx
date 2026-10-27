@@ -197,7 +197,7 @@ describe('Search: filter sheet', () => {
     for (let i = 0; i < 30; i++) await fireEvent.press(screen.getByTestId('filters.salary.plus'));
     expect(screen.getByTestId('filters.salary.value')).toHaveTextContent('₹50+ LPA');
     expect(screen.getByTestId('filters.salary.plus')).toBeDisabled();
-  });
+  }, 20_000); // about 40 button presses: close to the 5 s default when the laptop is busy
 
   it('sort by salary and by profile relevance', async () => {
     installJobsBackend({ jobs: [nurse, doctor, tech] });

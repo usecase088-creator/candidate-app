@@ -85,5 +85,8 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: applications.screen
     timeout: 20000
-- assertVisible: Radiology Technician
+# The list is loaded from the server again: wait for the new row.
+- extendedWaitUntil:
+    visible: Radiology Technician
+    timeout: 90000
 - assertVisible: '9 applications.*'

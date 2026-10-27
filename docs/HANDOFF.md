@@ -8,12 +8,15 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
   Plan and checklist: `docs/PHASE-3.md`; summary and recording plan: `docs/PHASE-3-SUMMARY.md`; decisions D26 (permissions, confirms, uploads) and D27 (differences from the website).
   Raj approved the plan with these answers: PLAN.md order (apply works for candidates whose form profile exists; the Part 1 demo uses the demo account), 4 Expo file packages OK,
   confirm step for Decline and Reject, XHR uploads inside `createApiClient.ts`, PLAN.md's Part 1 list is the list, assume no Apple account (simulator build plus recording), **ask before each EAS build**.
-- **STILL OPEN in Phase 3 (needs Raj or the phone):**
-  1. **Run on the real Android phone:** the 4 new Maestro flows (`apply-quick`, `application-interview`, `application-offer`, `application-documents`; written without a phone, marked unverified) and the 9 old ones.
-     The debug APK with the new native modules was rebuilt locally (`android/app/build/outputs/apk/debug/app-debug.apk`; install it, then `npm run backend:local`, `npx expo start`, `adb reverse` as below).
-  2. **iPhone simulator:** needs one EAS iOS simulator build (`e2e-test` profile): **ask Raj first**. Then run the workflow with one flow first, then the folder (see "iPhone status").
-  3. **Android test build (EAS `preview` APK)** for Raj's and the client's phone: **ask Raj first.** Then one real Sentry event from it, checked for personal data.
-  4. CV upload through the system file picker is not automated (the picker is outside the app); check it by hand on the phone and record it.
+- **Phase 3 status after the phone runs (2026-10-28):**
+  - **Android, real phone (Realme RMX3944): all 13 flows pass** (4 new + the 9 old; flows were run one by one, with reseeds between the applicant flows).
+    The phone found a real bug (new application hidden above the list after Quick Apply): fixed (`APPLICATIONS_LIST_PROPS`, `maintainVisibleContentPosition` off).
+    Flow lessons are in `docs/SETUP.md` "Phone run notes" (Security test screen, Google Password Manager dialog, slow link, photo picker, reseed).
+  - **iPhone: EAS iOS simulator build `5cbcc287` exists (free) and `smoke` PASSED on it** (run 40546963258). Every other macOS job waited 15 minutes for a runner and was
+    cancelled (7 attempts between 16:00 and 19:12 UTC; probe `mac-probe.yml` showed `macos-15`, `macos-26`, `macos-latest` all without a machine; GitHub status clean).
+    Hypothesis, not proof: US-daytime capacity. **Next:** retry at a quiet hour with the flows as separate runs (`application-offer`, `application-interview`, `apply-quick`,
+    each touches different seeded data), reseed first (`npm run backend:local -- --no-start`, backend stopped), then the 9 old flows.
+  - **Still to do, needs Raj:** Android preview APK build (EAS, **ask first**) and the real Sentry event from it; by-hand checks of camera photo, share sheet, CV picker.
 - **Demo account for the apply flows:** `applicant@apronhanger.test` (password in `seedData.ts`): filled profile (94%), 8 applications, one per state. `candidate@apronhanger.test` has no profile on purpose ("no form CV" cases).
   Every `npm run backend:local` seed resets both (and staging shares the database).
 - **Reference clone `../job` is at `f185fe0`** (= the live commit, checked read-only on 2026-10-27, D6). `../job-hotfix` unchanged.

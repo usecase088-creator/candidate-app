@@ -10,17 +10,27 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: applications.screen
     timeout: 20000
-- assertVisible: My Applications
+# The list comes from the server and can take a while on a slow link: wait for the tab row before anything else.
+- extendedWaitUntil:
+    visible:
+      id: applications.tab.all
+    timeout: 90000
 
-# The Interview Scheduled tab shows the two seeded interviews.
+# A tab filters the list: Applied shows only the new application, All brings the rest back.
 - tapOn:
-    id: applications.tab.interview-scheduled
+    id: applications.tab.applied
 - assertVisible:
+    id: application.row.5eed0000-0000-4000-8000-00000000a101
+- assertNotVisible:
     id: application.row.5eed0000-0000-4000-8000-00000000a102
-- assertVisible:
-    id: application.row.5eed0000-0000-4000-8000-00000000a103
+- tapOn:
+    id: applications.tab.all
 
 # Virtual interview: Join Meeting is there, Accept.
+- scrollUntilVisible:
+    element:
+      id: application.row.5eed0000-0000-4000-8000-00000000a102
+    timeout: 30000
 - tapOn:
     id: application.row.5eed0000-0000-4000-8000-00000000a102
 - extendedWaitUntil:
@@ -44,8 +54,14 @@ appId: work.apronhanger.candidate.dev
     timeout: 15000
 
 # In-person interview: ask to reschedule (a note is required).
-- tapOn:
-    id: applications.tab.interview-scheduled
+- extendedWaitUntil:
+    visible:
+      id: applications.tab.all
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: application.row.5eed0000-0000-4000-8000-00000000a103
+    timeout: 30000
 - tapOn:
     id: application.row.5eed0000-0000-4000-8000-00000000a103
 - extendedWaitUntil:

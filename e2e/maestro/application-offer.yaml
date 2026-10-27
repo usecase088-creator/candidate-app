@@ -10,8 +10,15 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: applications.screen
     timeout: 20000
-- tapOn:
-    id: applications.tab.offer-sent
+# The list comes from the server and can take a while on a slow link: wait for the tab row before anything else.
+- extendedWaitUntil:
+    visible:
+      id: applications.tab.all
+    timeout: 90000
+- scrollUntilVisible:
+    element:
+      id: application.row.5eed0000-0000-4000-8000-00000000a106
+    timeout: 30000
 - tapOn:
     id: application.row.5eed0000-0000-4000-8000-00000000a106
 - extendedWaitUntil:

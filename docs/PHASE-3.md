@@ -1,6 +1,6 @@
 # Phase 3 — Apply and applications (week 3) → Part 1 delivery
 
-Status: **approved by Raj 2026-10-27. Tasks 0 to 9 built and pushed (Maestro runs, iPhone run and the Part 1 builds are still open: see HANDOFF).** Raj's answers are in "Decisions" at the end.
+Status: **approved by Raj 2026-10-27. Tasks 0 to 9 built and pushed; all 13 flows pass on the real Android phone; iPhone flows blocked by macOS runner capacity (smoke passed); Part 1 builds not made yet: see HANDOFF.** Raj's answers are in "Decisions" at the end.
 
 Goal: a signed-in candidate can apply to a job (quick apply, apply with job questions, apply with their own CV), see all their
 applications with the website's statuses, and answer what the hospital asks: accept / decline / reschedule an interview, upload
@@ -137,14 +137,14 @@ Source of truth: the website (`../job/candidates/src`: `lib/applications.ts`, `l
 
 ## Task 9 — End-to-end
 
-- [ ] (flows written, NOT run: no phone attached) Maestro on the real phone (local backend, seeded states): `apply-quick.yaml` (chooser → job question → quick apply → appears in
+- [x] (run 2026-10-28 on the real phone, Realme RMX3944: all four pass; CV upload through the system file picker is checked by hand) Maestro on the real phone (local backend, seeded states): `apply-quick.yaml` (chooser → job question → quick apply → appears in
       My Applications), `apply-cv.yaml` (pick a file pushed to the phone with `adb`, submit), `application-interview.yaml` (accept,
       then reschedule with a note), `application-offer.yaml` (view letter opens the browser, accept), `application-documents.yaml`
       (upload requested documents). If the system file picker cannot be driven reliably, the picking step is the only manual one
       and is recorded on video; everything around it stays automated.
 - [x] Playwright (Chromium, API mocked): My Applications tabs and counts, apply chooser states, action card transitions.
-- [ ] Whole existing Maestro suite (9 flows) still passes on Android.
-- [ ] iPhone simulator workflow: the new flows that do not need a picker, plus the 9 existing flows (one clean app per flow, as now).
+- [x] Whole existing Maestro suite (9 flows) still passes on Android (run on the phone 2026-10-28, each flow passes; three needed longer waits for the slow link).
+- [ ] iPhone simulator workflow: `smoke` PASSED on a Mac (run 40546963258, new build 5cbcc287). The other flows could not run: every macOS job waited 15 minutes for a runner and was cancelled (7 attempts, 2026-10-27 16:00 to 19:12 UTC, see HANDOFF). Open until GitHub gives a Mac.
 
 ## Task 10 — Part 1 builds (these cost build minutes: asked at that point, not before)
 

@@ -61,7 +61,8 @@ describe('useQuickApply', () => {
       apply: useQuickApply(),
       list: useApplications(),
     }));
-    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+    // Read `data`: TanStack Query only re-renders for the properties that were read (a screen reads it in render).
+    await waitFor(() => expect(result.current.list.data).toBeDefined());
     await act(async () => {
       await result.current.apply.mutateAsync({ jobId: 'job-1', me });
     });
@@ -296,7 +297,8 @@ describe('useRespond', () => {
       respond: useRespond(),
       list: useApplications(),
     }));
-    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
+    // Read `data`: TanStack Query only re-renders for the properties that were read (a screen reads it in render).
+    await waitFor(() => expect(result.current.list.data).toBeDefined());
     await act(async () => {
       await result.current.respond.mutateAsync({ id: interviewVirtual.id, status: 'InterviewAccepted' });
     });

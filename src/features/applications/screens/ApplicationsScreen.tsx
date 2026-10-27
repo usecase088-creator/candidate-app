@@ -19,6 +19,12 @@ import { useApplications } from '../hooks/useApplications';
 import { formatFetchedTime } from '../logic/interview';
 import { countByTab, inTab, TABS, type Tab } from '../logic/status';
 
+/**
+ * A new application is added at the top. FlashList would keep the old rows where they were and push the new one out of
+ * sight (found on the phone after Quick Apply), so this list does not hold its position.
+ */
+export const APPLICATIONS_LIST_PROPS = { maintainVisibleContentPosition: { disabled: true } } as const;
+
 const slug = (tab: Tab) => tab.toLowerCase().replace(/\s+/g, '-');
 
 export function ApplicationsScreen() {
@@ -97,6 +103,7 @@ export function ApplicationsScreen() {
         refreshing={query.isRefetching}
         onRefresh={() => void query.refetch()}
         keyboardShouldPersistTaps="handled"
+        {...APPLICATIONS_LIST_PROPS}
         contentContainerStyle={styles.content}
       />
     </Screen>

@@ -1,7 +1,7 @@
 # ApronHanger candidate app: Phase 3 summary
 
-**Phase:** 3 of 5, "Apply and applications" · **Dates:** 27 October 2026 · **Status:** built and tested by computer (code checks, server checks, web checks);
-**not yet run on a phone or on an iPhone simulator, and the Part 1 builds are not made yet** (section 6) · **Prepared for:** Raj and the ApronHanger client
+**Phase:** 3 of 5, "Apply and applications" · **Dates:** 27 October 2026 · **Status:** built; tested by computer (code, server and web checks) **and on the real Android phone (all 13 flows pass)**;
+**iPhone: the app starts on the simulator (`smoke` passed) but the longer iPhone flows could not run (no macOS runner from GitHub); the Part 1 builds are not made yet** (section 6) · **Prepared for:** Raj and the ApronHanger client
 
 ---
 
@@ -12,16 +12,18 @@ Phase 3 lets a signed-in candidate **apply for a job and follow what happens nex
 something: accept, decline or ask to move an interview, upload requested documents, open and accept or reject an offer. It uses the same backend and the
 same wording as the website. The backend was not changed.
 
-What is verified so far: all automated checks pass (1,171 code checks, 39 server checks, 8 web-browser checks including the smallest phone width).
-What is still open: the new phone flows have not been run on the real phone (it was disconnected), the iPhone check needs one free iOS build from EAS,
-and the first test builds for the client are waiting for Raj's go-ahead (they use build minutes).
+What is verified: all automated checks pass (code, server, web at the smallest phone width), and **all 13 phone flows pass on the real Android phone**
+(the 4 new ones and the 9 from Phases 1 and 2). The phone found one real bug that no automated check had caught: after Quick Apply, the new application was
+hidden above the visible part of My Applications. It is fixed.
+What is still open: the iPhone simulator (the app starts and signs in screen shows; the longer flows are waiting for GitHub to provide a Mac) and the first
+test builds for the client, which wait for Raj's go-ahead (they use build minutes).
 
 | | |
 | --- | --- |
 | Screens built | Apply chooser · Quick Apply · Apply with your CV · My Applications (list with tabs) · One application with its answer card |
 | Answer cards | Interview · Document request · Documents submitted · Offer letter · Joining date |
 | Automated checks | **1,171** code checks · **39** server-contract checks · **8** web checks (incl. 320 px width) |
-| New phone flows written | 4 (`apply-quick`, `application-interview`, `application-offer`, `application-documents`): **not run yet** |
+| New phone flows | 4 (`apply-quick`, `application-interview`, `application-offer`, `application-documents`): **all pass on the real Android phone** |
 | Decisions recorded | D26 (permissions, confirmations, uploads) · D27 (differences from the website) |
 | Cost | Nothing so far. The two test builds (section 6) use EAS build minutes: asked first. |
 
@@ -58,7 +60,9 @@ That form is the profile builder of Phase 4. The Part 1 demo therefore uses a de
   the smallest phone width (no sideways overflow).
 - **Found while building, fixed:** the Decline and Reject confirmations did nothing in the web build (the phone's alert has no web version); two of our own
   test helpers changed shared test data and made later tests fail. Neither affects the app.
-- **Not yet checked on a real device:** the phone's file picker, photo picker, camera permission, the share sheet, and the four new phone flows.
+- **Found on the real phone, fixed:** after applying, the new application was out of sight at the top of My Applications (the list kept its old position). A unit test and the `apply-quick` flow now guard it.
+- **Checked on the real phone:** Quick Apply with job questions, the photo picker and upload of a requested document, accepting and rescheduling interviews, the offer letter opening in the browser and accepting the offer.
+- **Not checked on a device yet:** the camera permission and taking a photo, the share sheet (download and share the offer letter), CV upload through the file picker: check these three by hand.
 
 ---
 
@@ -83,8 +87,8 @@ PDF and pictures for requested documents (the server refuses the rest); errors k
 
 | Item | Needs |
 | --- | --- |
-| Run the 4 new phone flows and the 9 old ones on the real Android phone | The phone connected again. The debug build with the new picker libraries is rebuilt locally (free). |
-| iPhone simulator: the 9 old flows and the new flows that need no file picker | **One EAS iOS simulator build** (free plan). Raj to say yes. |
+| iPhone simulator: the 9 old flows and the new flows that need no file picker | A Mac from GitHub. `smoke` passed on one; seven other attempts waited 15 minutes for a Mac and were cancelled (GitHub's free macOS pool had no machine; no incident reported). Retry at a quiet hour. |
+| Check by hand on the phone: camera photo, share the offer letter, CV upload from the file picker | 10 minutes with the phone |
 | Android test build (APK) for Raj's and the client's phone | **One EAS preview build.** Raj to say yes. |
 | iPhone "build" for the client | The client's Apple account is assumed not active: simulator build plus a screen recording. |
 | One real Sentry event from a build, checked for personal data | After the preview build. |

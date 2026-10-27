@@ -82,6 +82,19 @@ appId: work.apronhanger.candidate.dev
     direction: UP
 - tapOn:
     id: signup.submit
+# Android: Google Password Manager may ask to save the new password right after the form is sent. It covers the app
+# until it is answered. Close it with Back, like the login helper does: never "Continue" (it would save the test password
+# to the owner's Google account) and never "Never" (it turns the prompt off for good).
+- extendedWaitUntil:
+    visible: 'Save password.*'
+    timeout: 6000
+    optional: true
+- runFlow:
+    when:
+      platform: Android
+      visible: 'Save password.*'
+    commands:
+      - back
 # iPhone: with the number pad still open the first tap can be swallowed; tap again if the OTP step has not appeared.
 - runFlow:
     when:
