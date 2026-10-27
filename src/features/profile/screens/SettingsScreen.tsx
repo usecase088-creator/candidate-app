@@ -43,6 +43,12 @@ export function SettingsScreen() {
           onPress={() => void WebBrowser.openBrowserAsync(TERMS_URL)}
         />
         <Button
+          testID="settings.delete"
+          label="Delete account"
+          variant="destructive"
+          onPress={() => router.push('/delete-account')}
+        />
+        <Button
           testID="settings.signout"
           label="Sign out"
           variant="outline"

@@ -69,6 +69,8 @@ describe('signOutNotice (D18)', () => {
   it('shows the backend message for a blocked account', () => {
     expect(signOutNotice('blocked', 'Account not found.')).toBe('Account not found.');
     expect(signOutNotice('blocked')).toBe(SESSION_EXPIRED_MESSAGE);
+    expect(signOutNotice('deleted')).toBe('Your account has been deleted.');
+    expect(signOutNotice('user')).toBeUndefined();
   });
 
   it('says nothing after a normal sign-out or on first start', () => {

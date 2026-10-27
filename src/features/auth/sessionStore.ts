@@ -6,7 +6,8 @@ import { api } from '@/api/client';
 import { isApiError } from '@/api/errors';
 import { type AuthUser, AuthUserSchema, MeResponseSchema, RefreshResponseSchema } from '@/api/schemas/auth';
 import { z } from 'zod';
-import { disablePush } from '@/features/push/pushService';
+import { BUILDER_STEP_KEY } from '@/features/profile/builder/useBuilderStep';
+import { disablePush, PUSH_TOKEN_KEY } from '@/features/push/pushService';
 import { secureStorage } from '@/lib/secureStorage';
 
 export const TOKEN_KEY = 'auth.token';
@@ -14,8 +15,11 @@ export const USER_KEY = 'auth.user';
 /** Long-lived token that renews the access token. Same rule as the access token: SecureStore only. */
 export const REFRESH_KEY = 'auth.refresh';
 
-/** user: they tapped Sign out · expired: token rejected or unreadable · blocked: account suspended/deleted (403). */
-export type SignOutReason = 'user' | 'expired' | 'blocked';
+/**
+ * user: they tapped Sign out · expired: token rejected or unreadable · blocked: account suspended/deleted (403) ·
+ * deleted: they deleted their own account (nothing more to tell the server).
+ */
+export type SignOutReason = 'user' | 'expired' | 'blocked' | 'deleted';
 
 type SessionState = {
   status: 'restoring' | 'signedOut' | 'signedIn';
@@ -47,6 +51,9 @@ async function clearStorage() {
     secureStorage.deleteItem(TOKEN_KEY),
     secureStorage.deleteItem(USER_KEY),
     secureStorage.deleteItem(REFRESH_KEY),
+    // Belong to the person who just left: the push token and where they stopped in the profile form.
+    secureStorage.deleteItem(PUSH_TOKEN_KEY),
+    secureStorage.deleteItem(BUILDER_STEP_KEY),
   ]);
 }
 
