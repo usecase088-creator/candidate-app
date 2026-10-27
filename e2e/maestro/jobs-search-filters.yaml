@@ -18,7 +18,8 @@ appId: work.apronhanger.candidate.dev
 - inputText: CARDIO
 - runFlow: _common/hideKeyboard.yaml
 - assertVisible: Showing 1 of 4 verified roles
-- assertVisible: Consultant Cardiologist
+- assertVisible:
+    id: job.title.5eed0000-0000-4000-8000-00000000b002
 - tapOn:
     id: search.query
 - eraseText: 20
@@ -58,7 +59,8 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: filters.done
 - assertVisible: Showing 1 of 4 verified roles
-- assertVisible: Locum Dental Surgeon
+- assertVisible:
+    id: job.title.5eed0000-0000-4000-8000-00000000b004
 
 # Filters stay when the user switches tabs and comes back.
 - tapOn:
@@ -98,7 +100,8 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: filters.done
 - assertVisible: Showing 1 of 4 verified roles
-- assertVisible: Consultant Cardiologist
+- assertVisible:
+    id: job.title.5eed0000-0000-4000-8000-00000000b002
 
 # Opening a result shows the job.
 - tapOn:

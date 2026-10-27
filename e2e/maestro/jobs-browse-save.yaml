@@ -65,7 +65,8 @@ appId: work.apronhanger.candidate.dev
       id: saved.screen
     timeout: 10000
 - assertVisible: 1 role bookmarked for later
-- assertVisible: Staff Nurse
+- assertVisible:
+    id: job.title.5eed0000-0000-4000-8000-00000000b001
 - tapOn:
     id: job.save.5eed0000-0000-4000-8000-00000000b001
 - assertVisible: No saved jobs yet
