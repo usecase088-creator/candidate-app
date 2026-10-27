@@ -1,6 +1,6 @@
 # Phase 3 — Apply and applications (week 3) → Part 1 delivery
 
-Status: **plan, waiting for Raj's OK** (CLAUDE.md: write it first, show it to Raj, then build).
+Status: **approved by Raj 2026-10-27, Task 0 in progress.** Raj's answers are in "Decisions" at the end.
 
 Goal: a signed-in candidate can apply to a job (quick apply, apply with job questions, apply with their own CV), see all their
 applications with the website's statuses, and answer what the hospital asks: accept / decline / reschedule an interview, upload
@@ -169,16 +169,18 @@ Source of truth: the website (`../job/candidates/src`: `lib/applications.ts`, `l
 - The repo is public: no secrets, no real candidate data, test files in `e2e/` are generated or tiny and made up.
 - The staging server shares the dev database: reseed before every iPhone run.
 
-## Questions for Raj (answer before I start Task 1)
+## Decisions (Raj, 2026-10-27)
 
-1. **New app-only signups cannot apply in Phase 3** (finding 1): the form that unlocks applying is the Phase 4 wizard. Options:
-   (a) keep PLAN.md order: Phase 3 works for candidates whose form profile exists (made on the website) and the Part 1 demo
-   uses such an account; (b) move the profile wizard into Phase 3 and push notifications and settings out of Phase 4
-   (a re-plan, same total effort, changes Part 1 delivery content); (c) a minimal "complete my profile" screen in Phase 3
-   (extra, a change request). I recommend **(a)** and telling the client now.
-2. **OK to add** `expo-document-picker`, `expo-image-picker`, `expo-file-system`, `expo-sharing` (all Expo SDK, native, need a rebuild
-   of the debug APK and a new iPhone simulator build; no cost beyond the one free EAS iOS build)?
-3. **Confirm step for Decline interview and Reject offer?** The website has none. I recommend **yes** (a wrong tap is final).
-4. **Uploads with progress through `XMLHttpRequest` inside `createApiClient.ts`** (Task 3, D26): OK?
-5. **Part 1 checklist:** do you have the SOW's Part 1 list, or is the Phase 3 list in PLAN.md the list?
-6. **Apple:** is the client's Apple Developer account active yet (decides TestFlight vs simulator + recording)?
+1. **(a)** Keep the PLAN.md order. The Part 1 demo uses a **demo account with a filled profile**, seeded on the local backend and on staging. No "complete my profile" screen (not built; (c) is rejected).
+2. The 4 Expo packages are installed. After prebuild the merged Android manifest and the iOS Info.plist are checked: only camera and photo access with clear reason texts; no microphone, no broad media or storage permission. The final list is in DECISIONS.md (D26).
+3. **Confirm step** before Decline interview and Reject offer (D26).
+4. **XHR uploads inside `createApiClient.ts`.** First step of Task 3: check that MSW intercepts React Native's XHR under jest-expo. If it does not, the transport goes behind a small interface and is faked in tests.
+5. **PLAN.md's Part 1 list is the list** (same as the SOW). The structured-form "review profile" step arrives with the Phase 4 profile builder.
+6. **Assume the client's Apple account is NOT active:** iPhone = simulator build plus a screen recording. Raj will say if that changes.
+7. Camera and gallery photos use the picker's quality setting (about 0.7) before the 5 MB check, so normal phone photos are not rejected.
+8. Ask Raj before each EAS build.
+
+## Extra checks Raj asked for in Task 0
+
+- [x] Public docs scanned for notes about open weaknesses of the live backend: moved to local `docs/client/OPEN-WEAKNESSES.md`, public docs now only name the item ids (reported to Raj; git history still holds the old text).
+- [ ] On the local backend copy: `POST /api/applications` quick apply with a `profile` that has extra keys (`user`, `role`, `hospitalId`, `verified`, `matchPercent`, `userId`, `email`). Observe and report only; fix nothing; the result goes to local `docs/client/` (not the public repo).

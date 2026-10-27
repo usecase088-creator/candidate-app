@@ -197,3 +197,18 @@ again, not even read-only, unless Raj says so. If a production check is ever nee
 Raj accepted Phase 2 (Android phone 9/9, iPhone simulator 9/9). `usecase088-creator/candidate-app` **stays public** (free GitHub macOS minutes) and Claude may push to `main` of this repo without asking each time.
 This does not change the rules for `../job`, `../job-hotfix`, the deployed branch or Render. Because the repo is public: never commit secrets, `.env*`, `docs/client/`, personal data or client-only material.
 Known exposure, accepted by Raj: `staging-backend/` (a copy of the client's backend at `f185fe0`, including the open items kept in local `docs/client/`) is public. Revisit before the store submission.
+
+## D26 — Phase 3: permissions, confirm steps, uploads (2026-10-27, Raj)
+
+1. **Permissions (checked on the merged files, 2026-10-27).** Only camera and photo access, with reason texts.
+   - **Android release manifest** (preview variant, `processReleaseMainManifest`): `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` (offline detection), `VIBRATE` (React Native default, no prompt), `CAMERA`.
+     No microphone, no storage or media read/write, no biometrics, no screen overlay. Blocked in `app.config.ts`: `RECORD_AUDIO`, `READ/WRITE_EXTERNAL_STORAGE`, `READ_MEDIA_IMAGES/VIDEO/AUDIO`, `USE_BIOMETRIC`, `USE_FINGERPRINT`, and `SYSTEM_ALERT_WINDOW` (preview and production).
+     Files and gallery pictures come from the system document picker and photo picker, which need no permission. The debug build adds `SYSTEM_ALERT_WINDOW` and `ACCESS_LOCAL_NETWORK` itself (developer menu, Metro); they are not in release builds.
+   - **iOS Info.plist:** `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription` (wording in `app.config.ts`). No microphone text, no Face ID text (`expo-secure-store` `faceIDPermission: false`; the app uses no biometrics).
+     `NSAppTransportSecurity` allows plain http only in development and preview (D20).
+   - Tests in `src/lib/__tests__/appConfig.test.ts` fail if any of this changes.
+2. **Confirm step** before **Decline** (interview) and **Reject Offer**: a short dialog, one tap more. The website has none; both actions are final. Deviation from the website, deliberate.
+3. **Uploads with progress run through `XMLHttpRequest` inside `src/api/createApiClient.ts`** (same token, base URL, timeout and error mapping as `fetch`), so "no network calls outside the client" still holds. If MSW cannot intercept React Native's XHR under jest-expo, the transport sits behind a small interface and is faked in tests.
+4. **Photo quality:** camera and gallery pictures use the picker's quality setting (about 0.7) before the 5 MB check.
+5. **Part 1 demo account:** a demo candidate with a filled profile (completeness ≥ 30), seeded on the local backend and on staging. No "complete my profile" screen in Phase 3; the structured-form review step comes with the Phase 4 profile builder.
+6. **iPhone:** assume the client's Apple account is not active: simulator build plus screen recording (Raj tells if that changes). Every EAS build is asked first.

@@ -102,3 +102,68 @@ describe('plugins', () => {
     expect(pluginNames(configFor({ APP_VARIANT: 'development' }))).toContain('expo-secure-store');
   });
 });
+
+describe('permissions (Phase 3, D26): only camera and photo access, with reason texts', () => {
+  const imagePicker = (c: ExpoConfig) =>
+    (c.plugins ?? []).find((p) => Array.isArray(p) && p[0] === 'expo-image-picker') as
+      [string, Record<string, unknown>] | undefined;
+
+  it.each(['development', 'preview', 'production'])(
+    '%s: image picker has camera and photo reasons and no microphone',
+    (variant) => {
+      const options = imagePicker(configFor({ APP_VARIANT: variant }))?.[1];
+      expect(options).toBeDefined();
+      expect(typeof options?.cameraPermission).toBe('string');
+      expect(String(options?.cameraPermission).length).toBeGreaterThan(20);
+      expect(typeof options?.photosPermission).toBe('string');
+      expect(String(options?.photosPermission).length).toBeGreaterThan(20);
+      expect(options?.microphonePermission).toBe(false);
+    },
+  );
+
+  it('blocks the microphone and the broad storage permissions that libraries add on their own', () => {
+    expect(configFor({ APP_VARIANT: 'production' }).android?.blockedPermissions).toEqual(
+      expect.arrayContaining([
+        'android.permission.RECORD_AUDIO',
+        'android.permission.READ_EXTERNAL_STORAGE',
+        'android.permission.WRITE_EXTERNAL_STORAGE',
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.READ_MEDIA_VIDEO',
+        'android.permission.READ_MEDIA_AUDIO',
+      ]),
+    );
+  });
+});
+
+describe('permissions: no Face ID text (the app does not use biometrics)', () => {
+  it('turns off the Face ID usage text that expo-secure-store adds by default', () => {
+    const secureStore = (configFor({ APP_VARIANT: 'production' }).plugins ?? []).find(
+      (p) => Array.isArray(p) && p[0] === 'expo-secure-store',
+    ) as [string, Record<string, unknown>] | undefined;
+    expect(secureStore?.[1]).toMatchObject({ faceIDPermission: false });
+  });
+});
+
+describe('permissions: no biometrics, no screen overlay in store builds', () => {
+  const blocked = (variant: string) => configFor({ APP_VARIANT: variant }).android?.blockedPermissions ?? [];
+
+  it.each(['development', 'preview', 'production'])(
+    '%s blocks the biometric permissions secure-store pulls in',
+    (variant) => {
+      expect(blocked(variant)).toEqual(
+        expect.arrayContaining(['android.permission.USE_BIOMETRIC', 'android.permission.USE_FINGERPRINT']),
+      );
+    },
+  );
+
+  it.each(['preview', 'production'])(
+    '%s blocks SYSTEM_ALERT_WINDOW (only the developer menu needs it)',
+    (variant) => {
+      expect(blocked(variant)).toContain('android.permission.SYSTEM_ALERT_WINDOW');
+    },
+  );
+
+  it('development keeps it (developer menu overlay)', () => {
+    expect(blocked('development')).not.toContain('android.permission.SYSTEM_ALERT_WINDOW');
+  });
+});

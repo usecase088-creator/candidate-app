@@ -56,3 +56,5 @@ docs/client/
 *.tmp.txt
 ios-out/
 ios[0-9]/
+
+*.tmp.log

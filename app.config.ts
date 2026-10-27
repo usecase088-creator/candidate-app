@@ -91,6 +91,22 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         monochromeImage: './assets/images/android-icon-monochrome.png',
       },
       predictiveBackGestureEnabled: false,
+      // Phase 3 (D26): only camera and photo access. Libraries add storage permissions and the image picker the
+      // microphone on their own; blocking them keeps the merged manifest to what the app really uses
+      // (the system photo picker and document picker need no storage permission).
+      blockedPermissions: [
+        'android.permission.RECORD_AUDIO',
+        'android.permission.READ_EXTERNAL_STORAGE',
+        'android.permission.WRITE_EXTERNAL_STORAGE',
+        'android.permission.READ_MEDIA_IMAGES',
+        'android.permission.READ_MEDIA_VIDEO',
+        'android.permission.READ_MEDIA_AUDIO',
+        // expo-secure-store pulls these in; the app uses no biometrics.
+        'android.permission.USE_BIOMETRIC',
+        'android.permission.USE_FINGERPRINT',
+        // Expo's template adds the screen overlay for the developer menu; store and test builds don't need it.
+        ...(variant === 'development' ? [] : ['android.permission.SYSTEM_ALERT_WINDOW']),
+      ],
     },
     web: {
       output: 'single',
@@ -99,10 +115,21 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: [
       'expo-router',
       // Keeps SecureStore data out of Android auto-backup (a restored backup can't decrypt it anyway).
-      'expo-secure-store',
+      // faceIDPermission false: the app uses no biometrics, so the iPhone gets no Face ID usage text.
+      ['expo-secure-store', { faceIDPermission: false }],
       // Release builds block plain http. Development and preview talk to the http test backend (D20);
       // the store build stays https-only.
       ['expo-build-properties', { android: { usesCleartextTraffic: variant !== 'production' } }],
+      [
+        'expo-image-picker',
+        {
+          cameraPermission:
+            'ApronHanger uses the camera so you can take a photo of a document to upload with your application.',
+          photosPermission:
+            'ApronHanger uses your photos only when you choose a picture of a document to upload with your application.',
+          microphonePermission: false,
+        },
+      ],
       [
         'expo-splash-screen',
         {
