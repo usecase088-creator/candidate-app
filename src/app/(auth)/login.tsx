@@ -53,13 +53,13 @@ export default function Login() {
     setFormError(undefined);
     setBusy(true);
     try {
-      const { token, user } = await authApi.login(values);
+      const { token, user, refreshToken } = await authApi.login(values);
       if (user.role !== 'CANDIDATE') return fail(ROLE_MISMATCH_MESSAGE);
       toast.show('Welcome back!', { variant: 'success' });
       setSuccess(true);
       timer.current = setTimeout(() => {
         // Signing in switches the (auth) layout to Home.
-        signIn(token, user).catch(() => {
+        signIn(token, user, refreshToken).catch(() => {
           setSuccess(false);
           fail(loginErrorMessage(undefined));
         });

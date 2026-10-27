@@ -9,7 +9,7 @@ import { API } from '@/test/msw/handlers';
 import { server } from '@/test/msw/server';
 import { secureStorage } from '@/lib/secureStorage';
 
-import { resetSessionForTests, TOKEN_KEY, USER_KEY, useSession } from '../sessionStore';
+import { REFRESH_KEY, resetSessionForTests, TOKEN_KEY, USER_KEY, useSession } from '../sessionStore';
 
 const fake = SecureStore as typeof SecureStore & { __reset: () => void };
 const me = (reply: () => Response) => {
@@ -174,5 +174,138 @@ describe('signOut', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(state()).toMatchObject({ status: 'signedOut', signOutReason: 'expired' });
     await expect(secureStorage.getItem(TOKEN_KEY)).resolves.toBeNull();
+  });
+});
+
+describe('refresh tokens', () => {
+  const refreshReply = {
+    token: 'new-access',
+    refreshToken: 'new-refresh',
+    expiresIn: 1800,
+    user: candidateUser,
+  };
+  /** /api/auth/me answers 401 for the old token and fine for the new one. */
+  function meNeedsNewToken() {
+    server.use(
+      http.get(`${API}/api/auth/me`, ({ request }) =>
+        request.headers.get('authorization') === 'Bearer new-access'
+          ? HttpResponse.json(meResponse)
+          : HttpResponse.json({ error: 'Invalid or expired token' }, { status: 401 }),
+      ),
+    );
+  }
+  const refreshEndpoint = (reply: () => Response) => {
+    const bodies: unknown[] = [];
+    server.use(
+      http.post(`${API}/api/auth/refresh`, async ({ request }) => {
+        bodies.push(await request.json());
+        return reply();
+      }),
+    );
+    return bodies;
+  };
+
+  it('signIn keeps the refresh token in secure storage, and drops an old one when there is none', async () => {
+    await state().signIn('tok', candidateUser, 'refresh-1');
+    expect(await secureStorage.getItem(REFRESH_KEY)).toBe('refresh-1');
+    await state().signIn('tok2', candidateUser);
+    expect(await secureStorage.getItem(REFRESH_KEY)).toBeNull();
+  });
+
+  it('restore: an expired access token is renewed with the refresh token, and the new tokens are saved', async () => {
+    await storeSession('old-access');
+    await secureStorage.setItem(REFRESH_KEY, 'old-refresh');
+    meNeedsNewToken();
+    const bodies = refreshEndpoint(() => HttpResponse.json(refreshReply));
+    await state().restore();
+    expect(bodies).toEqual([{ refreshToken: 'old-refresh' }]);
+    expect(state().status).toBe('signedIn');
+    expect(await secureStorage.getItem(TOKEN_KEY)).toBe('new-access');
+    expect(await secureStorage.getItem(REFRESH_KEY)).toBe('new-refresh');
+  });
+
+  it('restore: when the refresh token is refused too, the user is signed out and everything is cleared', async () => {
+    await storeSession('old-access');
+    await secureStorage.setItem(REFRESH_KEY, 'old-refresh');
+    meNeedsNewToken();
+    refreshEndpoint(() =>
+      HttpResponse.json({ error: 'Session expired. Please log in again.' }, { status: 401 }),
+    );
+    await state().restore();
+    expect(state()).toMatchObject({ status: 'signedOut', signOutReason: 'expired' });
+    expect(await secureStorage.getItem(TOKEN_KEY)).toBeNull();
+    expect(await secureStorage.getItem(REFRESH_KEY)).toBeNull();
+  });
+
+  it('restore: no refresh token stored (older sign-in) behaves as before', async () => {
+    await storeSession('old-access');
+    meNeedsNewToken();
+    await state().restore();
+    expect(state()).toMatchObject({ status: 'signedOut', signOutReason: 'expired' });
+  });
+
+  it('restore: offline during the refresh keeps the user signed in', async () => {
+    await storeSession('old-access');
+    await secureStorage.setItem(REFRESH_KEY, 'old-refresh');
+    meNeedsNewToken();
+    refreshEndpoint(() => HttpResponse.error());
+    await state().restore();
+    expect(state().status).toBe('signedIn');
+    expect(await secureStorage.getItem(REFRESH_KEY)).toBe('old-refresh');
+  });
+
+  it('a suspended account (403 on refresh) is told so', async () => {
+    await storeSession('old-access');
+    await secureStorage.setItem(REFRESH_KEY, 'old-refresh');
+    meNeedsNewToken();
+    refreshEndpoint(() =>
+      HttpResponse.json(
+        { error: 'Your account has been suspended. Please contact support.' },
+        { status: 403 },
+      ),
+    );
+    await state().restore();
+    expect(state()).toMatchObject({
+      status: 'signedOut',
+      signOutReason: 'blocked',
+      signOutMessage: 'Your account has been suspended. Please contact support.',
+    });
+  });
+
+  it('a request that fails mid-session renews the token and goes on', async () => {
+    await state().signIn('old-access', candidateUser, 'old-refresh');
+    server.use(
+      http.get(`${API}/api/things`, ({ request }) =>
+        request.headers.get('authorization') === 'Bearer new-access'
+          ? HttpResponse.json({ ok: true })
+          : HttpResponse.json({ error: 'Invalid or expired token' }, { status: 401 }),
+      ),
+    );
+    refreshEndpoint(() => HttpResponse.json(refreshReply));
+    await expect(api.get('/api/things', z.object({ ok: z.boolean() }))).resolves.toEqual({ ok: true });
+    expect(state().status).toBe('signedIn');
+  });
+
+  it('sign out ends the sign-in on the server and clears the refresh token', async () => {
+    await state().signIn('tok', candidateUser, 'refresh-1');
+    const bodies: unknown[] = [];
+    server.use(
+      http.post(`${API}/api/auth/logout`, async ({ request }) => {
+        bodies.push(await request.json());
+        return HttpResponse.json({ success: true });
+      }),
+    );
+    await state().signOut('user');
+    expect(bodies).toEqual([{ refreshToken: 'refresh-1' }]);
+    expect(await secureStorage.getItem(REFRESH_KEY)).toBeNull();
+    expect(state().status).toBe('signedOut');
+  });
+
+  it('sign out works offline', async () => {
+    await state().signIn('tok', candidateUser, 'refresh-1');
+    server.use(http.post(`${API}/api/auth/logout`, () => HttpResponse.error()));
+    await state().signOut('user');
+    expect(state().status).toBe('signedOut');
+    expect(await secureStorage.getItem(REFRESH_KEY)).toBeNull();
   });
 });

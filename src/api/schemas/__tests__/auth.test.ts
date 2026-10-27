@@ -24,6 +24,15 @@ describe('AuthUserSchema', () => {
 });
 
 describe('AuthResponseSchema (login and register)', () => {
+  it('keeps the refresh token the app asks for', () => {
+    expect(AuthResponseSchema.parse({ ...loginResponse, refreshToken: 'r1', expiresIn: 1800 })).toMatchObject(
+      {
+        refreshToken: 'r1',
+      },
+    );
+    expect(AuthResponseSchema.parse(loginResponse).refreshToken).toBeUndefined();
+  });
+
   it('parses a login response', () => {
     expect(AuthResponseSchema.parse(loginResponse)).toMatchObject({ token: 'test.jwt.token' });
   });

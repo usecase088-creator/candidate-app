@@ -16,7 +16,20 @@ export const AuthUserSchema = z
 export type AuthUser = z.infer<typeof AuthUserSchema>;
 
 /** POST /api/auth/login 200 and POST /api/auth/register 201. */
-export const AuthResponseSchema = z.object({ token: z.string().min(1), user: AuthUserSchema }).loose();
+/** Login and register. The refresh fields come only because the app sends X-Refresh-Capable (backend PR 8). */
+export const AuthResponseSchema = z
+  .object({
+    token: z.string().min(1),
+    refreshToken: z.string().min(1).optional(),
+    expiresIn: z.number().optional(),
+    user: AuthUserSchema,
+  })
+  .loose();
+
+/** POST /api/auth/refresh. */
+export const RefreshResponseSchema = z
+  .object({ token: z.string().min(1), refreshToken: z.string().min(1), expiresIn: z.number().optional() })
+  .loose();
 
 /** GET /api/auth/me 200. */
 export const MeResponseSchema = z.object({ user: AuthUserSchema }).loose();

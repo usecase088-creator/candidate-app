@@ -53,6 +53,8 @@ export function createApiClient(config: ApiClientConfig) {
   let token: string | null = null;
   let expiryReported = false;
   let onSessionExpired = config.onSessionExpired;
+  let refreshHandler: (() => Promise<string | null>) | undefined;
+  let refreshing: Promise<string | null> | null = null;
   let reportError = config.reportError;
 
   const baseUrl = () => (typeof config.baseUrl === 'function' ? config.baseUrl() : config.baseUrl);
@@ -77,12 +79,15 @@ export function createApiClient(config: ApiClientConfig) {
     schema: S,
     body: unknown,
     opts: RequestOptions,
+    deferExpiry = false,
   ): Promise<z.output<S>> {
     const sentToken = token;
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'X-App-Version': config.appVersion,
       'X-Platform': config.platform,
+      // This app can keep its session alive with refresh tokens (backend: short access token + refresh token).
+      'X-Refresh-Capable': '1',
     };
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (sentToken) headers.Authorization = `Bearer ${sentToken}`;
@@ -120,7 +125,7 @@ export function createApiClient(config: ApiClientConfig) {
       opts.signal?.removeEventListener('abort', abortFromCaller);
     }
 
-    return handleResponse(status, ok, text, path, schema, sentToken);
+    return handleResponse(status, ok, text, path, schema, sentToken, deferExpiry);
   }
 
   /** Same for every call: error statuses become ApiErrors, a 401 ends the session once, the body is parsed. */
@@ -131,6 +136,7 @@ export function createApiClient(config: ApiClientConfig) {
     path: string,
     schema: S,
     sentToken: string | null,
+    deferExpiry = false,
   ): z.output<S> {
     let json: unknown;
     let isJson = true;
@@ -141,16 +147,51 @@ export function createApiClient(config: ApiClientConfig) {
     }
 
     if (!ok) {
-      if (status === 401 && sentToken && sentToken === token && !expiryReported) {
-        expiryReported = true;
-        onSessionExpired?.();
-      }
+      // deferExpiry: the caller will try to refresh the session first and decides whether it is really over.
+      if (status === 401 && !deferExpiry) expire(sentToken);
       throw ApiError.fromHttp(status, isJson ? json : undefined);
     }
     if (!isJson) fail(ApiError.parse(status, path, ['(root): response is not JSON']));
     const parsed = schema.safeParse(json);
     if (!parsed.success) fail(ApiError.parse(status, path, zodIssues(parsed.error)));
     return parsed.data;
+  }
+
+  /** The session is over: tell the app once. Only if the rejected token is still the current one. */
+  function expire(sentToken: string | null) {
+    if (sentToken && sentToken === token && !expiryReported) {
+      expiryReported = true;
+      onSessionExpired?.();
+    }
+  }
+
+  /**
+   * A fresh access token for the session that `sentToken` belonged to. Requests that fail together share one refresh;
+   * a request that failed with an old token after another already renewed it just uses the new one.
+   */
+  async function renew(sentToken: string): Promise<string | null> {
+    if (token && token !== sentToken) return token;
+    refreshing ??= (async () => {
+      try {
+        return await refreshHandler!();
+      } finally {
+        refreshing = null;
+      }
+    })();
+    return refreshing;
+  }
+
+  /** Seconds left on an access token (a JWT), or null when it cannot be read. */
+  function secondsLeft(jwt: string): number | null {
+    try {
+      const payload = jwt.split('.')[1];
+      if (!payload) return null;
+      const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      const exp = (JSON.parse(json) as { exp?: unknown }).exp;
+      return typeof exp === 'number' ? exp - Date.now() / 1000 : null;
+    } catch {
+      return null;
+    }
   }
 
   /** One multipart upload. Never repeated by itself (a retry could store the file twice). */
@@ -161,11 +202,18 @@ export function createApiClient(config: ApiClientConfig) {
     opts: UploadOptions = {},
   ): Promise<z.output<S>> {
     if (!config.uploadTransport) throw new Error('This API client has no upload transport.');
+    // A file can take a minute to send: do not start with a token about to run out.
+    if (refreshHandler && token) {
+      const left = secondsLeft(token);
+      if (left !== null && left < 60) await renew(token);
+    }
     const sentToken = token;
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'X-App-Version': config.appVersion,
       'X-Platform': config.platform,
+      // This app can keep its session alive with refresh tokens (backend: short access token + refresh token).
+      'X-Refresh-Capable': '1',
     };
     if (sentToken) headers.Authorization = `Bearer ${sentToken}`;
 
@@ -194,6 +242,14 @@ export function createApiClient(config: ApiClientConfig) {
     );
   }
 
+  /** Calls that must never trigger a refresh: they are how a session starts or ends. */
+  const NO_REFRESH = new Set([
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/refresh',
+    '/api/auth/logout',
+  ]);
+
   async function request<S extends z.ZodType>(
     method: Method,
     path: string,
@@ -201,15 +257,32 @@ export function createApiClient(config: ApiClientConfig) {
     body?: unknown,
     opts: RequestOptions = {},
   ): Promise<z.output<S>> {
+    const sentToken = token;
+    const canRefresh = !!refreshHandler && !!sentToken && !NO_REFRESH.has(path);
     // GET is safe to repeat: one retry on a network error. Never for writes (PLAN.md §2).
     const attempts = method === 'GET' ? 2 : 1;
-    for (let attempt = 1; ; attempt++) {
-      try {
-        return await once(method, path, schema, body, opts);
-      } catch (e) {
-        if (e instanceof ApiError && e.kind === 'network' && attempt < attempts) continue;
+    const run = async (deferExpiry: boolean) => {
+      for (let attempt = 1; ; attempt++) {
+        try {
+          return await once(method, path, schema, body, opts, deferExpiry);
+        } catch (e) {
+          if (e instanceof ApiError && e.kind === 'network' && attempt < attempts) continue;
+          throw e;
+        }
+      }
+    };
+    try {
+      return await run(canRefresh);
+    } catch (e) {
+      if (!(canRefresh && e instanceof ApiError && e.isUnauthorized && sentToken)) throw e;
+      // 401: the access token ran out. Get a new one (a failed refresh because of the network keeps the session)...
+      const next = await renew(sentToken);
+      if (!next) {
+        expire(sentToken);
         throw e;
       }
+      // ...and send the request again, once.
+      return run(false);
     }
   }
 
@@ -222,6 +295,13 @@ export function createApiClient(config: ApiClientConfig) {
     },
     setSessionExpiredHandler(handler: (() => void) | undefined) {
       onSessionExpired = handler;
+    },
+    /**
+     * Gets a new access token when the current one is rejected: sets it with setAuthToken and returns it, returns
+     * null when the session is really over, or throws (network) when it could not find out.
+     */
+    setRefreshHandler(handler: (() => Promise<string | null>) | undefined) {
+      refreshHandler = handler;
     },
     /** Wired to Sentry at app start (root layout), so the client itself has no Sentry dependency. */
     setErrorReporter(reporter: ((error: ApiError) => void) | undefined) {

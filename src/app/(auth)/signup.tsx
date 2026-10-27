@@ -100,11 +100,11 @@ export default function Signup() {
     }
 
     try {
-      const { token, user } = await authApi.register({ ...draft, signupToken });
+      const { token, user, refreshToken } = await authApi.register({ ...draft, signupToken });
       toast.show('Account created!', { variant: 'success' });
       setSuccess(true);
       timer.current = setTimeout(() => {
-        signIn(token, user).catch(() => {
+        signIn(token, user, refreshToken).catch(() => {
           setSuccess(false);
           fail(loginErrorMessage(undefined));
         });

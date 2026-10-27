@@ -298,3 +298,125 @@ describe('session expiry (401)', () => {
     expect(hook).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('refreshing the session on 401', () => {
+  /** A server where `fresh` is the only token that works. */
+  function serverWith(fresh: string) {
+    const seen: string[] = [];
+    server.use(
+      http.get(`${API}/api/a`, ({ request }) => {
+        const auth = request.headers.get('authorization') ?? '';
+        seen.push(auth);
+        return auth === `Bearer ${fresh}`
+          ? HttpResponse.json({ ok: true })
+          : HttpResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+      }),
+    );
+    return seen;
+  }
+
+  it('gets a new access token, retries the request once, and nobody is signed out', async () => {
+    const seen = serverWith('new');
+    const onSessionExpired = jest.fn();
+    const client = makeClient({ onSessionExpired });
+    const refresh = jest.fn(async () => {
+      client.setAuthToken('new');
+      return 'new';
+    });
+    client.setRefreshHandler(refresh);
+    client.setAuthToken('old');
+    await expect(client.get('/api/a', Ok)).resolves.toEqual({ ok: true });
+    expect(seen).toEqual(['Bearer old', 'Bearer new']);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(onSessionExpired).not.toHaveBeenCalled();
+  });
+
+  it('parallel 401s refresh once, and every request is retried with the new token', async () => {
+    const seen = serverWith('new');
+    const client = makeClient();
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const refresh = jest.fn(async () => {
+      await gate;
+      client.setAuthToken('new');
+      return 'new';
+    });
+    client.setRefreshHandler(refresh);
+    client.setAuthToken('old');
+    const all = Promise.all([client.get('/api/a', Ok), client.get('/api/a', Ok), client.get('/api/a', Ok)]);
+    await new Promise((r) => setTimeout(r, 50));
+    release();
+    await expect(all).resolves.toHaveLength(3);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(seen.filter((s) => s === 'Bearer new')).toHaveLength(3);
+  });
+
+  it('ends the session when the refresh itself says no, and still rejects with 401', async () => {
+    serverWith('never');
+    const onSessionExpired = jest.fn();
+    const client = makeClient({ onSessionExpired });
+    client.setRefreshHandler(async () => null);
+    client.setAuthToken('old');
+    const err = await rejection(client.get('/api/a', Ok));
+    expect(err.isUnauthorized).toBe(true);
+    expect(onSessionExpired).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the session when the refresh could not reach the server (offline)', async () => {
+    serverWith('never');
+    const onSessionExpired = jest.fn();
+    const client = makeClient({ onSessionExpired });
+    client.setRefreshHandler(async () => {
+      throw ApiError.network();
+    });
+    client.setAuthToken('old');
+    const err = await rejection(client.get('/api/a', Ok));
+    expect(err.kind).toBe('network');
+    expect(onSessionExpired).not.toHaveBeenCalled();
+  });
+
+  it('tries only once: a second 401 after the refresh ends the session', async () => {
+    const seen = serverWith('never');
+    const onSessionExpired = jest.fn();
+    const client = makeClient({ onSessionExpired });
+    const refresh = jest.fn(async () => {
+      client.setAuthToken('new');
+      return 'new';
+    });
+    client.setRefreshHandler(refresh);
+    client.setAuthToken('old');
+    await rejection(client.get('/api/a', Ok));
+    expect(seen).toEqual(['Bearer old', 'Bearer new']);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(onSessionExpired).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not try to refresh for the sign-in, refresh or sign-out calls themselves', async () => {
+    for (const path of ['/api/auth/login', '/api/auth/refresh', '/api/auth/logout']) {
+      capture('post', path, () => HttpResponse.json({ error: 'no' }, { status: 401 }));
+    }
+    const refresh = jest.fn(async () => 'x');
+    const client = makeClient();
+    client.setRefreshHandler(refresh);
+    client.setAuthToken('old');
+    for (const path of ['/api/auth/login', '/api/auth/refresh', '/api/auth/logout']) {
+      await rejection(client.post(path, {}, Ok));
+    }
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it('without a token (wrong password) nothing is refreshed', async () => {
+    capture('post', '/api/auth/login', () => HttpResponse.json({ error: 'no' }, { status: 401 }));
+    const refresh = jest.fn(async () => 'x');
+    const client = makeClient();
+    client.setRefreshHandler(refresh);
+    await rejection(client.post('/api/auth/login', {}, Ok));
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it('tells the server it can use refresh tokens', async () => {
+    const seen = capture('get', '/api/a', () => HttpResponse.json({ ok: true }));
+    await makeClient().get('/api/a', Ok);
+    expect(seen[0].headers.get('x-refresh-capable')).toBe('1');
+  });
+});
