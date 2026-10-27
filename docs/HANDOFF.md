@@ -1,22 +1,29 @@
-# Handoff (written 2026-10-27, end of the Phase 2 session)
+# Handoff (updated 2026-10-27, Phase 3 built)
 
 Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
 
-- **Phase 1 accepted. Phase 2 (Jobs) accepted by Raj on 2026-10-27 (D25); the repo stays public and pushes to `main` of this repo are fine.** Phase 3 is approved (`docs/PHASE-3.md`); Task 0 done (D26), Task 1 next. Demo account for apply flows: `applicant@apronhanger.test` (password in `seedData.ts`, 8 seeded applications); `candidate@apronhanger.test` has no profile on purpose. Summary and screen recording plan: `docs/PHASE-2-SUMMARY.md`; plan and
-  checklist: `docs/PHASE-2.md`; decisions D23 (differences from the website) and D24 (staging server); change requests CR-004, CR-005.
-- **Phase 2 evidence:** `npm run check` green (727 tests, coverage gates met); contract tests pass against the local backend at `f185fe0` (saved-jobs has no
-  `applications` list); drift check passes (GET on production); Playwright 9/9 job specs incl. 320 px; **Maestro 9/9 on the real Android phone** and **9/9 on the iPhone simulator** (6 auth/smoke + 3 job flows each).
-  The phone found one real Android bug (job header text collapsed): fixed.
-- **Reference clone `../job` is at `f185fe0`** (fast-forwarded 2026-10-26, D6) = the live commit. `../job-hotfix` unchanged.
+- **Phase 1 and 2 accepted (Phase 2: D25). Phase 3 (Apply and applications) is BUILT and pushed; `npm run check` green (1,171 tests); contract 39 tests; web 8 new specs.**
+  Plan and checklist: `docs/PHASE-3.md`; summary and recording plan: `docs/PHASE-3-SUMMARY.md`; decisions D26 (permissions, confirms, uploads) and D27 (differences from the website).
+  Raj approved the plan with these answers: PLAN.md order (apply works for candidates whose form profile exists; the Part 1 demo uses the demo account), 4 Expo file packages OK,
+  confirm step for Decline and Reject, XHR uploads inside `createApiClient.ts`, PLAN.md's Part 1 list is the list, assume no Apple account (simulator build plus recording), **ask before each EAS build**.
+- **STILL OPEN in Phase 3 (needs Raj or the phone):**
+  1. **Run on the real Android phone:** the 4 new Maestro flows (`apply-quick`, `application-interview`, `application-offer`, `application-documents`; written without a phone, marked unverified) and the 9 old ones.
+     The debug APK with the new native modules was rebuilt locally (`android/app/build/outputs/apk/debug/app-debug.apk`; install it, then `npm run backend:local`, `npx expo start`, `adb reverse` as below).
+  2. **iPhone simulator:** needs one EAS iOS simulator build (`e2e-test` profile): **ask Raj first**. Then run the workflow with one flow first, then the folder (see "iPhone status").
+  3. **Android test build (EAS `preview` APK)** for Raj's and the client's phone: **ask Raj first.** Then one real Sentry event from it, checked for personal data.
+  4. CV upload through the system file picker is not automated (the picker is outside the app); check it by hand on the phone and record it.
+- **Demo account for the apply flows:** `applicant@apronhanger.test` (password in `seedData.ts`): filled profile (94%), 8 applications, one per state. `candidate@apronhanger.test` has no profile on purpose ("no form CV" cases).
+  Every `npm run backend:local` seed resets both (and staging shares the database).
+- **Reference clone `../job` is at `f185fe0`** (= the live commit, checked read-only on 2026-10-27, D6). `../job-hotfix` unchanged.
 - **Staging server exists (D24):** `apronhanger-staging-api` on Raj's own Render workspace, `https://apronhanger-staging-api.onrender.com`, free plan, dev Neon DB,
-  OTP test mode. Raj's other free service there (SkibidiChat) was paused on his request. Free plan sleeps (~50 s). `app.config.ts` blocks only the live host.
-  The `e2e-test` EAS profile points at staging (`API_URL_OVERRIDE`).
-- **Repo `usecase088-creator/candidate-app` was made public by Raj (2026-10-27)** for free GitHub runner minutes. It contains `staging-backend/` (a copy of the client's backend) and the
-  docs: Raj was told; open question whether to move staging to a private repo. A scratch file `r.tmp.json` (a GitHub API response, no secrets) was committed by mistake in `0d4bad4`; removed in the next commit, still in history.
+  OTP test mode. Free plan sleeps (~50 s). `app.config.ts` blocks only the live host. The `e2e-test` EAS profile points at staging (`API_URL_OVERRIDE`).
+- **Repo `usecase088-creator/candidate-app` is public (D25, Raj's decision).** Never commit secrets, `.env*`, `docs/client/`, personal data or client-only material. Notes about open backend weaknesses live only in local `docs/client/`.
+- **Sentry:** project `apronhanger-candidate-app` in org `rajendra-3g`; DSN in `.env.local` and the EAS variable; Sentry MCP is in the local, uncommitted `.mcp.json`.
+- **Git on this laptop:** Git Credential Manager has no GitHub login; pushes use the token from `.env.local` for one command (helper in the session scratchpad, or `git -c credential.helper= -c "http.https://github.com/.extraheader=AUTHORIZATION: basic <base64 x-access-token:TOKEN>" push origin main`).
 
-## iPhone status (done: 9/9)
+## iPhone status (Phase 2: done 9/9; Phase 3 flows not run yet)
 
 - EAS iOS simulator build `5abe96e6` (free). GitHub workflow `ios-e2e` (manual, 75-minute limit, one clean app per flow). The app starts, signs in against staging and shows the real jobs on an iPhone SE (iOS 26.2).
 - **Raj said "push" on 2026-10-27; everything is pushed.** Flow fixes found on the iPhone (all in the scripts, none in the app): `hideKeyboard` is not supported (Return instead);
@@ -58,7 +65,7 @@ remaining open items (what is parked, what is untouched, and why) is kept outsid
 
 ## Open items for Raj
 
-1. ~~Accept Phase 2~~ done (D25). Phase 3: write `docs/PHASE-3.md`, show it to Raj, build.
+1. Accept Phase 3 (after the phone runs and the builds). Then Phase 4: write `docs/PHASE-4.md`, show it to Raj, build.
 2. ~~Push / public repo~~ decided (D25): public, push allowed. Revisit `staging-backend/` exposure before store submission.
 3. ~~Sentry DSN~~ done 2026-10-27: project `apronhanger-candidate-app` in org `rajendra-3g` (react-native). DSN is in `.env.local` and the EAS variable `EXPO_PUBLIC_SENTRY_DSN` (development, preview, production). A test event arrived (issue APRONHANGER-CANDIDATE-APP-1, no user data). Still to do: send one real app event from a build and check it for personal data (the scrubber is unit-tested). Sentry MCP is in the local `.mcp.json` (not committed).
 4. **Client conversation** about the security fixes and the open question: see `docs/client/` (local only).
