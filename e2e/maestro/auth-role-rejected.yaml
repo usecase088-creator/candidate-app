@@ -14,11 +14,10 @@ appId: work.apronhanger.candidate.dev
     id: login.password
 - inputText: Test@1234
 - runFlow: _common/hideKeyboard.yaml
-# iOS: Return on the password field already submits the form, so only tap Sign in if it is still there.
+# iOS: Return on the password field already submits the form (see below); Android taps Sign in.
 - runFlow:
     when:
-      visible:
-        id: login.submit
+      platform: Android
     commands:
       - tapOn:
           id: login.submit

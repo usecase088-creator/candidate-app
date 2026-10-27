@@ -17,9 +17,8 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: signup.name
 - inputText: Maestro Tester
-- tapOn:
-    id: signup.mobile
-- inputText: '9000000002'
+# The mobile number is typed last: on iPhone its number pad has no Return key, and tapping another field from it
+# sent the next text into the mobile field.
 - tapOn:
     id: signup.email
 # A .test address: never a real-looking inbox.
@@ -27,6 +26,10 @@ appId: work.apronhanger.candidate.dev
 # Keyboard "next" moves to the password field, as a user would (the field is under the keyboard here).
 - pressKey: Enter
 - inputText: Secret@123
+- runFlow: _common/hideKeyboard.yaml
+- tapOn:
+    id: signup.mobile
+- inputText: '9000000002'
 - runFlow: _common/hideKeyboard.yaml
 - scrollUntilVisible:
     element:
