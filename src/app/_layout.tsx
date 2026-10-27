@@ -10,7 +10,8 @@ import { useSession } from '@/features/auth/sessionStore';
 import { useFilterStore } from '@/features/jobs/filterStore';
 import { getEnv } from '@/lib/env';
 import { appQueryClient, setupFocusManager, setupOnlineManager } from '@/lib/queryClient';
-import { initSentry, reportApiError } from '@/lib/sentry';
+import { secureStorage } from '@/lib/secureStorage';
+import { initSentry, reportApiError, sendInstallCheckEvent } from '@/lib/sentry';
 import { FontGate } from '@/theme/FontGate';
 
 // Splash stays until fonts are loaded and the stored session has been checked (FontGate holdSplash).
@@ -23,6 +24,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     void useSession.getState().restore();
+    // Preview builds only, once per install (Phase 3 acceptance): one event to prove Sentry works on a real phone.
+    void sendInstallCheckEvent(secureStorage);
     const stopOnline = setupOnlineManager();
     const stopFocus = setupFocusManager();
     // Sign-out (button, expired token, 401): drop every cached query and the search state of that user.

@@ -50,9 +50,14 @@ describe('which backend each build talks to (D20)', () => {
   it('only the production build uses the live server', () => {
     expect(configFor({ APP_VARIANT: 'production' }).extra?.apiUrl).toBe('https://job-ojsr.onrender.com');
     expect(configFor({ APP_VARIANT: 'development' }).extra?.apiUrl).toBe('http://localhost:3000');
-    expect(configFor({ APP_VARIANT: 'preview', PREVIEW_API_URL: undefined }).extra?.apiUrl).toBe(
-      'http://localhost:3000',
-    );
+  });
+
+  it('the preview build talks to the staging server by default (D24), never to localhost and never to the live server', () => {
+    const url = configFor({ APP_VARIANT: 'preview', PREVIEW_API_URL: undefined, API_URL_OVERRIDE: undefined })
+      .extra?.apiUrl;
+    expect(url).toBe('https://apronhanger-staging-api.onrender.com');
+    expect(url).not.toMatch(/localhost/);
+    expect(url).not.toMatch(/job-ojsr\.onrender\.com|apronhanger\.work/);
   });
 
   it('preview can point at a staging server later (PREVIEW_API_URL)', () => {

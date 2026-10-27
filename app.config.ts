@@ -12,6 +12,8 @@ const EAS_PROJECT_ID = '3bb496c0-6a80-4efe-a672-ccb36ba6fbd9';
 const PRODUCTION_API_URL = 'https://job-ojsr.onrender.com'; // live backend used by apronhanger.work
 /** Local reference backend (Task 4): the dev database, reached from the phone through `adb reverse tcp:3000 tcp:3000`. */
 const LOCAL_API_URL = 'http://localhost:3000';
+/** The staging server (D24): Raj's own Render workspace, shares the development database. Test data only. */
+const STAGING_API_URL = 'https://apronhanger-staging-api.onrender.com';
 /** D20: only the production (store) build may talk to the live server. */
 // Only the real production host: the staging server (D4) is also on onrender.com but is a test backend.
 const LIVE_SERVER = /job-ojsr.onrender.com|apronhanger.work/;
@@ -27,8 +29,9 @@ const VARIANTS: Record<Variant, { name: string; idSuffix: string; scheme: string
     name: 'ApronHanger (Preview)',
     idSuffix: '.preview',
     scheme: 'apronhanger-preview',
-    // D20: never the live server. The test backend until a staging server exists (D4), then PREVIEW_API_URL.
-    apiUrl: LOCAL_API_URL,
+    // D20: never the live server. Preview builds go on real phones, where localhost does not exist: the staging server
+    // (D24). PREVIEW_API_URL or API_URL_OVERRIDE can point somewhere else (never the live server).
+    apiUrl: STAGING_API_URL,
   },
   production: { name: 'ApronHanger', idSuffix: '', scheme: 'apronhanger', apiUrl: PRODUCTION_API_URL },
 };
