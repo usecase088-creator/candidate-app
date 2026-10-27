@@ -11,7 +11,8 @@ appId: work.apronhanger.candidate.dev
       id: search.screen
     timeout: 10000
 - scrollUntilVisible:
-    element: 'Showing 4 of 4 verified roles'
+    element:
+      id: search.query
     direction: UP
     timeout: 10000
 - assertVisible: Showing 4 of 4 verified roles
@@ -22,7 +23,8 @@ appId: work.apronhanger.candidate.dev
 - inputText: CARDIO
 - runFlow: _common/hideKeyboard.yaml
 - scrollUntilVisible:
-    element: 'Showing 1 of 4 verified roles'
+    element:
+      id: search.query
     direction: UP
     timeout: 10000
 - assertVisible: Showing 1 of 4 verified roles
@@ -33,7 +35,8 @@ appId: work.apronhanger.candidate.dev
 - eraseText: 20
 - runFlow: _common/hideKeyboard.yaml
 - scrollUntilVisible:
-    element: 'Showing 4 of 4 verified roles'
+    element:
+      id: search.query
     direction: UP
     timeout: 10000
 - assertVisible: Showing 4 of 4 verified roles
@@ -44,7 +47,8 @@ appId: work.apronhanger.candidate.dev
 - inputText: karnataka
 - runFlow: _common/hideKeyboard.yaml
 - scrollUntilVisible:
-    element: 'Showing 2 of 4 verified roles'
+    element:
+      id: search.query
     direction: UP
     timeout: 10000
 - assertVisible: Showing 2 of 4 verified roles
@@ -80,7 +84,8 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: filters.done
 - scrollUntilVisible:
-    element: 'Showing 1 of 4 verified roles'
+    element:
+      id: search.query
     direction: UP
     timeout: 10000
 - assertVisible: Showing 1 of 4 verified roles
@@ -97,7 +102,8 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: tabs.search
 - scrollUntilVisible:
-    element: 'Showing 1 of 4 verified roles'
+    element:
+      id: search.query
     direction: UP
     timeout: 10000
 - assertVisible: Showing 1 of 4 verified roles
@@ -134,7 +140,8 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: filters.done
 - scrollUntilVisible:
-    element: 'Showing 1 of 4 verified roles'
+    element:
+      id: search.query
     direction: UP
     timeout: 10000
 - assertVisible: Showing 1 of 4 verified roles
