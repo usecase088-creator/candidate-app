@@ -22,11 +22,9 @@ import { AuthModeTabs } from '@/features/auth/components/AuthModeTabs';
 import { loginErrorMessage } from '@/features/auth/messages';
 import { useSession } from '@/features/auth/sessionStore';
 import { firstError, otpError, signupSchema, type SignupValues } from '@/features/auth/validation';
+import { PRIVACY_URL, TERMS_URL } from '@/lib/site';
 import { colors, radius, spacing } from '@/theme/tokens';
 
-const SITE = 'https://apronhanger.work'; // D5
-const TERMS_URL = `${SITE}/APRONHANGER_Work_Terms_and_Conditions.pdf`;
-const PRIVACY_URL = `${SITE}/privacy-policy.html`;
 const SUCCESS_DELAY_MS = 1200;
 /** The website's red box shows the first error in its schema order. */
 const FIELD_ORDER = ['email', 'name', 'password', 'mobile'] as const;

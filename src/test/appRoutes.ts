@@ -16,6 +16,7 @@ import GovJobs from '@/app/gov-jobs';
 import IntlJobs from '@/app/intl-jobs';
 import JobDetails from '@/app/job/[id]';
 import SavedJobs from '@/app/saved-jobs';
+import Settings from '@/app/settings';
 import RootLayout from '@/app/_layout';
 
 export const appRoutes = {
@@ -35,6 +36,7 @@ export const appRoutes = {
   'apply/[jobId]/upload': ApplyUpload,
   'job/[id]': JobDetails,
   'saved-jobs': SavedJobs,
+  settings: Settings,
   'gov-jobs': GovJobs,
   'intl-jobs': IntlJobs,
 };
