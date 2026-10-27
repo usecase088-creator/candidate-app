@@ -19,6 +19,17 @@ export const MatchProfileSchema = z
 
 export type MatchProfile = z.infer<typeof MatchProfileSchema>;
 
+/** A file kept in the document vault (Cloudinary link). */
+export const SupportingDocumentSchema = z
+  .object({
+    name: z.string(),
+    url: z.string(),
+    publicId: z.string().nullish(),
+    mime: z.string().nullish(),
+  })
+  .loose();
+export type SupportingDocument = z.infer<typeof SupportingDocumentSchema>;
+
 export const CandidateMeSchema = z
   .object({
     id: z.string(),
@@ -37,6 +48,7 @@ export const CandidateMeSchema = z
     uploadedCvName: z.string().nullish(),
     uploadedCvData: z.string().nullish(),
     profile: MatchProfileSchema.nullish(),
+    supportingDocuments: z.array(SupportingDocumentSchema).nullish(),
   })
   .loose();
 

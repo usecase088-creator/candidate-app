@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import type { CandidateMe } from '@/api/schemas/candidate';
+import type { CandidateMe, SupportingDocument } from '@/api/schemas/candidate';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { FormErrorBox } from '@/components/ui/FormErrorBox';
@@ -16,6 +16,7 @@ import { failureText } from '@/features/applications/messages';
 import { queryView } from '@/features/jobs/hooks/queryView';
 import { colors, radius, spacing } from '@/theme/tokens';
 
+import { VaultSection } from '../components/VaultSection';
 import { FormField } from '../builder/components/FormField';
 import { type Block, type FieldSpec, stepBlocks } from '../builder/formSpec';
 import { type Draft, draftFromMe, type ProfileJson, profileFromDraft } from '../builder/model';
@@ -54,16 +55,26 @@ export function ProfileBuilderScreen() {
   );
 }
 
+const VAULT_STEP = 14;
+
 function Builder({ me, initialStep }: { me: CandidateMe; initialStep: number }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft>(() => draftFromMe(me));
   const [step, setStep] = useState(initialStep);
   const [error, setError] = useState<string>();
-  const base = (me.profile ?? {}) as ProfileJson;
+  const [docs, setDocs] = useState<SupportingDocument[]>(() => me.supportingDocuments ?? []);
+  // The picture lives on the account record. The profile JSON can hold an old copy, and the server writes whatever
+  // the profile says, so the current picture is put into every save.
+  const base: ProfileJson = {
+    ...(me.profile ?? {}),
+    ...(me.avatarUrl
+      ? { avatarUrl: me.avatarUrl, avatarCloudinaryId: me.avatarCloudinaryId ?? undefined }
+      : {}),
+  };
 
   const save = useMutation({
-    mutationFn: () => profileApi.save(profileFromDraft(draft, base)),
+    mutationFn: (files: SupportingDocument[] = docs) => profileApi.save(profileFromDraft(draft, base), files),
     onSuccess: (updated) => queryClient.setQueryData(CANDIDATE_ME_KEY, updated),
   });
 
@@ -79,7 +90,7 @@ function Builder({ me, initialStep }: { me: CandidateMe; initialStep: number }) 
     if (problem) return setError(problem);
     setError(undefined);
     try {
-      await save.mutateAsync();
+      await save.mutateAsync(docs);
       goTo(step + 1);
     } catch (e) {
       setError(failureText(e, 'Failed to save profile'));
@@ -97,7 +108,7 @@ function Builder({ me, initialStep }: { me: CandidateMe; initialStep: number }) 
     }
     setError(undefined);
     try {
-      await save.mutateAsync();
+      await save.mutateAsync(docs);
       await clearSavedStep();
       router.replace('/profile');
     } catch (e) {
@@ -135,6 +146,16 @@ function Builder({ me, initialStep }: { me: CandidateMe; initialStep: number }) 
             <BlockView key={`${step}.${i}`} block={block} draft={draft} set={set} />
           ))
         )}
+
+        {step === VAULT_STEP ? (
+          <VaultSection
+            docs={docs}
+            onUploaded={async (next) => {
+              await save.mutateAsync(next);
+              setDocs(next);
+            }}
+          />
+        ) : null}
 
         {error ? <FormErrorBox testID="builder.error" message={error} /> : null}
 

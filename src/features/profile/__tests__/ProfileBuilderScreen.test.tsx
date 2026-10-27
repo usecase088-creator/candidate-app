@@ -1,3 +1,4 @@
+import * as DocumentPicker from 'expo-document-picker';
 import { useFonts } from 'expo-font';
 import { fireEvent, screen, waitFor } from 'expo-router/testing-library';
 import { http, HttpResponse } from 'msw';
@@ -8,6 +9,7 @@ import { API } from '@/test/msw/handlers';
 import { installJobsBackend } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
+import { installXhrOverFetch } from '@/test/xhrOverFetch';
 
 import { BUILDER_STEP_KEY } from '../builder/useBuilderStep';
 
@@ -16,6 +18,8 @@ jest.mock('expo-splash-screen', () => ({
   hideAsync: jest.fn(() => Promise.resolve()),
   preventAutoHideAsync: jest.fn(() => Promise.resolve()),
 }));
+
+jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
 
 const DOCTOR =
   'Clinical Practitioners & Super Specialists (MBBS/ MD Physician/ MD/MS / DM / MCh / DNB-SS etc)';
@@ -52,13 +56,16 @@ const meWith = (profile: unknown, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-let puts: { profile: Record<string, unknown> }[];
+let puts: { profile: Record<string, unknown>; supportingDocuments?: unknown[] }[];
 function setup(me: unknown = meWith(fullProfile)) {
   puts = [];
   installJobsBackend({ me });
   server.use(
     http.put(`${API}/api/candidates/me`, async ({ request }) => {
-      const body = (await request.json()) as { profile: Record<string, unknown> };
+      const body = (await request.json()) as {
+        profile: Record<string, unknown>;
+        supportingDocuments?: unknown[];
+      };
       puts.push(body);
       return HttpResponse.json({ ...(me as object), profile: body.profile });
     }),
@@ -67,6 +74,11 @@ function setup(me: unknown = meWith(fullProfile)) {
 const open = () => startSignedIn('/profile-builder', 'builder.screen');
 const next = async () => fireEvent.press(await screen.findByTestId('builder.next'));
 
+let restoreXhr: () => void;
+beforeAll(() => {
+  restoreXhr = installXhrOverFetch();
+});
+afterAll(() => restoreXhr());
 beforeEach(() => {
   resetAppState();
   jest.mocked(useFonts).mockReturnValue([true, null]);
@@ -213,5 +225,80 @@ describe('Profile builder: no profile yet', () => {
     await open();
     expect(await screen.findByTestId('builder.field.fullName')).toHaveProp('value', 'Demo Applicant');
     expect(screen.getByTestId('builder.field.email')).toHaveTextContent('applicant@apronhanger.test');
+  });
+});
+
+describe('Profile builder: things the server would otherwise overwrite', () => {
+  it('sends the current picture from the account, not a stale one inside the profile JSON', async () => {
+    setup(
+      meWith(
+        { ...fullProfile, avatarUrl: 'https://old.example/a.jpg' },
+        { avatarUrl: 'https://new.example/b.jpg', avatarCloudinaryId: 'new-id' },
+      ),
+    );
+    await open();
+    await next();
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts[0]!.profile.avatarUrl).toBe('https://new.example/b.jpg');
+    expect(puts[0]!.profile.avatarCloudinaryId).toBe('new-id');
+  });
+});
+
+describe('Profile builder: document vault', () => {
+  const existing = {
+    name: 'licence.pdf',
+    url: 'https://res.example/licence.pdf',
+    publicId: 'docs/1',
+    mime: 'application/pdf',
+  };
+  const pickPdf = (name: string, size = 1000) =>
+    jest.mocked(DocumentPicker.getDocumentAsync).mockResolvedValueOnce({
+      canceled: false,
+      assets: [{ uri: `file:///cache/${name}`, name, size, mimeType: 'application/pdf' }],
+    } as never);
+  const withUpload = () =>
+    server.use(
+      http.post(`${API}/api/upload/documents`, () =>
+        HttpResponse.json([
+          {
+            url: 'https://res.example/new.pdf',
+            publicId: 'docs/2',
+            name: 'new.pdf',
+            mime: 'application/pdf',
+          },
+        ]),
+      ),
+    );
+
+  it('lists the files already saved', async () => {
+    setup(meWith(fullProfile, { supportingDocuments: [existing] }));
+    await secureStorage.setItem(BUILDER_STEP_KEY, '14');
+    await open();
+    expect(await screen.findByTestId('builder.vault.0')).toHaveTextContent('licence.pdf');
+  });
+
+  it('uploads a file and saves it together with the files already there (the server replaces the whole list)', async () => {
+    setup(meWith(fullProfile, { supportingDocuments: [existing] }));
+    withUpload();
+    pickPdf('new.pdf');
+    await secureStorage.setItem(BUILDER_STEP_KEY, '14');
+    await open();
+    await fireEvent.press(await screen.findByTestId('builder.vault.add'));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts[0]!.supportingDocuments).toEqual([
+      existing,
+      { name: 'new.pdf', url: 'https://res.example/new.pdf', publicId: 'docs/2', mime: 'application/pdf' },
+    ]);
+    expect(await screen.findByTestId('builder.vault.1')).toHaveTextContent('new.pdf');
+  });
+
+  it('refuses a file over 5 MB before uploading', async () => {
+    setup();
+    pickPdf('big.pdf', 6 * 1024 * 1024);
+    await secureStorage.setItem(BUILDER_STEP_KEY, '14');
+    await open();
+    await fireEvent.press(await screen.findByTestId('builder.vault.add'));
+    expect(await screen.findByTestId('builder.vault.error')).toHaveTextContent('File must be under 5MB');
+    expect(puts).toHaveLength(0);
   });
 });

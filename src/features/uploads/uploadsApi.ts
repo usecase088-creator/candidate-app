@@ -8,6 +8,7 @@ import {
   ApplicationDocumentListSchema,
   type ApplicationDocument,
   type UploadedFile,
+  UploadedFileListSchema,
   UploadedFileSchema,
 } from '@/api/schemas/applications';
 
@@ -16,6 +17,7 @@ import {
   mimeFromName,
   type PickedFile,
   validateAvatarFile,
+  validateVaultFiles,
   validateCvFile,
   validateDocumentFiles,
 } from './logic/files';
@@ -74,3 +76,12 @@ export async function uploadAvatar(file: PickedAsset, opts: UploadOptions = {}) 
 }
 
 export const deleteAvatar = () => api.delete('/api/upload/avatar', OkSchema);
+
+/** Vault files: PDF or Word, 5 MB each, up to 10 at a time (API.md §22). The caller saves them with the profile. */
+export async function uploadSupportingDocuments(files: PickedAsset[], opts: UploadOptions = {}) {
+  const problem = validateVaultFiles(files);
+  if (problem) throw new Error(problem);
+  const form = new FormData();
+  for (const file of files) appendFile(form, 'documents', file);
+  return api.upload('/api/upload/documents', form, UploadedFileListSchema, opts);
+}

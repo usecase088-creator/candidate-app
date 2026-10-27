@@ -40,6 +40,9 @@ async function pickFiles(type: string[], multiple: boolean): Promise<PickResult>
 export const pickCv = () => pickFiles([PDF, DOC, DOCX], false);
 
 /** PDFs and pictures for a document request. */
+/** Several PDF or Word files for the profile's document vault. */
+export const pickVaultFiles = () => pickFiles([PDF, DOC, DOCX], true);
+
 export const pickDocuments = () => pickFiles([PDF, 'image/jpeg', 'image/png', 'image/webp'], true);
 
 function fromPhotos(res: ImagePicker.ImagePickerResult): PickResult {

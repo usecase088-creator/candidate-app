@@ -75,6 +75,18 @@ export function validateAvatarFile(file: PickedFile): string | undefined {
   return undefined;
 }
 
+export const MAX_VAULT_FILES = 10;
+
+/** Vault files follow the CV rules (PDF or Word, 5 MB), up to 10 at once. The first problem is reported. */
+export function validateVaultFiles(files: PickedFile[]): string | undefined {
+  if (files.length > MAX_VAULT_FILES) return `You can upload up to ${MAX_VAULT_FILES} files at a time.`;
+  for (const f of files) {
+    const problem = validateCvFile(f);
+    if (problem) return problem;
+  }
+  return undefined;
+}
+
 const MAX_NAME_LENGTH = 100;
 
 /** A display and upload name: no folders, no control characters, at most 100 characters, extension kept. */

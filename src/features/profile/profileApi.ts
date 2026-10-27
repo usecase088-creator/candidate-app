@@ -1,8 +1,13 @@
 // PUT /api/candidates/me (API.md §9): the server stores the profile JSON and answers with the whole candidate.
-// The body carries the profile only; files and the CV have their own calls.
+// `supportingDocuments` REPLACES the stored list when it is not empty, so callers always send the full list.
 import { api } from '@/api/client';
-import { CandidateMeSchema } from '@/api/schemas/candidate';
+import { CandidateMeSchema, type SupportingDocument } from '@/api/schemas/candidate';
 
 export const profileApi = {
-  save: (profile: Record<string, unknown>) => api.put('/api/candidates/me', { profile }, CandidateMeSchema),
+  save: (profile: Record<string, unknown>, supportingDocuments?: SupportingDocument[]) =>
+    api.put(
+      '/api/candidates/me',
+      supportingDocuments && supportingDocuments.length > 0 ? { profile, supportingDocuments } : { profile },
+      CandidateMeSchema,
+    ),
 };
