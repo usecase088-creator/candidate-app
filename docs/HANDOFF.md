@@ -1,8 +1,11 @@
-# Handoff (updated 2026-10-28, Phase 3 built, Phase 4 not started)
+# Handoff (updated 2026-10-28 night: Phase 4 built locally; Phase 3 acceptance still open)
 
 Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
+
+- **Phase 4 was built locally overnight (2026-10-28), unpushed and undeployed.** Start with `docs/PHASE-4-SUMMARY.md` (features, the decisions I took for Raj, what is NOT proven) and `docs/PHASE-4.md` (plan, what Raj must give). App: tag `part-1` = delivered Part 1; `git log part-1..HEAD` = the Phase 4 commits (local only, `main` and the tag are not pushed). Backend: six branches `feat/app-config`, `feat/delete-account-page`, `feat/rate-limits`, `feat/push-tokens`, `feat/refresh-tokens`, `feat/delete-account` in `../job-hotfix`, all from live `f185fe0`, merge cleanly in any order, PR bodies in local `docs/client/PR4..PR9-body.md`, new tables need Raj's manual SQL on Neon (backup branch first). Open questions for the client: `docs/client/CLIENT-QUESTIONS.md`. Observations: `docs/client/PHASE-4-FINDINGS.md`.
+- **Next:** Raj reviews; push decisions; Firebase/Apple/Play values; then ONE EAS rebuild (ask first) and the phone checks + the 3 new Maestro flows (written, never run) + iOS re-run. Native packages added: `expo-print`, `expo-notifications`.
 
 - **Phase 1 and 2 accepted (Phase 2: D25). Phase 3 (Apply and applications) is BUILT and pushed; its acceptance is CONDITIONAL on (1) the Android preview build below
   and (2) Raj's by-hand checks. Phase 4 is NOT started** (do not start it in the session that finished Phase 3).

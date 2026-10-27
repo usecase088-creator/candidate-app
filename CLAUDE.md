@@ -5,7 +5,7 @@ candidate website, same backend and database. Built with Expo (React Native).
 Goal: live on Play Store and App Store, no crashes, passes store review first time.
 
 - Master plan: `docs/PLAN.md`
-- Current phase: **Phase 4, not started** (Phase 3 is built; its acceptance by Raj is conditional on the Android preview build and his by-hand checks: see `docs/HANDOFF.md`). First step of Phase 4: write `docs/PHASE-4.md` and show it to Raj before building  <- update this line when the phase changes
+- Current phase: **Phase 4 is BUILT LOCALLY (night of 2026-10-28), not accepted, not pushed, not deployed.** Read `docs/PHASE-4-SUMMARY.md` first (what was built, decisions to confirm, what is not proven). Six backend branches `feat/*` wait in `../job-hotfix` (Raj pushes/merges/deploys). Phase 3 acceptance is still conditional (see `docs/HANDOFF.md`)  <- update this line when the phase changes
 - Handoff / current state: `docs/HANDOFF.md` (read it first in a new session)
 - Decisions log: `docs/DECISIONS.md`
 - Machine setup: `docs/SETUP.md`

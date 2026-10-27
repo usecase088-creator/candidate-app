@@ -331,3 +331,19 @@ mounted on**, so the counts add up across those paths for the same IP.
     `Hospital.logoCloudinaryId`, `GovJob` or `InternationalJob`, yet the live site serves gov/intl jobs, so production was
     probably synced by hand (`prisma db push`): Render's start command is `npx tsx src/index.ts` (checked 2026-10-26), so no migration runs on deploy at all, `npm start` is not used. Our local backend
     runs `migrate deploy` then `db push`. Worth raising with the backend team before Phase 4.
+
+---
+
+## Added in Phase 4 (backend branches in `../job-hotfix`, NOT live yet; see `docs/PHASE-4-SUMMARY.md`)
+
+| Endpoint | Auth | Request | Answer | Notes |
+| --- | --- | --- | --- | --- |
+| `GET /api/app-config` | none | | `{ minVersion: { android, ios }, flags: { name: bool } }` | env-driven; bad values = no restriction. App: force-update screen, `useFlag`. |
+| `POST /api/auth/login`, `/register` | | header `X-Refresh-Capable: 1` | adds `refreshToken`, `expiresIn: 1800`; access token lives 30 min | Without the header: unchanged (15-day token). |
+| `POST /api/auth/refresh` | none | `{ refreshToken }` | `{ token, refreshToken, expiresIn, user }` | Rotates. 401 `Session expired. Please log in again.`; 403 suspended. Reuse after 10 s ends the sign-in. |
+| `POST /api/auth/logout` | none | `{ refreshToken }` | `{ success: true }` | Always 200. |
+| `POST /api/push-tokens` | CANDIDATE | `{ token, platform: android\|ios }` | `{ success: true }` | Expo push token. |
+| `DELETE /api/push-tokens` | CANDIDATE | `{ token }` | `{ success: true }` | JSON body (`api.deleteJson`). |
+| `POST /api/account/delete` | CANDIDATE | `{ password }` | `{ success: true }` | Wrong password: 400 `Incorrect password` (never 401). 5 tries / 15 min / account. |
+| Rate limits (`/api/auth/*`) | | | 429 same words as before | Sign-in 10/email, OTP send 5/mobile, OTP check 10/mobile, IP net 100/40. |
+
