@@ -4,4 +4,10 @@ import { http, HttpResponse } from 'msw';
 // Base URL matches the development variant (app.config.ts).
 export const API = 'http://localhost:3000';
 
-export const handlers = [http.get(`${API}/health`, () => HttpResponse.json({ status: 'ok', db: 'ok' }))];
+export const handlers = [
+  http.get(`${API}/health`, () => HttpResponse.json({ status: 'ok', db: 'ok' })),
+  // The app asks for its settings at start (Phase 4). By default nothing is restricted.
+  http.get(`${API}/api/app-config`, () =>
+    HttpResponse.json({ minVersion: { android: '0.0.0', ios: '0.0.0' }, flags: {} }),
+  ),
+];
