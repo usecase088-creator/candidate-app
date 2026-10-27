@@ -62,7 +62,14 @@ const BASE = {
   matchPercent: 75,
 };
 
-export type ApplicationFixture = typeof BASE & Record<string, unknown>;
+/** A row as the backend sends it. Only the fields tests read by name are typed; the rest is open. */
+export type ApplicationFixture = Record<string, unknown> & {
+  id: string;
+  status: string;
+  appliedOn: string;
+  jobId: string;
+  applicationDocuments: unknown[];
+};
 
 /** One application row. `over` replaces any field; a new `jobId` or `job` keeps the two in step unless both are given. */
 export function application(over: Record<string, unknown> = {}): ApplicationFixture {
