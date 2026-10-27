@@ -11,6 +11,7 @@ import { useSession } from '@/features/auth/sessionStore';
 import { spacing } from '@/theme/tokens';
 
 import { AvatarSection } from '../components/AvatarSection';
+import { useUnreadCount } from '@/features/notifications/hooks/useNotifications';
 import { useCandidateMe } from '../hooks/useCandidateMe';
 
 function initialsOf(name: string, given?: string | null) {
@@ -28,6 +29,7 @@ export function ProfileScreen() {
   const router = useRouter();
   const signOut = useSession((s) => s.signOut);
   const query = useCandidateMe();
+  const unread = useUnreadCount();
   const view = queryView(query);
   const me = query.data;
   const name = me?.profile?.name ?? me?.name ?? '';
@@ -64,6 +66,13 @@ export function ProfileScreen() {
           testID="profile.edit"
           label={completeness > 0 ? 'Edit profile' : 'Build my profile'}
           onPress={() => router.push('/profile-builder')}
+        />
+        <Button
+          testID="profile.notifications"
+          label={unread ? `Notifications (${unread})` : 'Notifications'}
+          accessibilityLabel={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+          variant="outline"
+          onPress={() => router.push('/notifications')}
         />
         <Button
           testID="profile.settings"

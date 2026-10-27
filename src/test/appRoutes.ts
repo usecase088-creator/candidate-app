@@ -15,6 +15,7 @@ import ApplyUpload from '@/app/apply/[jobId]/upload';
 import GovJobs from '@/app/gov-jobs';
 import IntlJobs from '@/app/intl-jobs';
 import JobDetails from '@/app/job/[id]';
+import Notifications from '@/app/notifications';
 import ProfileBuilder from '@/app/profile-builder';
 import SavedJobs from '@/app/saved-jobs';
 import Settings from '@/app/settings';
@@ -36,6 +37,7 @@ export const appRoutes = {
   'apply/[jobId]/form': ApplyForm,
   'apply/[jobId]/upload': ApplyUpload,
   'job/[id]': JobDetails,
+  notifications: Notifications,
   'profile-builder': ProfileBuilder,
   'saved-jobs': SavedJobs,
   settings: Settings,
