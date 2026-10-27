@@ -3,7 +3,7 @@
 import { z } from 'zod';
 
 /** validations.ts:86 */
-const phoneSchema = z
+export const phoneSchema = z
   .string()
   .min(10, 'Enter a valid 10-digit phone number')
   .max(15, 'Phone number is too long')
