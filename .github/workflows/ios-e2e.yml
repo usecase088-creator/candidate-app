@@ -106,6 +106,8 @@ jobs:
             xcrun simctl keychain "$UDID" reset 2>/dev/null
             xcrun simctl install "$UDID" "$APP"
             maestro --device "$UDID" test "$f" --format junit --output "output/report-$n.xml"               --debug-output "output/maestro-$n" || RESULT=1
+            xcrun simctl io "$UDID" screenshot "output/end-$n.png"
+            maestro --device "$UDID" hierarchy > "output/hierarchy-$n.json" 2>&1 || true
           done
           set -e
           sleep 2
