@@ -45,13 +45,13 @@ Source of truth: the website (`../job/candidates/src`: `lib/applications.ts`, `l
 
 ## Task 0 — Before building
 
-- [ ] Reference sync check: `../job` vs the live commit (read-only Render API). Only a `git fetch` + fast-forward with Raj's OK (D6).
-- [ ] Install Expo SDK packages with `npx expo install`: `expo-document-picker`, `expo-image-picker`, `expo-file-system`,
+- [x] Reference sync check (`../job` = live = `f185fe0`, nothing to fast-forward): `../job` vs the live commit (read-only Render API). Only a `git fetch` + fast-forward with Raj's OK (D6).
+- [x] Install Expo SDK packages (permissions checked on the merged manifest and plist: D26) with `npx expo install`: `expo-document-picker`, `expo-image-picker`, `expo-file-system`,
       `expo-sharing`. All are Expo SDK (allowed by CLAUDE.md) but **native**: the debug APK on the phone must be rebuilt
       (`prebuild` + Gradle, free, about 10 min) and an iOS simulator build is needed for the iPhone check (EAS free build,
       or the workflow's latest build is too old). Permissions text for camera and gallery goes in `app.config.ts`
       (store review needs a clear reason string).
-- [ ] Local backend seed (`scripts/backend-local`): the test candidate gets a form profile with completeness ≥ 30, one job with
+- [x] Local backend seed (done: second demo account `applicant@apronhanger.test`, 8 closed jobs, one application per state, job questions on Radiology Technician; the Phase 2 candidate stays without a profile) (`scripts/backend-local`): the test candidate gets a form profile with completeness ≥ 30, one job with
       job questions (text, number, select, checkbox), a candidate for "no form CV" (cannot apply), and applications in these states:
       `Applied`, `InterviewScheduled` (virtual and in-person), `DocumentsRequested` (with a note and a list), `DocumentsUploaded`,
       `OfferSent` (with an offer letter link), `JoiningConfirmed` (with a joining date), `Rejected`. The seed also resets them,
@@ -183,4 +183,4 @@ Source of truth: the website (`../job/candidates/src`: `lib/applications.ts`, `l
 ## Extra checks Raj asked for in Task 0
 
 - [x] Public docs scanned for notes about open weaknesses of the live backend: moved to local `docs/client/OPEN-WEAKNESSES.md`, public docs now only name the item ids (reported to Raj; git history still holds the old text).
-- [ ] On the local backend copy: `POST /api/applications` quick apply with a `profile` that has extra keys (`user`, `role`, `hospitalId`, `verified`, `matchPercent`, `userId`, `email`). Observe and report only; fix nothing; the result goes to local `docs/client/` (not the public repo).
+- [x] Probe done on the local backend copy (quick apply with extra keys in `profile`): observed and reported only, nothing fixed; the result is in local `docs/client/PROBE-quick-apply-extra-keys.md`.

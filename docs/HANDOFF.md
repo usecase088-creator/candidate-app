@@ -4,7 +4,7 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
 
-- **Phase 1 accepted. Phase 2 (Jobs) accepted by Raj on 2026-10-27 (D25); the repo stays public and pushes to `main` of this repo are fine.** Next: write `docs/PHASE-3.md` and show it to Raj. Summary and screen recording plan: `docs/PHASE-2-SUMMARY.md`; plan and
+- **Phase 1 accepted. Phase 2 (Jobs) accepted by Raj on 2026-10-27 (D25); the repo stays public and pushes to `main` of this repo are fine.** Phase 3 is approved (`docs/PHASE-3.md`); Task 0 done (D26), Task 1 next. Demo account for apply flows: `applicant@apronhanger.test` (password in `seedData.ts`, 8 seeded applications); `candidate@apronhanger.test` has no profile on purpose. Summary and screen recording plan: `docs/PHASE-2-SUMMARY.md`; plan and
   checklist: `docs/PHASE-2.md`; decisions D23 (differences from the website) and D24 (staging server); change requests CR-004, CR-005.
 - **Phase 2 evidence:** `npm run check` green (727 tests, coverage gates met); contract tests pass against the local backend at `f185fe0` (saved-jobs has no
   `applications` list); drift check passes (GET on production); Playwright 9/9 job specs incl. 320 px; **Maestro 9/9 on the real Android phone** and **9/9 on the iPhone simulator** (6 auth/smoke + 3 job flows each).

@@ -1,15 +1,24 @@
 // Runs inside .reference-backend after the backend's own seed. Writes buildSeedData() with upserts (idempotent).
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { buildSeedData, SEED_PASSWORD } from './seedData';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const { candidate, recruiter, hospitals, jobs, govJobs, intlJobs, signupNumbers } = buildSeedData(
-    process.env,
-    new Date(),
-  );
+  const {
+    candidate,
+    recruiter,
+    hospitals,
+    jobs,
+    govJobs,
+    intlJobs,
+    signupNumbers,
+    applicant,
+    archivedJobs,
+    applications,
+    applicationDocuments,
+  } = buildSeedData(process.env, new Date());
   const passwordHash = await bcrypt.hash(SEED_PASSWORD, 10);
   const activeAccount = { passwordHash, deletedAt: null, isSuspended: false, planSuspendedAt: null };
 
@@ -40,23 +49,136 @@ async function main() {
     create: { ...candidateUser, ...activeAccount },
     update: { ...candidateUser, ...activeAccount },
   });
-  const profile = { name: candidate.name, initials, userId: user.id, deletedAt: null, isSuspended: false };
+  // The Phase 2 candidate always starts WITHOUT a profile or CV (the "no form CV" cases of Phase 3), whatever an
+  // earlier test or probe wrote into the row.
+  const profile = {
+    name: candidate.name,
+    initials,
+    userId: user.id,
+    deletedAt: null,
+    isSuspended: false,
+    role: null,
+    specialty: null,
+    experienceYears: null,
+    location: null,
+    currentEmployer: null,
+    summary: null,
+    matchPercent: null,
+    verified: false,
+    registration: null,
+    phone: null,
+    languages: null,
+    procedures: null,
+    skills: Prisma.DbNull,
+    education: Prisma.DbNull,
+    certifications: Prisma.DbNull,
+    experience: Prisma.DbNull,
+    profileJson: Prisma.DbNull,
+    cvSource: null,
+    uploadedCvName: null,
+    uploadedCvMime: null,
+    cvCloudinaryId: null,
+    cvUrl: null,
+    avatarUrl: null,
+    avatarCloudinaryId: null,
+    supportingDocuments: Prisma.DbNull,
+    expectedSalaryMin: null,
+    expectedSalaryMax: null,
+    currentSalaryMin: null,
+    currentSalaryMax: null,
+    noticePeriod: null,
+    preferredLocations: Prisma.DbNull,
+    availabilityStatus: null,
+    searchBlob: null,
+  };
+  // Keyed by the login user, and the email is written back too: a test that changed the candidate's email (the
+  // website's profile save does) must not make the next seed create a second row.
   await prisma.candidate.upsert({
-    where: { email: candidate.email },
+    where: { userId: user.id },
     create: { email: candidate.email, ...profile },
-    update: profile,
+    update: { email: candidate.email, ...profile },
+  });
+
+  // Phase 3: the demo applicant (filled profile, so apply unlocks). Written the way the website's profile save writes it.
+  const { initials: applicantInitials, ...applicantUser } = applicant.user;
+  const applicantAccount = await prisma.user.upsert({
+    where: { email: applicant.user.email },
+    create: { ...applicantUser, ...activeAccount },
+    update: { ...applicantUser, ...activeAccount },
+  });
+  const p = applicant.profile;
+  const applicantFields = {
+    name: p.name,
+    initials: applicantInitials,
+    userId: applicantAccount.id,
+    deletedAt: null,
+    isSuspended: false,
+    role: p.role,
+    specialty: p.specialty,
+    experienceYears: p.yearsExperience,
+    location: p.state,
+    currentEmployer: p.experience[0].hospital,
+    summary: p.summary,
+    verified: false,
+    registration: `${p.registrationNumber} (${p.registrationCouncil})`,
+    phone: p.phone,
+    languages: JSON.stringify(p.languages),
+    procedures: JSON.stringify(p.procedures),
+    skills: [...p.clinicalSkills, ...p.technicalSkills],
+    education: p.qualifications,
+    certifications: p.certifications,
+    experience: p.experience,
+    profileJson: p as unknown as Prisma.InputJsonValue,
+    cvSource: 'form',
+    expectedSalaryMin: p.expectedSalaryMin,
+    expectedSalaryMax: p.expectedSalaryMax,
+    currentSalaryMin: p.currentSalaryMin,
+    currentSalaryMax: p.currentSalaryMax,
+    noticePeriod: p.availability,
+    preferredLocations: p.preferredLocations,
+    availabilityStatus: p.availabilityStatus,
+    searchBlob: [p.name, p.role, p.specialty, p.state, p.city, ...p.clinicalSkills].join(' ').toLowerCase(),
+  };
+  const applicantRow = await prisma.candidate.upsert({
+    where: { userId: applicantAccount.id },
+    create: { email: applicant.user.email, ...applicantFields },
+    update: { email: applicant.user.email, ...applicantFields },
   });
 
   // Saved jobs of the seeded candidate start empty on every seed, so the Maestro save flow can repeat (dev database only).
   const candidateRow = await prisma.candidate.findUnique({
-    where: { email: candidate.email },
+    where: { userId: user.id },
     select: { id: true },
   });
   if (candidateRow) await prisma.savedJob.deleteMany({ where: { candidateId: candidateRow.id } });
+  // Applications of both test candidates start fresh on every seed, so apply and answer flows can repeat
+  // (application documents go with them: the relation cascades).
+  const testCandidateIds = [candidateRow?.id, applicantRow.id].filter((id): id is string => !!id);
+  await prisma.application.deleteMany({ where: { candidateId: { in: testCandidateIds } } });
 
   for (const { id, ...data } of jobs) {
     const job = { ...data, postedById: recruiterUser.id };
     await prisma.job.upsert({ where: { id }, create: { id, ...job }, update: job });
+  }
+
+  for (const { id, ...data } of archivedJobs) {
+    const job = { ...data, postedById: recruiterUser.id };
+    await prisma.job.upsert({ where: { id }, create: { id, ...job }, update: job });
+  }
+
+  for (const { id, requestedDocumentList, ...data } of applications) {
+    await prisma.application.create({
+      data: {
+        id,
+        ...data,
+        cvSource: 'form',
+        candidateId: applicantRow.id,
+        ...(requestedDocumentList ? { requestedDocumentList: JSON.stringify(requestedDocumentList) } : {}),
+      },
+    });
+  }
+  for (const { id, ...data } of applicationDocuments) {
+    await prisma.applicationDocument.create({ data: { id, ...data } });
   }
 
   for (const { id, ...data } of govJobs) {
@@ -67,7 +189,7 @@ async function main() {
   }
 
   console.log(
-    `[seedApp] ${hospitals.length} hospitals, ${jobs.length} jobs, ${govJobs.length} gov, ${intlJobs.length} international, 1 candidate, 1 recruiter (password: see seedData.ts); freed ${ids.length} signup test account(s)`,
+    `[seedApp] ${hospitals.length} hospitals, ${jobs.length} jobs (+${archivedJobs.length} closed), ${govJobs.length} gov, ${intlJobs.length} international, 2 candidates (${applications.length} applications for the demo applicant), 1 recruiter (password: see seedData.ts); freed ${ids.length} signup test account(s)`,
   );
 }
 
