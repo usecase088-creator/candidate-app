@@ -66,7 +66,7 @@ If the backend cannot reach the database ("Can't reach database server"): IPv6 p
 
 1. ~~Accept Phase 2~~ done (D25). Phase 3: write `docs/PHASE-3.md`, show it to Raj, build.
 2. ~~Push / public repo~~ decided (D25): public, push allowed. Revisit `staging-backend/` exposure before store submission.
-3. **Sentry DSN** (`.env.local` `EXPO_PUBLIC_SENTRY_DSN` and an EAS variable), then one test event checked for personal data.
+3. ~~Sentry DSN~~ done 2026-10-27: project `apronhanger-candidate-app` in org `rajendra-3g` (react-native). DSN is in `.env.local` and the EAS variable `EXPO_PUBLIC_SENTRY_DSN` (development, preview, production). A test event arrived (issue APRONHANGER-CANDIDATE-APP-1, no user data). Still to do: send one real app event from a build and check it for personal data (the scrubber is unit-tested). Sentry MCP is in the local `.mcp.json` (not committed).
 4. **Tell the client** about A1, A3 and A5 and ask the A5 question.
 5. **Production on a paid always-on Render instance before store submission** (week 7). Client's cost.
 6. **Read-only Neon role** if a production check is ever needed again. Separate Neon branch for staging (D4) is still open: staging shares the dev database.
