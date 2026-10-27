@@ -1,7 +1,9 @@
+import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { Job } from '@/api/schemas/jobs';
+import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/Text';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -19,10 +21,10 @@ type Props = {
 };
 
 /**
- * Website RecommendedRail. The prompt's "Build my CV" button comes with the profile builder (Phase 4); until then the
- * card only tells the candidate what completing the profile unlocks.
+ * Website RecommendedRail. The prompt's "Build my CV" button opens the profile form.
  */
 export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
+  const router = useRouter();
   if (jobs.length === 0) {
     if (!showPrompt) return null;
     return (
@@ -33,6 +35,11 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
         <AppText color="mutedForeground" align="center">
           Complete your profile and we&apos;ll match you to the best roles instantly.
         </AppText>
+        <Button
+          testID="recommended.build"
+          label="Build my CV"
+          onPress={() => router.push('/profile-builder')}
+        />
       </View>
     );
   }

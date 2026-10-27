@@ -68,6 +68,12 @@ export function ProfileScreen() {
           onPress={() => router.push('/profile-builder')}
         />
         <Button
+          testID="profile.cv"
+          label="My CV"
+          variant="outline"
+          onPress={() => router.push('/cv-preview')}
+        />
+        <Button
           testID="profile.notifications"
           label={unread ? `Notifications (${unread})` : 'Notifications'}
           accessibilityLabel={unread ? `Notifications, ${unread} unread` : 'Notifications'}

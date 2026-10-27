@@ -109,6 +109,13 @@ describe('Home: loaded', () => {
     ).toBeOnTheScreen();
   });
 
+  it('the prompt has "Build my CV", which opens the profile form', async () => {
+    installJobsBackend({ jobs: [makeJob({ id: 'x', matchPercent: null })] });
+    await home();
+    await fireEvent.press(await screen.findByTestId('recommended.build'));
+    expect(await screen.findByTestId('builder.screen')).toBeOnTheScreen();
+  });
+
   it('a profile of 20%+ is scored on the device and only jobs in its location are recommended', async () => {
     installJobsBackend({
       jobs: [nurse, doctor],
