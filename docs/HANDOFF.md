@@ -1,13 +1,25 @@
-# Handoff (updated 2026-10-27, Phase 3 built)
+# Handoff (updated 2026-10-28, Phase 3 built, Phase 4 not started)
 
 Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
 
-- **Phase 1 and 2 accepted (Phase 2: D25). Phase 3 (Apply and applications) is BUILT and pushed; `npm run check` green (1,171 tests); contract 39 tests; web 8 new specs.**
+- **Phase 1 and 2 accepted (Phase 2: D25). Phase 3 (Apply and applications) is BUILT and pushed; its acceptance is CONDITIONAL on (1) the Android preview build below
+  and (2) Raj's by-hand checks. Phase 4 is NOT started** (do not start it in the session that finished Phase 3).
   Plan and checklist: `docs/PHASE-3.md`; summary and recording plan: `docs/PHASE-3-SUMMARY.md`; decisions D26 (permissions, confirms, uploads) and D27 (differences from the website).
-  Raj approved the plan with these answers: PLAN.md order (apply works for candidates whose form profile exists; the Part 1 demo uses the demo account), 4 Expo file packages OK,
-  confirm step for Decline and Reject, XHR uploads inside `createApiClient.ts`, PLAN.md's Part 1 list is the list, assume no Apple account (simulator build plus recording), **ask before each EAS build**.
+  `npm run check` green (1,180 tests); contract 39 tests; Playwright 8 new specs; **Maestro 13/13 flows on the real Android phone**.
+- **Phase 3 acceptance checklist (Raj):**
+  1. Install the **Android preview APK** (EAS build `a25efbdb-5301-40ad-825f-6fd91c5b5bc8`, built from commit `75c080d`; install link in the chat / on the EAS build page).
+     It is "ApronHanger (Preview)", talks to the **staging server** (`https://apronhanger-staging-api.onrender.com`, never the live one; the first request after a pause takes ~50 s).
+  2. By hand on that build: camera photo for a document request, download/share of the offer letter, CV upload through the file picker.
+  3. **Sentry install check:** the preview build sends ONE info event on its first launch (message "Install check: this preview build can reach Sentry. Scrub probe ..."), tag
+     `purpose:install-check`, environment `preview`, project `apronhanger-candidate-app`, org `rajendra-3g`. It must read `[email]` and `[phone]` where the made-up probe values were
+     (`probe.person@example.test`, `9876543210`) and carry no user, IP or request body. The Sentry MCP needs to be authorised again to read it (`/mcp` in an interactive session), or open
+     the issue in the Sentry web page. **Not yet verified: it needs the build to be installed first.**
+  4. Demo logins and the seeded states: `docs/client/DEMO-ACCOUNTS.md` (git-ignored). Staging was reseeded on 2026-10-28.
+- **iOS (decision 2026-10-28, Raj):** the 3 iPhone runs dispatched on 2026-10-27 (offer, interview, quick apply) are left alone and are checked ONCE at the end of Phase 4.
+  **iOS flows must be re-run before the Part 2 build; if GitHub macOS is still blocked, price the EAS cloud simulator first.**
+  (EAS Workflows with Maestro need a paid Expo plan: see the note in `.eas/workflows/e2e.yml`. Free plan: 15 Android + 15 iOS builds a month, low priority queue; used in October so far: 3 iOS + 2 Android.)
 - **Phase 3 status after the phone runs (2026-10-28):**
   - **Android, real phone (Realme RMX3944): all 13 flows pass** (4 new + the 9 old; flows were run one by one, with reseeds between the applicant flows).
     The phone found a real bug (new application hidden above the list after Quick Apply): fixed (`APPLICATIONS_LIST_PROPS`, `maintainVisibleContentPosition` off).
