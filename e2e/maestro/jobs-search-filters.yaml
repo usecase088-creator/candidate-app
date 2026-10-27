@@ -10,6 +10,10 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: search.screen
     timeout: 10000
+- scrollUntilVisible:
+    element: 'Showing 4 of 4 verified roles'
+    direction: UP
+    timeout: 10000
 - assertVisible: Showing 4 of 4 verified roles
 
 # Text: live, case-insensitive.
@@ -17,6 +21,10 @@ appId: work.apronhanger.candidate.dev
     id: search.query
 - inputText: CARDIO
 - runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element: 'Showing 1 of 4 verified roles'
+    direction: UP
+    timeout: 10000
 - assertVisible: Showing 1 of 4 verified roles
 - assertVisible:
     id: job.title.5eed0000-0000-4000-8000-00000000b002
@@ -24,6 +32,10 @@ appId: work.apronhanger.candidate.dev
     id: search.query
 - eraseText: 20
 - runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element: 'Showing 4 of 4 verified roles'
+    direction: UP
+    timeout: 10000
 - assertVisible: Showing 4 of 4 verified roles
 
 # City or state.
@@ -31,6 +43,10 @@ appId: work.apronhanger.candidate.dev
     id: search.city
 - inputText: karnataka
 - runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element: 'Showing 2 of 4 verified roles'
+    direction: UP
+    timeout: 10000
 - assertVisible: Showing 2 of 4 verified roles
 - tapOn:
     id: search.city

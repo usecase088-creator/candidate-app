@@ -67,6 +67,13 @@ appId: work.apronhanger.candidate.dev
     direction: UP
 - tapOn:
     id: signup.submit
+# iPhone: with the number pad still open the first tap can be swallowed; tap again if the OTP step has not appeared.
+- runFlow:
+    when:
+      notVisible: 'Enter the OTP sent to 9000000002.'
+    commands:
+      - tapOn:
+          id: signup.submit
 - extendedWaitUntil:
     visible: 'Enter the OTP sent to 9000000002.'
     timeout: 20000
