@@ -225,6 +225,15 @@ npx eas-cli@latest workflow:run .eas/workflows/e2e.yml         # 2 builds + 2 Ma
 npx eas-cli@latest build -p ios --profile e2e-test             # 1 build: iOS simulator app, proves iOS compiles (free)
 ```
 
+**Firebase file (push, 2026-10-31):** the EAS file variable `GOOGLE_SERVICES_JSON` (preview + production) holds
+`google-services.json` (Firebase project `candidate-app-69427`; local copy in `C:\dev\ah-secrets\`, outside the repo).
+File variables are NOT loaded on the laptop, so the local and the EAS fingerprint differ and the build fails in
+"Configure expo-updates" (runtime version mismatch). **Always set it locally for the build command** (same contents,
+the fingerprint hashes only the contents):
+`GOOGLE_SERVICES_JSON=C:/dev/ah-secrets/google-services.json npx eas-cli build -p android --profile preview`
+(PowerShell: `$env:GOOGLE_SERVICES_JSON="C:/dev/ah-secrets/google-services.json"; npx.cmd eas-cli build ...`).
+FCM V1 service-account key: uploaded to EAS credentials for `.preview` and the store package (Raj, 2026-10-31).
+
 Profiles (`eas.json`, rules checked by `src/lib/__tests__/easConfig.test.ts`): `development` (debug APK / iOS
 simulator), `preview` (internal APK, live backend), `production` (store build, only with Raj's OK), `e2e-test`
 (development variant, no credentials, APK + iOS simulator). There is no `submit` config on purpose: never
