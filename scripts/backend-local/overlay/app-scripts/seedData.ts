@@ -543,6 +543,24 @@ export function buildSeedData(env: Env, now: Date) {
   /** Free for signup tests: seedApp deletes candidate accounts on these numbers each run, so signup E2E can repeat. */
   const signupNumbers = numbers.slice(1);
 
+  /** Phase 4: what the bell and the notifications list show for the demo applicant (newest first). */
+  const applicantNotifications = [
+    {
+      title: 'Interview Scheduled',
+      message: 'Your interview for Staff Nurse has been scheduled.',
+      read: false,
+      link: '/applications',
+      createdAt: new Date(now.getTime() - 60 * 60 * 1000),
+    },
+    {
+      title: 'Application Received',
+      message: 'Your application for Staff Nurse was received.',
+      read: true,
+      link: '/applications',
+      createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+    },
+  ];
+
   return {
     candidate,
     recruiter,
@@ -552,6 +570,7 @@ export function buildSeedData(env: Env, now: Date) {
     intlJobs,
     signupNumbers,
     applicant,
+    applicantNotifications,
     archivedJobs,
     applications,
     applicationDocuments,

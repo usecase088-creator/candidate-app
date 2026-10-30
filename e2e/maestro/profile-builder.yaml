@@ -24,6 +24,12 @@ appId: work.apronhanger.candidate.dev
     id: builder.field.email
 - assertVisible:
     id: builder.field.phone
+# The step is long: Next / Back sit below the fold.
+- scrollUntilVisible:
+    element:
+      id: builder.next
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: builder.next
 - extendedWaitUntil:
@@ -43,6 +49,12 @@ appId: work.apronhanger.candidate.dev
     visible: 'Step 2 of 16'
     timeout: 20000
 # Going back does not save anything and shows step 1 again.
+# The step is long: Next / Back sit below the fold.
+- scrollUntilVisible:
+    element:
+      id: builder.back
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: builder.back
 - assertVisible: 'Step 1 of 16'

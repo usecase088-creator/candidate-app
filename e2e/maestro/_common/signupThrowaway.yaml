@@ -32,7 +32,7 @@ appId: work.apronhanger.candidate.dev
       # Keyboard "next" moves to the password field, as a user would (the field is under the keyboard here).
       - pressKey: Enter
       - inputText: Secret@123
-      - runFlow: _common/hideKeyboard.yaml
+      - runFlow: hideKeyboard.yaml
 # iPhone: with the keyboard up, the email and password fields sit behind it and a tap lands on the keyboard. So they are
 # filled first, while the keyboard is down; then the name and the mobile number (the number pad has no Return key).
 - runFlow:
@@ -109,7 +109,7 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: signup.otp
 - inputText: '123456'
-- runFlow: _common/hideKeyboard.yaml
+- runFlow: hideKeyboard.yaml
 - tapOn:
     id: signup.submit
 - extendedWaitUntil:

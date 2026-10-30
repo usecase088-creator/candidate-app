@@ -184,6 +184,18 @@ describe('seed demo applicant (Phase 3: the Part 1 demo account)', () => {
     const { applicant, signupNumbers } = buildSeedData(env, now);
     expect(signupNumbers).not.toContain(applicant.profile.phone);
   });
+
+  it('has notifications for the bell and the list (Phase 4): one unread that opens My Applications, one read', () => {
+    const { applicantNotifications } = buildSeedData(env, now);
+    expect(applicantNotifications).toHaveLength(2);
+    const unread = applicantNotifications.filter((n) => !n.read);
+    expect(unread).toHaveLength(1);
+    expect(unread[0]).toMatchObject({ link: '/applications' });
+    expect(applicantNotifications.every((n) => n.title.length > 0 && n.message.length > 0)).toBe(true);
+    // Newest first, as the server lists them; dates relative to the seed run.
+    expect(unread[0]!.createdAt.getTime()).toBeGreaterThan(applicantNotifications.find((n) => n.read)!.createdAt.getTime());
+    expect(unread[0]!.createdAt.getTime()).toBeLessThanOrEqual(now.getTime());
+  });
 });
 
 describe('seed closed jobs for the applicant (public job counts stay at four)', () => {

@@ -15,6 +15,7 @@ async function main() {
     intlJobs,
     signupNumbers,
     applicant,
+    applicantNotifications,
     archivedJobs,
     applications,
     applicationDocuments,
@@ -143,6 +144,11 @@ async function main() {
     where: { userId: applicantAccount.id },
     create: { email: applicant.user.email, ...applicantFields },
     update: { email: applicant.user.email, ...applicantFields },
+  });
+  // Phase 4: the applicant's notifications start the same on every seed (one unread for the bell), dev database only.
+  await prisma.inAppNotification.deleteMany({ where: { userId: applicantAccount.id } });
+  await prisma.inAppNotification.createMany({
+    data: applicantNotifications.map((n) => ({ ...n, userId: applicantAccount.id })),
   });
 
   // Saved jobs of the seeded candidate start empty on every seed, so the Maestro save flow can repeat (dev database only).
