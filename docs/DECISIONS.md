@@ -16,6 +16,7 @@ Windows laptop, 8 GB RAM, no Mac.
 ## D2 — Bundle ID / package name (decided 2026-10-24)
 
 **`work.apronhanger.candidate`** for Android and iOS (Raj). Matches the live domain apronhanger.work (D5).
+**LOCKED (Raj, 2026-10-30): confirmed as final for Google Play and the App Store. A test in `src/lib/__tests__/appConfig.test.ts` fails if it changes.**
 Variants: `work.apronhanger.candidate.dev`, `work.apronhanger.candidate.preview`.
 
 The app's permanent ID inside the stores, like a username. Users never see it. Google calls it
@@ -248,3 +249,20 @@ Raj was asleep and asked for decisions to be taken and listed. Each can be rever
 6. **Selections are buttons** (single choice and multi choice), as in D27 item 6. Lists (qualifications, experience, ...) have Add and Remove.
 7. **Settings** (Profile tab) holds Privacy Policy, Terms, version and Sign out. Links are `https://apronhanger.work/privacy-policy.html` and the terms PDF (same as the sign-up screen); the privacy URL is assumed to exist on the candidate site.
 
+
+## D29 — Phase 4 changes asked by Raj (2026-10-30)
+
+1. **Notifications: a bell in a top bar** over the four tabs (brand on the left, bell with the unread count on the
+   right, "99+" above 99), opening the notifications list. No new tab. The Profile-tab "Notifications" button is gone
+   (replaces D28 summary item 8). The tab screens no longer take the top safe area themselves; the top bar does.
+2. **Account deletion data list** for the privacy policy and the Play data-safety form: `docs/store/ACCOUNT-DELETION-DATA.md`.
+3. **Profile drafts stay on the phone until the last step** (Raj approved): Next sends nothing; the profile is saved only by
+   "Save profile" on the Review step, as on the website ("Save & generate CV"), so Quick Apply eligibility starts at the same
+   point. Draft, step and picked vault files live in one app-private folder per user id (`profile-drafts/<userId>/`), are
+   checked against the user id when read, and are removed at every sign-out and after a successful save. The final save is
+   safe to retry: waiting files are uploaded in groups of 10 and each uploaded group is written to the draft at once, so a
+   failed profile save (or an app restart) never uploads them again. Replaces D28 item 5.
+4. **Dates use the phone's date picker** (Raj approved `@react-native-community/datetimepicker` 9.2.1, not `@expo/ui`): Android
+   system dialog, iOS calendar sheet with Done/Cancel; stored as YYYY-MM-DD like the website; work dates cannot be in the
+   future; optional dates can be cleared. Expo web (Playwright only) has no date picker. Replaces D28 item 3; CR-006 date part.
+5. **Store ID `work.apronhanger.candidate` is locked** (D2).

@@ -6,7 +6,7 @@ import withWindowsCmake from './plugins/withWindowsCmake.ts';
 // Values that differ per variant live here; src/lib/env.ts validates what reaches the app.
 type Variant = 'development' | 'preview' | 'production';
 
-const BUNDLE_ID = 'work.apronhanger.candidate'; // D2 — permanent once published
+const BUNDLE_ID = 'work.apronhanger.candidate'; // D2, LOCKED by Raj 2026-10-30: permanent once published, never change
 /** EAS project (eas init 2026-10-25, organization apronhanger-candidate). Public id, not a secret. */
 const EAS_PROJECT_ID = '3bb496c0-6a80-4efe-a672-ccb36ba6fbd9';
 const PRODUCTION_API_URL = 'https://job-ojsr.onrender.com'; // live backend used by apronhanger.work

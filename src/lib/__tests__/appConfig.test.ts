@@ -44,6 +44,24 @@ describe('EAS project', () => {
   });
 });
 
+describe('store ID (D2, LOCKED by Raj on 2026-10-30)', () => {
+  // Permanent once published: changing it makes a new store app with zero users. Never edit these values.
+  it('production is work.apronhanger.candidate on Android and iOS', () => {
+    const config = configFor({ APP_VARIANT: 'production' });
+    expect(config.android?.package).toBe('work.apronhanger.candidate');
+    expect(config.ios?.bundleIdentifier).toBe('work.apronhanger.candidate');
+  });
+
+  it.each([
+    ['development', 'work.apronhanger.candidate.dev'],
+    ['preview', 'work.apronhanger.candidate.preview'],
+  ])('%s installs next to it as %s', (variant, id) => {
+    const config = configFor({ APP_VARIANT: variant });
+    expect(config.android?.package).toBe(id);
+    expect(config.ios?.bundleIdentifier).toBe(id);
+  });
+});
+
 describe('which backend each build talks to (D20)', () => {
   const LIVE = /onrender.com|apronhanger.work/;
 

@@ -11,12 +11,12 @@ App repo: 14 local commits on `main` after tag `part-1` (`git log part-1..HEAD`)
 ## App features (4B), all with loading/error/empty/offline states, testIDs, labels
 | Feature | Where | Needs backend? |
 | --- | --- | --- |
-| Profile tab: name, photo, completeness, buttons to Edit profile, My CV, Notifications, Settings, Sign out | Profile tab | no |
+| Profile tab: name, photo, completeness, buttons to Edit profile, My CV, Settings, Sign out | Profile tab | no |
 | Settings: privacy, terms, version, push on/off, Delete account, Sign out | `/settings` | push + delete need PR 7 / 9 |
 | Profile photo: camera or gallery, remove (confirm), 5 MB check | Profile tab | no (existing avatar endpoint) |
 | **Profile builder**, 16 steps, website fields, rules and wording; saved at every Next; resumes where you stopped; Review step; document vault (PDF/Word, 5 MB) | `/profile-builder` | no (existing `PUT /api/candidates/me`) |
 | CV preview and **CV PDF** (made on the phone with `expo-print`, shared with the share sheet, copy deleted) | `/cv-preview` | no |
-| Notifications list, read, read-all, tap to open | `/notifications` | no (existing endpoints) |
+| Notifications list, read, read-all, tap to open; bell with unread count in the top bar of the tabs (D29) | `/notifications` | no (existing endpoints) |
 | One link router (`src/lib/linking.ts`) for notification rows, push payloads and app links; refuses anything that is not apronhanger.work or our own schemes | | no |
 | Push: asked once after the first application, or in Settings; token registered; tap opens the right screen; token removed at sign-out | | PR 7 |
 | Refresh tokens: short access token renewed in the background; parallel 401s refresh once; sign-out ends the server session | | PR 8 |
@@ -49,7 +49,7 @@ D28 in `docs/DECISIONS.md` has the details. In short:
 5. **Dates are typed as YYYY-MM-DD**, salary as two number boxes, choices as buttons (no new picker library).
 6. **Refresh is opt-in by a request header**, so the live website and the Part 1 builds behave exactly as today.
 7. **Deleting an account hard-deletes the User row** and anonymises the Candidate row (applications need it). Offer letters and interview history stay with the hospital.
-8. **Notifications are reached from the Profile tab** (no new tab: that needs your OK).
+8. ~~Notifications are reached from the Profile tab~~ replaced on 2026-10-30 by a bell in the top bar (D29).
 9. **Push permission is asked once**, after the first successful application ("Not now" is remembered), or from Settings.
 10. **iOS store link** is the website until the App Store id exists (`IOS_STORE_URL` in `src/lib/site.ts`). Android link is `https://play.google.com/store/apps/details?id=work.apronhanger.candidate`.
 11. **Privacy URL** `https://apronhanger.work/privacy-policy.html` is assumed to be live (the sign-up screen already used it).
