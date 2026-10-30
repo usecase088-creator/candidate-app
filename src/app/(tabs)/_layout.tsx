@@ -3,6 +3,7 @@ import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 
 import { useSession } from '@/features/auth/sessionStore';
+import { TopBar } from '@/features/notifications/components/TopBar';
 import { colors, fonts } from '@/theme/tokens';
 
 type Tab = { name: string; title: string; testID: string; ios: SFSymbol; android: AndroidSymbol };
@@ -35,7 +36,8 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
+        // One top bar for the four tabs, with the notification bell (website Navbar). It takes the top safe area.
+        header: () => <TopBar />,
         tabBarActiveTintColor: colors.brand,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },

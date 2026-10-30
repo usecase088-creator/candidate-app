@@ -127,7 +127,7 @@ export function HomeScreen() {
     ) : null;
 
   return (
-    <Screen testID="home.screen" edges={['top']} padded={false}>
+    <Screen testID="home.screen" edges={[]} padded={false}>
       <JobList
         testID="home.list"
         jobs={view === 'ready' ? visible : []}

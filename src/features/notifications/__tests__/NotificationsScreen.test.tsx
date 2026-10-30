@@ -118,10 +118,10 @@ describe('Notifications', () => {
     await waitFor(() => expect(calls).toEqual(['read-all']));
   });
 
-  it('is reached from the Profile tab', async () => {
+  it('is reached from the bell in the top bar', async () => {
     setup([n({ id: 'a' })]);
     await startSignedIn('/profile', 'profile.screen');
-    await fireEvent.press(await screen.findByTestId('profile.notifications'));
+    await fireEvent.press(await screen.findByTestId('topbar.notifications'));
     expect(await screen.findByTestId('notifications.screen')).toBeOnTheScreen();
   });
 });

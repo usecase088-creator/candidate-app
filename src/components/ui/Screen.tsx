@@ -14,7 +14,7 @@ export type ScreenProps = {
   children: ReactNode;
   /** Forms and long content: scrolls, and stays scrollable at font scale 2 and 320 pt width. */
   scroll?: boolean;
-  /** Tab screens leave the bottom edge to the tab bar. */
+  /** Tab screens pass none: the top bar takes the top edge and the tab bar the bottom one. */
   edges?: Edge[];
   padded?: boolean;
   /** When this value changes the scroll view jumps back to the top (a new step of a form). */

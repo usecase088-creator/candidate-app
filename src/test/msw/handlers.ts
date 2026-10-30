@@ -10,4 +10,6 @@ export const handlers = [
   http.get(`${API}/api/app-config`, () =>
     HttpResponse.json({ minVersion: { android: '0.0.0', ios: '0.0.0' }, flags: {} }),
   ),
+  // The bell in the top bar of every tab asks for the unread count. By default there is nothing.
+  http.get(`${API}/api/notifications`, () => HttpResponse.json({ data: [], unreadCount: 0 })),
 ];

@@ -1,18 +1,16 @@
-# Notifications list: open it from the Profile tab and open the application a notification points to.
+# Notifications list: open it from the bell in the top bar and open the application a notification points to.
 # Needs: the demo applicant with at least one notification whose link is /applications (seed it with the recruiter side
 # or insert one on the dev database). Push delivery itself (a real phone with Firebase) is checked by hand, not here.
 # NOT YET RUN ON A DEVICE (written 2026-10-28 overnight, no phone attached): run it once before relying on it.
 appId: work.apronhanger.candidate.dev
 ---
 - runFlow: _common/loginApplicant.yaml
-- tapOn:
-    id: tabs.profile
 - extendedWaitUntil:
     visible:
-      id: profile.screen
+      id: home.screen
     timeout: 20000
 - tapOn:
-    id: profile.notifications
+    id: topbar.notifications
 - extendedWaitUntil:
     visible:
       id: notifications.screen
@@ -25,5 +23,5 @@ appId: work.apronhanger.candidate.dev
     id: notifications.back
 - extendedWaitUntil:
     visible:
-      id: profile.screen
+      id: home.screen
     timeout: 15000

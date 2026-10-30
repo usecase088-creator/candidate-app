@@ -128,7 +128,7 @@ export function SearchScreen() {
     ) : null;
 
   return (
-    <Screen testID="search.screen" edges={['top']} padded={false}>
+    <Screen testID="search.screen" edges={[]} padded={false}>
       <JobList
         testID="search.list"
         jobs={view === 'ready' ? visible : []}

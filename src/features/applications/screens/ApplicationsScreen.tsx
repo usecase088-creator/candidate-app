@@ -87,7 +87,7 @@ export function ApplicationsScreen() {
     ) : null;
 
   return (
-    <Screen testID="applications.screen" edges={['top']} padded={false}>
+    <Screen testID="applications.screen" edges={[]} padded={false}>
       <FlashList
         testID="applications.list"
         data={view === 'ready' ? list : []}
