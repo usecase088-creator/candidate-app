@@ -4,6 +4,14 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
 
+- **2026-10-30 session (Raj's answers to the Phase 4 review):**
+  - Built (tests first, `npm run check` green, 95 suites / 1,428 tests): bell + unread count in a top bar (D29.1), profile drafts on the phone until the last step with retry-safe final save (D29.3), native date picker `@react-native-community/datetimepicker` 9.2.1 (D29.4, new native module: needs the next EAS build), flaky job-details test fixed, store ID locked (D2), `docs/store/ACCOUNT-DELETION-DATA.md`.
+  - Backend PR 9 got a second commit `a95ba54` (recruiter notifications renamed to "Deleted candidate", pending OTP/reset requests deleted). **Not run against a real database.**
+  - **Pushed: the 6 backend `feat/*` branches** to `apronhanger/job` (via Git Credential Manager, user `rajendra0000`; the `GITHUB_TOKEN` in `.env.local` has no access to that repo). `conflict-resolution1` untouched (`f185fe0`, still live).
+  - **NOT pushed: app `main` and tag `part-1`.** Raj wanted the app repo private first, and on 2026-10-30 it still answered 200 to an anonymous request (public). Push only after Raj confirms.
+  - **Deploy plan (Raj):** all 6 PRs to STAGING first, phone test against staging, then production one PR at a time, a Neon backup branch before every PR with SQL (7, 8, 9). Staging today syncs from `../job/backend` (live code) and Render builds it from the app repo's `main` with `prisma db push`: needs a combined backend branch, a sync source switch, the app push and a preview EAS build (ask first). Not done.
+  - Candidate website = Apache/cPanel static hosting (not Cloudflare): PR 5's page is uploaded by hand (see local `docs/client/PR5-body.md`).
+  - Preview APK `a25efbdb` (Phase 3): FINISHED; APK link expires 2026-11-10.
 - **Phase 4 was built locally overnight (2026-10-28), unpushed and undeployed.** Start with `docs/PHASE-4-SUMMARY.md` (features, the decisions I took for Raj, what is NOT proven) and `docs/PHASE-4.md` (plan, what Raj must give). App: tag `part-1` = delivered Part 1; `git log part-1..HEAD` = the Phase 4 commits (local only, `main` and the tag are not pushed). Backend: six branches `feat/app-config`, `feat/delete-account-page`, `feat/rate-limits`, `feat/push-tokens`, `feat/refresh-tokens`, `feat/delete-account` in `../job-hotfix`, all from live `f185fe0`, merge cleanly in any order, PR bodies in local `docs/client/PR4..PR9-body.md`, new tables need Raj's manual SQL on Neon (backup branch first). Open questions for the client: `docs/client/CLIENT-QUESTIONS.md`. Observations: `docs/client/PHASE-4-FINDINGS.md`.
 - **Next:** Raj reviews; push decisions; Firebase/Apple/Play values; then ONE EAS rebuild (ask first) and the phone checks + the 3 new Maestro flows (written, never run) + iOS re-run. Native packages added: `expo-print`, `expo-notifications`.
 
