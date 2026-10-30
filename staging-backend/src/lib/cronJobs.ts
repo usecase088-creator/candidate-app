@@ -2,12 +2,19 @@ import cron from 'node-cron';
 import prisma from './prisma';
 import logger from './logger';
 import { getRecruiterLimit } from './helpers';
+import { processCleanup } from './accountDeletion';
 import { isDowngrade, isUpgrade } from './planBilling';
 import { BILLING_CYCLE_DAYS, getPlanPrice, getJobLimit } from '../config/plans';
 import { closePlanExpiredActiveJobs, closeExpiredJobs } from './hospitalSuspend';
+import { processReceipts } from './pushNotifications';
 import { computeRecruiterActivationPlan, applyRecruiterActivationPlan } from './recruiterPlan';
 
 export function initCronJobs() {
+  // ─── Every 30 minutes: remove Cloudinary files of deleted accounts that could not be removed at once ──
+  cron.schedule('*/30 * * * *', () => {
+    void processCleanup();
+  });
+
   // Run every hour to check for expired jobs
   cron.schedule('0 * * * *', async () => {
     try {
@@ -389,6 +396,11 @@ export function initCronJobs() {
     } catch (error) {
       logger.error('Error running expiration notifications cron job: ' + error);
     }
+  });
+
+  // ─── Every 30 minutes: Expo push receipts (forget phones that are gone) ──────
+  cron.schedule('*/30 * * * *', () => {
+    void processReceipts();
   });
 
   logger.info('Cron jobs initialized successfully.');

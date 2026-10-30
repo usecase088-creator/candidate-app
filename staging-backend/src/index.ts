@@ -18,11 +18,14 @@ import logger from './lib/logger';
 
 // Import Routes
 import authRoutes from './routes/authRoutes';
+import refreshRoutes from './routes/refreshRoutes';
 import jobRoutes from './routes/jobRoutes';
+import appConfigRoutes from './routes/appConfigRoutes';
 import hospitalRoutes from './routes/hospitalRoutes';
 import applicationRoutes from './routes/applicationRoutes';
 import candidateRoutes from './routes/candidateRoutes';
 import savedJobRoutes from './routes/savedJobRoutes';
+import accountRoutes from './routes/accountRoutes';
 import searchRoutes from './routes/searchRoutes';
 import statsRoutes from './routes/statsRoutes';
 
@@ -42,7 +45,9 @@ import uploadRoutes from './routes/uploadRoutes';
 import planRoutes from './routes/planRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import webhookRoutes from './routes/webhookRoutes';
+import { createAuthRateLimits } from './lib/authRateLimits';
 import notificationRoutes from './routes/notificationRoutes';
+import pushTokenRoutes from './routes/pushTokenRoutes';
 import adminGovJobRoutes from './routes/admin/adminGovJobRoutes';
 import govJobRoutes from './routes/govJobRoutes';
 import adminIntlJobRoutes from './routes/admin/adminIntlJobRoutes';
@@ -112,6 +117,15 @@ const otpLimiter = rateLimit({
   // LOCAL-ONLY PATCH from apronhanger-app scripts/backend-local/patches.ts: room for E2E runs in test mode.
   max: process.env.OTP_TEST_MODE === 'true' && process.env.NODE_ENV !== 'production' ? 100 : 5,
   message: { error: 'Too many OTP requests, please try again after 15 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// The app refreshes its session every 30 minutes; a shared mobile-network IP can have many users on it.
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  message: { error: 'Too many requests. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -188,18 +202,23 @@ app.use(cors({
 // ─── API Routes ──────────────────────────────────────────────────────────────
 
 // Limiters must be registered BEFORE the routes they protect
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/signup/send-otp', otpLimiter);
-app.use('/api/auth/signup/verify-otp', otpLimiter);
-app.use('/api/auth/forgot-password', otpLimiter);
-app.use('/api/auth/verify-otp', otpLimiter);
-app.use('/api/auth/reset-password', otpLimiter);
-app.use('/api/auth/resend-otp', otpLimiter);
+// Sign-in and OTP routes count people (email / mobile) first, with a high safety net per IP (src/lib/authRateLimits.ts).
+// The old per-IP limiters (authLimiter, otpLimiter) stay for admin login and onboarding.
+const authLimits = createAuthRateLimits();
+app.use('/api/auth/login', ...authLimits.login);
+app.use('/api/auth/register', ...authLimits.login);
+app.use('/api/auth/signup/send-otp', ...authLimits.otpSend);
+app.use('/api/auth/signup/verify-otp', ...authLimits.otpVerify);
+app.use('/api/auth/forgot-password', ...authLimits.otpSend);
+app.use('/api/auth/verify-otp', ...authLimits.otpVerify);
+app.use('/api/auth/reset-password', ...authLimits.otpVerify);
+app.use('/api/auth/resend-otp', ...authLimits.otpSend);
 app.use('/api/onboarding/verify-mobile', otpLimiter);
 app.use('/api/onboarding/resend-otp', otpLimiter);
 
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/refresh', refreshLimiter);
+app.use('/api/auth', refreshRoutes);
 
 // Modular Admin Routes (replaces monolith adminRoutes)
 app.use('/api/admin/auth/login', authLimiter);
@@ -216,6 +235,7 @@ app.use('/api/admin', adminGovJobRoutes);
 app.use('/api/admin', adminIntlJobRoutes);
 
 app.use('/api/hospitals', hospitalRoutes);
+app.use('/api/app-config', publicJobsLimiter, appConfigRoutes);
 app.use('/api/gov-jobs', govJobRoutes);
 app.use('/api/intl-jobs', intlJobRoutes);
 app.use('/api/candidates', searchLimiter, candidateRoutes);
@@ -225,7 +245,9 @@ app.use('/api/search', searchLimiter, searchRoutes);
 app.use('/api/upload', uploadLimiter, uploadRoutes);
 app.use('/api/plan', planRoutes);
 app.use('/api/payment', paymentLimiter, paymentRoutes);
+app.use('/api/account', accountRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/push-tokens', pushTokenRoutes);
 
 app.use('/api/onboarding/hospitals', onboardingLimiter);
 app.use('/api/onboarding/verify-code', inviteCodeLimiter);

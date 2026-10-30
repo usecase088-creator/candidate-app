@@ -30,8 +30,14 @@ model User {
   // In-app notifications
   notifications InAppNotification[]
 
+  // Phones that get push notifications (mobile app)
+  pushTokens PushToken[]
+
   // Search log (one row per search; tracks pull usage)
   searchLogs SearchLog[]
+
+  // Mobile app sign-ins (refresh tokens)
+  refreshTokens RefreshToken[]
 
   // ── Plan Usage Tracking (NEW) ──────────────────────────────────────────────
   currentMonthStartDate    DateTime @default(now())
@@ -373,6 +379,24 @@ model ApplicationDocument {
   uploadedBy    String      @default("CANDIDATE") // "CANDIDATE" | "RECRUITER"
 }
 
+// ── Mobile app sign-ins ──────────────────────────────────────────────────────
+/// A refresh token of the mobile app. Only the SHA-256 hash is stored. Tokens of one sign-in share a familyId.
+model RefreshToken {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  familyId     String
+  tokenHash    String    @unique
+  tokenVersion Int // User.tokenVersion when it was issued; a password reset ends the sign-in
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+  revokedAt    DateTime?
+  replacedAt   DateTime? // set when this token was swapped for a newer one
+
+  @@index([userId])
+  @@index([familyId])
+}
+
 // ── Plan change / upgrade / downgrade audit log ─────────────────────────────
 model PlanChangeLog {
   id            String   @id @default(uuid())
@@ -387,6 +411,18 @@ model PlanChangeLog {
   paymentStatus String   @default("Pending") // "Paid" | "Pending" | "Waived"
   paymentRef    String? // Payment gateway reference (future)
   note          String?
+}
+
+// ── Account deletion: Cloudinary files waiting to be removed ─────────────────
+model CloudinaryCleanup {
+  id           String    @id @default(uuid())
+  publicId     String
+  resourceType String // "raw" | "image"
+  attempts     Int       @default(0)
+  createdAt    DateTime  @default(now())
+  lastTriedAt  DateTime?
+
+  @@index([createdAt])
 }
 
 // ── Admin authentication (separate from User table) ──────────────────────────
@@ -410,6 +446,29 @@ model InAppNotification {
   read      Boolean  @default(false)
   link      String? // Optional deep-link for the notification
   createdAt DateTime @default(now())
+}
+
+// ── Push notifications (mobile app) ──────────────────────────────────────────
+model PushToken {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  platform   String // "android" | "ios"
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// Expo ticket ids waiting for their receipt (checked by a cron job 15+ minutes after sending).
+model PushReceiptPending {
+  id        String   @id @default(uuid())
+  ticketId  String
+  token     String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 // ── In-app notifications for Admins ──────────────────────────────────────────

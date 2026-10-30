@@ -9,6 +9,7 @@ import { BILLING_CYCLE_DAYS, DEFAULT_PLAN_TIER } from '../config/plans';
 import { sendOTP, verifyOTP, smartResendOTP } from '../lib/otp';
 import { generateResetToken, validateResetToken, deleteResetToken } from '../lib/resetTokenStore';
 import { generateSignupToken, validateSignupToken, deleteSignupToken } from '../lib/signupTokenStore';
+import { ACCESS_TOKEN_SECONDS, issueRefreshToken, wantsRefresh } from '../lib/refreshTokens';
 
 const router = Router();
 const SECRET = process.env.JWT_SECRET;
@@ -213,14 +214,17 @@ router.post('/register', async (req: Request, res: Response) => {
 
     await deleteSignupToken(String(signup_token));
 
+    const refreshCapable = wantsRefresh(req);
     const token = jwt.sign(
       { id: user.id, email: user.email, name: user.name, role: user.role, hospitalId, candidateId, tokenVersion: user.tokenVersion },
       SECRET,
-      { expiresIn: '15d' }
+      { expiresIn: refreshCapable ? ACCESS_TOKEN_SECONDS : '15d' }
     );
+    const refresh = refreshCapable ? await issueRefreshToken(user) : null;
 
     res.status(201).json({
       token,
+      ...(refresh ? { refreshToken: refresh.token, expiresIn: ACCESS_TOKEN_SECONDS } : {}),
       user: { id: user.id, email: user.email, name: user.name, role: user.role, hospitalId, candidateId }
     });
   } catch (error) {
@@ -264,14 +268,19 @@ router.post('/login', async (req: Request, res: Response) => {
       candidateId = candidate?.id ?? null;
     }
 
+    // The mobile app opts in (X-Refresh-Capable: 1) to a short access token plus a refresh token.
+    // Everyone else gets exactly what they always got: one 15-day token.
+    const refreshCapable = wantsRefresh(req);
     const token = jwt.sign(
       { id: user.id, email: user.email, name: user.name, role: user.role, hospitalId: user.hospitalId, candidateId, tokenVersion: user.tokenVersion },
       SECRET,
-      { expiresIn: '15d' }
+      { expiresIn: refreshCapable ? ACCESS_TOKEN_SECONDS : '15d' }
     );
+    const refresh = refreshCapable ? await issueRefreshToken(user) : null;
 
     res.json({
       token,
+      ...(refresh ? { refreshToken: refresh.token, expiresIn: ACCESS_TOKEN_SECONDS } : {}),
       user: { id: user.id, email: user.email, name: user.name, role: user.role, hospitalId: user.hospitalId, candidateId }
     });
   } catch (error) {
