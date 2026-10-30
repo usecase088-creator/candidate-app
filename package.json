@@ -6,6 +6,7 @@
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo/ui": "~58.0.23",
     "@hookform/resolvers": "5.9.2",
+    "@react-native-community/datetimepicker": "9.2.1",
     "@sentry/react-native": "~8.28.0",
     "@shopify/flash-list": "2.3.2",
     "@tanstack/react-query": "^5.104.5",
