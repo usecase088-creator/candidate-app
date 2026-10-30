@@ -29,6 +29,8 @@ export function buildStagingEnv(local: Env, jwtSecret: string): Record<string, s
     NODE_ENV: 'staging',
     JWT_SECRET: jwtSecret,
     NODE_VERSION: '24.19.0',
+    // Backend PR 7: Expo push on every new in-app notification, off unless this is true. Staging tests it on the phone.
+    EXPO_PUSH_ENABLED: 'true',
   };
   return Object.fromEntries(Object.entries(env).filter(([, v]) => v !== ''));
 }

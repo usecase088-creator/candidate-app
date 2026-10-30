@@ -44,6 +44,10 @@ describe('buildStagingEnv', () => {
     });
   });
 
+  it('turns on push to phones (backend PR 7: off unless EXPO_PUSH_ENABLED=true), so the preview build can be tested', () => {
+    expect(buildStagingEnv(localEnv(), NEW_JWT).EXPO_PUSH_ENABLED).toBe('true');
+  });
+
   it('is not NODE_ENV=production, because OTP test mode and its OTP limit switch themselves off there', () => {
     expect(buildStagingEnv(localEnv(), NEW_JWT).NODE_ENV).toBe('staging');
   });
