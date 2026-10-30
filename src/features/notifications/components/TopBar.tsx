@@ -11,7 +11,15 @@ export function TopBar() {
   const insets = useSafeAreaInsets();
   return (
     <View testID="topbar" style={[styles.bar, { paddingTop: insets.top }]}>
-      <AppText variant="heading" weight="bold" color="primary" numberOfLines={1} style={styles.brand}>
+      <AppText
+        testID="topbar.brand"
+        variant="heading"
+        weight="bold"
+        color="primary"
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.5}
+        style={styles.brand}
+      >
         ApronHanger
       </AppText>
       <NotificationBell />

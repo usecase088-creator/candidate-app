@@ -33,7 +33,7 @@ export function NotificationBell() {
             variant="caption"
             weight="semibold"
             color="destructiveForeground"
-            maxFontSizeMultiplier={1.3}
+            maxFontSizeMultiplier={1}
           >
             {count}
           </AppText>

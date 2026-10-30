@@ -68,7 +68,7 @@ export function NotificationsScreen() {
         )}
         {view === 'ready' && items.length > 0 && (
           <>
-            <View style={styles.row}>
+            <View testID="notifications.actions" style={styles.row}>
               <AppText testID="notifications.unread" color="mutedForeground">
                 {`${unread} unread`}
               </AppText>
@@ -112,7 +112,14 @@ export function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   stack: { gap: spacing['3'] },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing['2'] },
+  // Wraps at large text sizes: "Mark all as read" goes under the count instead of off the screen.
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing['2'],
+  },
   title: { flex: 1 },
   card: {
     minHeight: MIN_TOUCH,

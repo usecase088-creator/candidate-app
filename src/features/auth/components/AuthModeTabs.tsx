@@ -19,7 +19,13 @@ export function AuthModeTabs({ active }: { active: Mode }) {
         onPress={() => !selected && router.replace(href)}
         style={[styles.tab, selected && styles.selected]}
       >
-        <AppText variant="label" weight="semibold" color={selected ? 'foreground' : 'mutedForeground'}>
+        <AppText
+          variant="label"
+          weight="semibold"
+          align="center"
+          color={selected ? 'foreground' : 'mutedForeground'}
+          style={styles.label}
+        >
           {label}
         </AppText>
         {mode === 'signup' && (
@@ -54,11 +60,15 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH - spacing['2'],
     borderRadius: radius.lg,
     flexDirection: 'row',
+    // At 320 pt and font scale 2 the label and the "New" badge wrap inside the tab instead of overflowing it.
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing['2'],
+    gap: spacing['1'],
     paddingHorizontal: spacing['2'],
+    paddingVertical: spacing['1'],
   },
+  label: { flexShrink: 1 },
   selected: { backgroundColor: colors.surface, boxShadow: shadows.soft },
   badge: {
     backgroundColor: colors.brandSoft,
