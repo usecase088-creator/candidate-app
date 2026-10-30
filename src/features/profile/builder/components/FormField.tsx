@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Chip } from '@/components/ui/Chip';
+import { DateField } from '@/components/ui/DateField';
 import { TextInput } from '@/components/ui/TextInput';
 import { AppText } from '@/components/ui/Text';
 import { spacing } from '@/theme/tokens';
@@ -41,6 +42,19 @@ export function FormField({ testID, spec, value, onChange }: Props) {
           keyboardType={spec.keyboard ?? 'default'}
           autoCapitalize={spec.keyboard === 'url' || spec.keyboard === 'email-address' ? 'none' : 'sentences'}
           autoCorrect={false}
+        />
+      );
+    case 'date':
+      // The phone's date picker; kept as YYYY-MM-DD like the website's date input. Work dates cannot be in the future.
+      return (
+        <DateField
+          testID={testID}
+          label={spec.label}
+          helper={spec.hint}
+          required={spec.required}
+          value={asString(value)}
+          onChange={onChange}
+          maximumDate={spec.key === 'revalidationDate' ? undefined : new Date()}
         />
       );
     case 'number':

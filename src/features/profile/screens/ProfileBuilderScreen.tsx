@@ -1,8 +1,11 @@
-// The 16-step profile form (website ProfileFormWizard). Each step is saved when the user taps Next, so they can stop
-// and come back; the step they reached is remembered. The sign-in phone and email are shown, never edited (B8).
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+// The 16-step profile form (website ProfileFormWizard). As on the website, nothing is sent to the server before the
+// last step: until then the draft (and picked vault files) stay on the phone, per user, so the candidate can stop and
+// come back, and becomes eligible for Quick Apply at the same point as on the website. The final save is safe to retry:
+// files uploaded by a save that failed later are remembered and not uploaded again.
+// The sign-in phone and email are shown, never edited (B8).
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { CandidateMe, SupportingDocument } from '@/api/schemas/candidate';
@@ -13,30 +16,49 @@ import { Screen } from '@/components/ui/Screen';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { AppText } from '@/components/ui/Text';
 import { failureText } from '@/features/applications/messages';
+import { useSession } from '@/features/auth/sessionStore';
 import { queryView } from '@/features/jobs/hooks/queryView';
+import { MAX_VAULT_FILES } from '@/features/uploads/logic/files';
+import { uploadSupportingDocuments } from '@/features/uploads/uploadsApi';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import { VaultSection } from '../components/VaultSection';
 import { FormField } from '../builder/components/FormField';
+import { type BuilderDraft, clearDraft, loadDraft, type PendingFile, saveDraft } from '../builder/draftStore';
 import { type Block, type FieldSpec, stepBlocks } from '../builder/formSpec';
 import { type Draft, draftFromMe, type ProfileJson, profileFromDraft } from '../builder/model';
 import { LAST_STEP, STEPS } from '../builder/options';
-import { clearSavedStep, saveStep, useSavedStep } from '../builder/useBuilderStep';
 import { validateStep } from '../builder/validation';
 import { CANDIDATE_ME_KEY, useCandidateMe } from '../hooks/useCandidateMe';
 import { profileApi } from '../profileApi';
 
 type Row = Record<string, unknown>;
 
+/** The draft this user left on the phone: undefined while reading, null when there is none. */
+function useStoredDraft(userId: string | undefined): BuilderDraft | null | undefined {
+  const [loaded, setLoaded] = useState<{ userId: string; draft: BuilderDraft | null }>();
+  useEffect(() => {
+    if (!userId) return;
+    let live = true;
+    void loadDraft(userId).then((draft) => live && setLoaded({ userId, draft }));
+    return () => {
+      live = false;
+    };
+  }, [userId]);
+  if (!userId) return null; // signed in offline without a saved user: no draft is kept
+  return loaded?.userId === userId ? loaded.draft : undefined;
+}
+
 export function ProfileBuilderScreen() {
   const query = useCandidateMe();
-  const savedStep = useSavedStep();
+  const userId = useSession((s) => s.user?.id);
+  const stored = useStoredDraft(userId);
   const view = queryView(query);
-  const ready = view === 'ready' && query.data && savedStep !== undefined;
+  const ready = view === 'ready' && query.data && stored !== undefined;
   return (
     <>
       {ready ? (
-        <Builder me={query.data} initialStep={savedStep} />
+        <Builder me={query.data} stored={stored} userId={userId} />
       ) : (
         <Screen testID="builder.screen" scroll>
           {view === 'error' || view === 'offline' ? (
@@ -56,14 +78,26 @@ export function ProfileBuilderScreen() {
 }
 
 const VAULT_STEP = 14;
+const clampStep = (n: number) => (Number.isInteger(n) ? Math.min(Math.max(n, 0), LAST_STEP) : 0);
 
-function Builder({ me, initialStep }: { me: CandidateMe; initialStep: number }) {
+function Builder({
+  me,
+  stored,
+  userId,
+}: {
+  me: CandidateMe;
+  stored: BuilderDraft | null;
+  userId: string | undefined;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<Draft>(() => draftFromMe(me));
-  const [step, setStep] = useState(initialStep);
+  const [draft, setDraft] = useState<Draft>(() => stored?.draft ?? draftFromMe(me));
+  const [step, setStep] = useState(() => clampStep(stored?.step ?? 0));
+  const [pending, setPending] = useState<PendingFile[]>(() => stored?.pending ?? []);
+  const [uploaded, setUploaded] = useState<SupportingDocument[]>(() => stored?.uploaded ?? []);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
-  const [docs, setDocs] = useState<SupportingDocument[]>(() => me.supportingDocuments ?? []);
+  const saved = me.supportingDocuments ?? [];
   // The picture lives on the account record. The profile JSON can hold an old copy, and the server writes whatever
   // the profile says, so the current picture is put into every save.
   const base: ProfileJson = {
@@ -73,28 +107,43 @@ function Builder({ me, initialStep }: { me: CandidateMe; initialStep: number }) 
       : {}),
   };
 
-  const save = useMutation({
-    mutationFn: (files: SupportingDocument[] = docs) => profileApi.save(profileFromDraft(draft, base), files),
-    onSuccess: (updated) => queryClient.setQueryData(CANDIDATE_ME_KEY, updated),
-  });
+  /** Writes the draft to the phone. A failed write must not stop the form: the draft is still on screen. */
+  const keep = (patch: Partial<BuilderDraft>) =>
+    userId
+      ? saveDraft(userId, { step, draft, pending, uploaded, ...patch }).catch(() => undefined)
+      : Promise.resolve();
 
   const goTo = (n: number) => {
     setStep(n);
-    void saveStep(n);
+    void keep({ step: n });
   };
   const exit = () => (router.canGoBack() ? router.back() : router.replace('/profile'));
   const set = (key: string, value: unknown) => setDraft((d) => ({ ...d, [key]: value }));
 
-  async function onNext() {
+  function onNext() {
     const problem = validateStep(step, draft);
     if (problem) return setError(problem);
     setError(undefined);
-    try {
-      await save.mutateAsync(docs);
-      goTo(step + 1);
-    } catch (e) {
-      setError(failureText(e, 'Failed to save profile'));
+    goTo(step + 1);
+  }
+
+  /** Uploads what is still waiting, in groups the server accepts, remembering each group as soon as it is up. */
+  async function uploadWaiting(): Promise<SupportingDocument[]> {
+    let done = uploaded;
+    let waiting = pending;
+    while (waiting.length > 0) {
+      const group = waiting.slice(0, MAX_VAULT_FILES);
+      const result = await uploadSupportingDocuments(group);
+      done = [
+        ...done,
+        ...result.map((u) => ({ name: u.name ?? 'Document', url: u.url, publicId: u.publicId, mime: u.mime ?? null })),
+      ];
+      waiting = waiting.slice(group.length);
+      setUploaded(done);
+      setPending(waiting);
+      await keep({ pending: waiting, uploaded: done });
     }
+    return done;
   }
 
   async function onSubmit() {
@@ -107,12 +156,24 @@ function Builder({ me, initialStep }: { me: CandidateMe; initialStep: number }) 
       }
     }
     setError(undefined);
+    setSaving(true);
     try {
-      await save.mutateAsync(docs);
-      await clearSavedStep();
+      let done: SupportingDocument[];
+      try {
+        done = await uploadWaiting();
+      } catch (e) {
+        setError(e instanceof Error && !('kind' in e) ? e.message : failureText(e, 'Could not upload documents'));
+        return;
+      }
+      // The server replaces the stored list as a whole, so the files already there go with the new ones.
+      const updated = await profileApi.save(profileFromDraft(draft, base), [...saved, ...done]);
+      queryClient.setQueryData(CANDIDATE_ME_KEY, updated);
+      if (userId) await clearDraft(userId);
       router.replace('/profile');
     } catch (e) {
       setError(failureText(e, 'Failed to save profile'));
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -149,10 +210,13 @@ function Builder({ me, initialStep }: { me: CandidateMe; initialStep: number }) 
 
         {step === VAULT_STEP ? (
           <VaultSection
-            docs={docs}
-            onUploaded={async (next) => {
-              await save.mutateAsync(next);
-              setDocs(next);
+            saved={[...saved, ...uploaded]}
+            waiting={pending}
+            userId={userId}
+            onPicked={(files) => {
+              const next = [...pending, ...files];
+              setPending(next);
+              void keep({ pending: next });
             }}
           />
         ) : null}
@@ -165,7 +229,7 @@ function Builder({ me, initialStep }: { me: CandidateMe; initialStep: number }) 
               testID="builder.back"
               label="Back"
               variant="outline"
-              disabled={save.isPending}
+              disabled={saving}
               onPress={() => {
                 setError(undefined);
                 goTo(step - 1);
@@ -173,17 +237,12 @@ function Builder({ me, initialStep }: { me: CandidateMe; initialStep: number }) 
             />
           ) : null}
           {step < LAST_STEP ? (
-            <Button
-              testID="builder.next"
-              label="Next"
-              loading={save.isPending}
-              onPress={() => void onNext()}
-            />
+            <Button testID="builder.next" label="Next" onPress={onNext} />
           ) : (
             <Button
               testID="builder.submit"
               label="Save profile"
-              loading={save.isPending}
+              loading={saving}
               onPress={() => void onSubmit()}
             />
           )}

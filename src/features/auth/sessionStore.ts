@@ -6,7 +6,7 @@ import { api } from '@/api/client';
 import { isApiError } from '@/api/errors';
 import { type AuthUser, AuthUserSchema, MeResponseSchema, RefreshResponseSchema } from '@/api/schemas/auth';
 import { z } from 'zod';
-import { BUILDER_STEP_KEY } from '@/features/profile/builder/useBuilderStep';
+import { clearAllDrafts } from '@/features/profile/builder/draftStore';
 import { disablePush, PUSH_TOKEN_KEY } from '@/features/push/pushService';
 import { secureStorage } from '@/lib/secureStorage';
 
@@ -51,9 +51,9 @@ async function clearStorage() {
     secureStorage.deleteItem(TOKEN_KEY),
     secureStorage.deleteItem(USER_KEY),
     secureStorage.deleteItem(REFRESH_KEY),
-    // Belong to the person who just left: the push token and where they stopped in the profile form.
+    // Belong to the person who just left: the push token and their profile-form draft (with its files).
     secureStorage.deleteItem(PUSH_TOKEN_KEY),
-    secureStorage.deleteItem(BUILDER_STEP_KEY),
+    clearAllDrafts(),
   ]);
 }
 

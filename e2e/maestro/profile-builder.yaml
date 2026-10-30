@@ -1,5 +1,5 @@
-# Profile builder: open it from the Profile tab, check step 1 shows the sign-in phone and email read-only, save a step,
-# leave, come back and land on the next step (the step is remembered).
+# Profile builder: open it from the Profile tab, check step 1 shows the sign-in phone and email read-only, go to step 2
+# (kept on the phone only, nothing is sent before the last step), leave, come back and land on step 2 (draft resumed).
 # Needs: npm run backend:local (or the staging server) and Metro. The demo applicant has a filled profile.
 # NOT YET RUN ON A DEVICE (written 2026-10-28 overnight, no phone attached): run it once with the phone before relying on it.
 appId: work.apronhanger.candidate.dev

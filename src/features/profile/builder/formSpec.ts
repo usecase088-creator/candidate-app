@@ -21,7 +21,16 @@ import {
   WORK_MODE_OPTIONS,
 } from './options';
 
-export type FieldKind = 'text' | 'multiline' | 'number' | 'select' | 'multi' | 'chips' | 'readonly' | 'bool';
+export type FieldKind =
+  | 'text'
+  | 'multiline'
+  | 'number'
+  | 'date'
+  | 'select'
+  | 'multi'
+  | 'chips'
+  | 'readonly'
+  | 'bool';
 
 export type FieldSpec = {
   kind: FieldKind;
@@ -57,8 +66,6 @@ export type Block =
       empty: () => Record<string, unknown>;
       fields: (item: Record<string, unknown>) => FieldSpec[];
     };
-
-const DATE_HINT = 'Use the format YYYY-MM-DD, for example 2021-08-01';
 
 const emptyExperience = (): Experience => ({
   role: '',
@@ -181,11 +188,9 @@ export function stepBlocks(step: number, s: Draft): Block[] {
               options: SPECIALIST_REGISTER_OPTIONS,
             },
             {
-              kind: 'text',
+              kind: 'date',
               key: 'revalidationDate',
               label: 'Revalidation / renewal date',
-              hint: DATE_HINT,
-              placeholder: 'YYYY-MM-DD',
             },
             {
               kind: 'text',
@@ -263,24 +268,20 @@ export function stepBlocks(step: number, s: Draft): Block[] {
               placeholder: 'OPD, ward, ICU, OT, cath lab',
             },
             {
-              kind: 'text',
+              kind: 'date',
               key: 'start',
               label: 'Start date',
               required: true,
-              hint: DATE_HINT,
-              placeholder: 'YYYY-MM-DD',
             },
             { kind: 'bool', key: 'current', label: 'I currently work here' },
             ...(item.current
               ? []
               : [
                   {
-                    kind: 'text',
+                    kind: 'date',
                     key: 'end',
                     label: 'End date',
                     required: true,
-                    hint: DATE_HINT,
-                    placeholder: 'YYYY-MM-DD',
                   } satisfies FieldSpec,
                 ]),
             {
