@@ -19,7 +19,9 @@ recommend for the SDK in `docs/DECISIONS.md` (D9).
    - Guide: https://docs.expo.dev/get-started/set-up-your-environment/ (choose Android Emulator, Development build)
 6. Maestro CLI: https://docs.maestro.dev (Getting started → Installing Maestro). Needs Java 17+.
    Check with `maestro --version`. `maestro studio` helps record flows.
-7. Playwright browser: `npx playwright install chromium` (inside the app repo, after Task 3)
+7. Playwright browser: `npx playwright install chromium` (inside the app repo, after Task 3). Run it again after a
+   Playwright upgrade: every test fails at once with "Executable doesn't exist ... chromium_headless_shell-NNNN" otherwise
+   (seen 2026-10-31). The auth specs abort every API call they do not mock, so a backend running on :3000 does not matter.
 8. Playwright MCP for Claude Code (lets Claude Code open Expo web in Chromium and look at screens):
    configured in the committed `.mcp.json` (pinned `@playwright/mcp`, Chromium, Pixel 7). Claude Code asks
    once to approve the project server; check with `/mcp`. Uses the Chromium from step 7.
@@ -79,6 +81,7 @@ Needs the reference repo at `../job` and `.env.local` filled (dev Neon database 
 ```
 npm run backend:local                 # set up and start on http://localhost:3000 (Ctrl+C to stop)
 npm run backend:local -- --no-start   # set up only
+npm run backend:local -- --source ../job-hotfix/backend   # same, from the combined Phase 4 branch (staging/phase4)
 adb reverse tcp:3000 tcp:3000         # lets the phone/emulator on USB use http://localhost:3000
 npm run test:contract                 # while the backend runs
 ```

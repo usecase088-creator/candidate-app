@@ -1,8 +1,18 @@
-# Handoff (updated 2026-10-28 night: Phase 4 built locally; Phase 3 acceptance still open)
+# Handoff (updated 2026-10-31 night: launch playbook Stages 0 to 4 run overnight; Phase 3 acceptance still open)
 
 Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
+
+- **2026-10-31 overnight (Raj approved an unattended run of `docs/LAUNCH-PLAYBOOK.md`):** read `docs/store/OVERNIGHT-SUMMARY.md` first,
+  then `docs/store/BLOCKERS.md` (what only Raj / the client can give) and `docs/store/STAGE-0-REPORT.md`.
+  Done: Stage 0 (rules quoted in `docs/store/STORE-RULES.md`, versions in `VERSIONS.md`); Stage 1 on the laptop (local backend
+  from the combined branch `staging/phase4` via `npm run backend:local -- --source ../job-hotfix/backend`, 39 + 6 contract tests incl.
+  a new `tests/contract/phase4.test.ts`, Playwright 38/38 after fixing the auth specs, local **release** APK built and checked for
+  16 KB alignment and permissions); Stage 3 items that need no decision (government-jobs note, deletion wording, iOS privacy manifest);
+  Stage 4 drafts in `docs/store/` (data inventory, Data safety, App Privacy, ratings, listing, screenshots, demo account, review notes).
+  **Not done: anything on the phone** (`adb devices` showed no device all night), Stage 2 measurements, guest browsing, support link,
+  Stages 5 and 6 (store accounts). EAS preview build: see the summary for the build id.
 
 - **2026-10-30 session (Raj's answers to the Phase 4 review):**
   - Built (tests first, `npm run check` green, 95 suites / 1,428 tests): bell + unread count in a top bar (D29.1), profile drafts on the phone until the last step with retry-safe final save (D29.3), native date picker `@react-native-community/datetimepicker` 9.2.1 (D29.4, new native module: needs the next EAS build), flaky job-details test fixed, store ID locked (D2), `docs/store/ACCOUNT-DELETION-DATA.md`.

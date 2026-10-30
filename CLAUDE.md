@@ -5,7 +5,7 @@ candidate website, same backend and database. Built with Expo (React Native).
 Goal: live on Play Store and App Store, no crashes, passes store review first time.
 
 - Master plan: `docs/PLAN.md`
-- Current phase: **Phase 4 built and revised (2026-10-30, D29), not accepted, app main + part-1 pushed (repo public for now), nothing deployed.** Read `docs/HANDOFF.md` top section, then `docs/PHASE-4-SUMMARY.md`. The 6 backend branches `feat/*` are PUSHED to `apronhanger/job` (Raj merges/deploys; staging first). Phase 3 acceptance is still conditional  <- update this line when the phase changes
+- Current phase: **Launch prep (Phase 5): playbook Stages 0 to 4 run overnight 2026-10-31, phone work and store accounts pending; Phase 4 built, staging runs the 6 backend PRs, production unchanged (`f185fe0`).** Read `docs/HANDOFF.md` top section, then `docs/store/OVERNIGHT-SUMMARY.md` and `docs/store/BLOCKERS.md`. Phase 3 acceptance is still conditional  <- update this line when the phase changes
 - Handoff / current state: `docs/HANDOFF.md` (read it first in a new session)
 - Decisions log: `docs/DECISIONS.md`
 - Machine setup: `docs/SETUP.md`
