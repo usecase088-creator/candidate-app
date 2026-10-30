@@ -120,6 +120,37 @@ describe('App Store', () => {
   });
 });
 
+describe('iOS privacy manifest (Apple required-reason APIs, docs/store/STORE-RULES.md)', () => {
+  const reasons = (category: string) => {
+    const manifest = configFor({ APP_VARIANT: 'production' }).ios?.privacyManifests as
+      | {
+          NSPrivacyAccessedAPITypes?: {
+            NSPrivacyAccessedAPIType: string;
+            NSPrivacyAccessedAPITypeReasons: string[];
+          }[];
+        }
+      | undefined;
+    return manifest?.NSPrivacyAccessedAPITypes?.find((t) => t.NSPrivacyAccessedAPIType === category)
+      ?.NSPrivacyAccessedAPITypeReasons;
+  };
+
+  it.each([
+    ['NSPrivacyAccessedAPICategoryUserDefaults', 'CA92.1'],
+    ['NSPrivacyAccessedAPICategoryFileTimestamp', 'C617.1'],
+    ['NSPrivacyAccessedAPICategorySystemBootTime', '35F9.1'],
+    ['NSPrivacyAccessedAPICategoryDiskSpace', 'E174.1'],
+  ])('declares %s with the app-functionality reason %s', (category, reason) => {
+    expect(reasons(category)).toContain(reason);
+  });
+
+  it('declares no tracking', () => {
+    expect(configFor({ APP_VARIANT: 'production' }).ios?.privacyManifests).toMatchObject({
+      NSPrivacyTracking: false,
+      NSPrivacyTrackingDomains: [],
+    });
+  });
+});
+
 describe('plugins', () => {
   it('includes expo-secure-store (keeps tokens out of Android backups)', () => {
     expect(pluginNames(configFor({ APP_VARIANT: 'development' }))).toContain('expo-secure-store');

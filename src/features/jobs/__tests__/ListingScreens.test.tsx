@@ -167,6 +167,16 @@ describe('Government jobs', () => {
     expect(await screen.findByText('No listings match your search.')).toBeOnTheScreen();
   });
 
+  it('says it is not a government app and points at the official sources (store rule, playbook 3.7)', async () => {
+    installJobsBackend({ gov: [aiims] });
+    await gov();
+    await screen.findByTestId('gov.card.g1');
+    const note = screen.getByTestId('gov.disclaimer');
+    expect(note).toHaveTextContent(/not a government app/i);
+    expect(note).toHaveTextContent(/not affiliated with any government body/i);
+    expect(note).toHaveTextContent(/official/i);
+  });
+
   it('search placeholder is the website text', async () => {
     installJobsBackend({ gov: [aiims] });
     await gov();

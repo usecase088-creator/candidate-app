@@ -1,5 +1,6 @@
-// npm run backend:local [-- --no-start]
-// Copies ../job/backend (read-only) to .reference-backend, adds our local-only files and patches, writes its .env
+// npm run backend:local [-- --no-start] [-- --source ../job-hotfix/backend]
+// Copies ../job/backend (read-only; or --source, e.g. the combined backend PR branch in ../job-hotfix) to
+// .reference-backend, adds our local-only files and patches, writes its .env
 // from .env.local, installs, migrates the Neon dev database (D13), seeds, and starts the server on :3000.
 // ../job itself is never changed. See docs/SETUP.md "Local backend".
 import { spawn, spawnSync } from 'node:child_process';
@@ -16,9 +17,11 @@ import {
   shouldCopy,
 } from './backend-local/env.ts';
 import { applyEdits, PATCHES } from './backend-local/patches.ts';
+import { stagingSource } from './backend-local/staging.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const source = path.resolve(root, '..', 'job', 'backend');
+// Same --source rule as staging:sync (outside this repo; default ../job/backend).
+const source = stagingSource(process.argv.slice(2), root);
 const target = path.join(root, '.reference-backend');
 const overlay = path.join(root, 'scripts', 'backend-local', 'overlay');
 const lockHashFile = path.join(target, 'node_modules', '.app-lock-hash');

@@ -62,8 +62,10 @@ export function DeleteAccountScreen() {
         <View testID="delete.warning" style={styles.stack}>
           <AppText>This permanently deletes your ApronHanger account. It cannot be undone.</AppText>
           <AppText color="mutedForeground">
-            Your profile, CV, photo, documents, saved jobs and notifications are removed. Your past
-            applications stay with the hospitals you applied to, without your name or any files.
+            Your profile, CV, photo, documents, saved jobs and notifications are removed. Your name and files
+            are taken off your past applications, but the applications themselves stay with the hospitals you
+            applied to as their records: status and dates, the hospital&apos;s own notes, the interview
+            history and any offer letter they issued.
           </AppText>
         </View>
         <PasswordInput

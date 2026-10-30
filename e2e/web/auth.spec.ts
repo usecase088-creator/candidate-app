@@ -34,6 +34,13 @@ async function mockApi(page: Page, path: string, status: number, body: unknown) 
   return sent;
 }
 
+// Everything the tests do not mock fails like an unreachable backend. Phase 4 made the app call the API at launch
+// (GET /api/app-config) and with the fake token (jobs, notifications); if a real backend runs on :3000 it answers 401
+// to the fake token and the app signs out, which is right for the app and wrong for these mocked tests.
+test.beforeEach(async ({ page }) => {
+  await page.route(`${API}/api/**`, (route) => route.abort());
+});
+
 async function openLogin(page: Page) {
   await page.goto('/');
   await expect(page.getByTestId('login.screen')).toBeVisible();
@@ -59,7 +66,7 @@ test('signs in and opens Home', async ({ page }) => {
 
 test('shows the website validation messages without calling the API', async ({ page }) => {
   let called = false;
-  await page.route(`${API}/api/**`, (route) => {
+  await page.route(`${API}/api/auth/login`, (route) => {
     called = true;
     return route.abort();
   });

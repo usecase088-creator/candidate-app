@@ -98,6 +98,32 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Only standard HTTPS/TLS: exempt from US export rules, so App Store Connect asks no encryption questions.
       infoPlist: { ITSAppUsesNonExemptEncryption: false },
       icon: './assets/expo.icon',
+      // Apple required-reason APIs (docs/store/STORE-RULES.md, "Privacy manifests"). The Expo and Sentry packages ship
+      // their own PrivacyInfo files, but Expo warns Apple does not always read manifests from static pods, so the app
+      // declares the app-functionality reasons itself: user defaults (CA92.1), file timestamps (C617.1), system boot
+      // time (35F9.1), disk space (E174.1). No tracking.
+      privacyManifests: {
+        NSPrivacyTracking: false,
+        NSPrivacyTrackingDomains: [],
+        NSPrivacyAccessedAPITypes: [
+          {
+            NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+            NSPrivacyAccessedAPITypeReasons: ['CA92.1'],
+          },
+          {
+            NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+            NSPrivacyAccessedAPITypeReasons: ['C617.1'],
+          },
+          {
+            NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime',
+            NSPrivacyAccessedAPITypeReasons: ['35F9.1'],
+          },
+          {
+            NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
+            NSPrivacyAccessedAPITypeReasons: ['E174.1'],
+          },
+        ],
+      },
       // Phase 4: apronhanger.work links open the app. Store build only: the .dev / .preview ids are not in assetlinks.json.
       ...(variant === 'production' ? { associatedDomains: [`applinks:${LINK_HOST}`] } : {}),
     },

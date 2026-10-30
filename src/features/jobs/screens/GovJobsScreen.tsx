@@ -51,6 +51,14 @@ export function GovJobsScreen() {
         subtitle="Latest notifications — AIIMS, UPSC, State PSC, and more."
         stats={stats}
       />
+      {/* Store rule (Google Play Deceptive Behavior, docs/store/STORE-RULES.md): no implied government affiliation. */}
+      <View testID="gov.disclaimer" accessibilityRole="text" style={styles.disclaimer}>
+        <AppText variant="caption" color="mutedForeground">
+          ApronHanger is not a government app and is not affiliated with any government body. Listings are
+          collected from public notifications; always apply through the official website of the authority (the
+          &quot;View / Apply&quot; link).
+        </AppText>
+      </View>
       <TextInput
         testID="gov.search"
         label="Search"
@@ -146,6 +154,11 @@ const GovCard = memo(function GovCard({ job, onOpen }: { job: GovJob; onOpen: (u
 });
 
 const styles = StyleSheet.create({
+  disclaimer: {
+    backgroundColor: colors.muted,
+    borderRadius: radius.lg,
+    padding: spacing['3'],
+  },
   content: { padding: spacing['4'] },
   header: { gap: spacing['4'], marginBottom: spacing['4'] },
   loading: { gap: spacing['3'] },

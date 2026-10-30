@@ -55,6 +55,11 @@ describe('Delete account', () => {
     expect(screen.getByText('Delete account')).toBeOnTheScreen();
     expect(screen.getByTestId('delete.warning')).toHaveTextContent(/cannot be undone/);
     expect(screen.getByTestId('delete.warning')).toHaveTextContent(/applications/);
+    // What the hospitals keep (docs/store/ACCOUNT-DELETION-DATA.md section 3): Apple asks apps to say what is retained.
+    const warning = screen.getByTestId('delete.warning');
+    expect(warning).toHaveTextContent(/hospital's own notes/);
+    expect(warning).toHaveTextContent(/interview history/);
+    expect(warning).toHaveTextContent(/offer letter/);
   });
 
   it('cannot be sent without a password', async () => {
