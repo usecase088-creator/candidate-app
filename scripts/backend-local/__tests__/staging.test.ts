@@ -1,4 +1,6 @@
-import { buildRenderServicePayload, buildStagingEnv, shouldCopyStaging, STAGING } from '../staging.ts';
+import path from 'node:path';
+
+import { buildRenderServicePayload, buildStagingEnv, shouldCopyStaging, STAGING, stagingSource } from '../staging.ts';
 
 const DEV_POOLED =
   'postgresql://user:secret@ep-dev-123-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
@@ -139,7 +141,27 @@ describe('shouldCopyStaging', () => {
     'vitest.config.ts',
     'scripts/seed-admin.ts',
     'app-scripts/seedApp.ts',
-  ])('skips %s (tests, audit scripts, secrets, installed packages)', (p) => {
+    'logs/combined.log',
+    'logs/error.log',
+  ])('skips %s (tests, audit scripts, secrets, installed packages, local logs)', (p) => {
     expect(shouldCopyStaging(p)).toBe(false);
+  });
+});
+
+describe('stagingSource', () => {
+  const root = path.resolve('/dev/ah');
+
+  it('takes the reference backend ../job/backend by default', () => {
+    expect(stagingSource([], root)).toBe(path.resolve('/dev/job/backend'));
+  });
+
+  it('takes --source <folder>, relative to the app repo (backend PR branches checked out in ../job-hotfix)', () => {
+    expect(stagingSource(['--source', '../job-hotfix/backend'], root)).toBe(path.resolve('/dev/job-hotfix/backend'));
+  });
+
+  it('refuses a missing value and any folder inside this repo (it would copy itself)', () => {
+    expect(() => stagingSource(['--source'], root)).toThrow(/--source needs a folder/);
+    expect(() => stagingSource(['--source', 'staging-backend'], root)).toThrow(/outside this repo/);
+    expect(() => stagingSource(['--source', '.'], root)).toThrow(/outside this repo/);
   });
 });

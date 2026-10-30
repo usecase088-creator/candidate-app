@@ -1,5 +1,7 @@
 // Pure helpers for the staging backend on Render (D4, D20): a test backend, not production. It runs the same
 // patched copy as `npm run backend:local`, against the dev Neon database, with OTP test mode on.
+import path from 'node:path';
+
 import { buildBackendEnv, type Env, shouldCopy } from './env.ts';
 
 export const STAGING = {
@@ -63,6 +65,24 @@ export function buildRenderServicePayload(options: {
 export function shouldCopyStaging(relPath: string): boolean {
   if (!shouldCopy(relPath)) return false;
   const first = relPath.split(/[\\/]/)[0];
-  if (first === 'scripts' || first === 'app-scripts' || first === 'vitest.config.ts') return false;
+  // logs/: what a local run of the backend or its tests wrote (may hold request data): never published.
+  if (first === 'scripts' || first === 'app-scripts' || first === 'vitest.config.ts' || first === 'logs') return false;
   return !/(^|[\\/])__tests__([\\/]|$)/.test(relPath);
+}
+
+/**
+ * Where `npm run staging:sync` copies the backend from: ../job/backend (read-only reference, the live code) by default,
+ * or `--source <folder>` (relative to this repo), e.g. ../job-hotfix/backend with backend PR branches merged for staging.
+ */
+export function stagingSource(argv: string[], root: string): string {
+  const i = argv.indexOf('--source');
+  if (i === -1) return path.resolve(root, '..', 'job', 'backend');
+  const value = argv[i + 1];
+  if (!value || value.startsWith('--')) throw new Error('--source needs a folder');
+  const source = path.resolve(root, value);
+  const inside = path.relative(root, source);
+  if (inside === '' || (!inside.startsWith('..') && !path.isAbsolute(inside))) {
+    throw new Error(`--source must be outside this repo (${source})`);
+  }
+  return source;
 }

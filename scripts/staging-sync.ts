@@ -1,15 +1,16 @@
 // npm run staging:sync
-// Generates staging-backend/ (committed) from ../job/backend (read-only) + our overlay and patches, the same
+// Generates staging-backend/ (committed) from ../job/backend (read-only; or --source <folder>, e.g. ../job-hotfix/backend)
 // patched backend that `npm run backend:local` runs. Render builds this folder for the staging server (D4, D20).
 import { cpSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { applyEdits, PATCHES } from './backend-local/patches.ts';
-import { shouldCopyStaging, STAGING } from './backend-local/staging.ts';
+import { shouldCopyStaging, STAGING, stagingSource } from './backend-local/staging.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const source = path.resolve(root, '..', 'job', 'backend');
+const source = stagingSource(process.argv.slice(2), root);
+console.log(`[staging-sync] source: ${source}`);
 const target = path.join(root, STAGING.rootDir);
 const overlaySrc = path.join(root, 'scripts', 'backend-local', 'overlay', 'src');
 
