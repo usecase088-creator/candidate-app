@@ -1,4 +1,5 @@
 // Port of the website's validateWizardStep (candidates/src/lib/validations.ts): same rules, same words, same order.
+import { parseWebsiteDate } from '@/lib/dates';
 import { z } from 'zod';
 
 import { isDentist, isDoctor, isNurse } from './options';
@@ -22,18 +23,14 @@ export function validateLinkedInUrl(url: string): string | null {
   }
 }
 
-/** Dates are typed as YYYY-MM-DD (what the website's date picker produces). Returns midnight UTC or null. */
+/** A date the website accepts (YYYY-MM-DD, YYYY-MM, YYYY: date-fns parseISO), as local midnight in ms, or null. */
 function parseIsoDate(value: string): number | null {
-  const v = value.trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
-  const t = Date.parse(`${v}T00:00:00Z`);
-  if (Number.isNaN(t) || new Date(t).toISOString().slice(0, 10) !== v) return null;
-  return t;
+  return parseWebsiteDate(value)?.getTime() ?? null;
 }
 
 function todayUtc() {
   const n = new Date();
-  return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
 }
 
 function compareDates(start: string, end: string, endIsCurrent: boolean): string | null {

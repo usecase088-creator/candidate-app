@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { parseWebsiteDate } from '@/lib/dates';
 import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
 
 import { DatePicker } from './datePicker';
@@ -13,13 +14,8 @@ export function toYmd(d: Date): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-/** YYYY-MM-DD back to that local day; anything else (or an impossible day) is null. */
-export function fromYmd(s: string): Date | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s.trim());
-  if (!m) return null;
-  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  return toYmd(d) === s.trim() ? d : null;
-}
+/** A saved date back to that local day (also the website's shorter YYYY-MM and YYYY); anything else is null. */
+export const fromYmd = parseWebsiteDate;
 
 const inWords = (d: Date) =>
   d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });

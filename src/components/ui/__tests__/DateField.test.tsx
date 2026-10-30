@@ -46,6 +46,12 @@ describe('DateField (iOS: picker in a sheet with Done)', () => {
     expect(screen.getByTestId('f.start')).toHaveProp('accessibilityLabel', 'Start date, not set');
   });
 
+  it('shows a month-only date saved by the website (2018-01) as the first of that month, and keeps it until a new pick', async () => {
+    await render(<Host initial="2018-01" />);
+    expect(screen.getByTestId('f.start')).toHaveTextContent('1 Jan 2018');
+    expect(screen.getByTestId('stored')).toHaveTextContent('2018-01');
+  });
+
   it('shows a saved date in words', async () => {
     await render(<Host initial="2021-08-01" />);
     expect(screen.getByTestId('f.start')).toHaveTextContent('1 Aug 2021');
