@@ -4,6 +4,7 @@ import * as Network from 'expo-network';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
 
+import { createGate } from '@/test/msw/gate';
 import { API } from '@/test/msw/handlers';
 import { installJobsBackend, makeJob } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
@@ -158,8 +159,18 @@ describe('Job details: content (website wording)', () => {
         makeJob({ id: 'j2', experienceMin: 0, experienceMax: 0, experience: null, city: null }),
       ],
     });
+    // The job arrives only after the screen is up (as on a busy machine): the check must wait for the card.
+    const gate = createGate();
+    server.use(
+      http.get(`${API}/api/jobs/:id`, async () => {
+        await gate.wait();
+        return HttpResponse.json({ ...full, experienceMin: 0, experienceMax: 0, experience: '2+ years in ICU' });
+      }),
+    );
     await open();
-    expect(await field('job.stats').findByText('2+ years in ICU')).toBeOnTheScreen();
+    gate.open();
+    const stats = within(await screen.findByTestId('job.stats'));
+    expect(stats.getByText('2+ years in ICU')).toBeOnTheScreen();
   });
 
   it('applicants: hidden at 0, singular, plural', async () => {
