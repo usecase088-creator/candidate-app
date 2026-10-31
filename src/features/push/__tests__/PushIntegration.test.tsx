@@ -107,6 +107,15 @@ describe('Settings: notifications', () => {
     expect(screen.queryByTestId('settings.push')).toBeNull();
   });
 
+  it('offers to turn notifications on when Android has not asked yet (reported as "denied")', async () => {
+    jest
+      .mocked(Notifications.getPermissionsAsync)
+      .mockResolvedValue({ status: 'denied', granted: false, canAskAgain: true } as never);
+    await startSignedIn('/settings', 'settings.screen');
+    expect(await screen.findByTestId('settings.push')).toBeOnTheScreen();
+    expect(screen.queryByTestId('settings.push.open')).toBeNull();
+  });
+
   it('points to the phone settings after a refusal', async () => {
     jest
       .mocked(Notifications.getPermissionsAsync)
@@ -122,6 +131,23 @@ describe('Settings: notifications', () => {
     expect(screen.queryByTestId('settings.push')).toBeNull();
     expect(screen.queryByTestId('settings.push.status')).toBeNull();
     (Device as { isDevice: boolean }).isDevice = true;
+  });
+});
+
+describe('signed in with notifications already allowed', () => {
+  it('registers this phone with the server without asking', async () => {
+    jest
+      .mocked(Notifications.getPermissionsAsync)
+      .mockResolvedValue({ status: 'granted', granted: true, canAskAgain: true } as never);
+    await startSignedIn('/settings', 'settings.screen');
+    await waitFor(() => expect(calls).toEqual(['POST']));
+    expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
+  });
+
+  it('registers nothing while notifications are not allowed', async () => {
+    await startSignedIn('/settings', 'settings.screen');
+    expect(await screen.findByTestId('settings.push')).toBeOnTheScreen();
+    expect(calls).toEqual([]);
   });
 });
 

@@ -1,12 +1,14 @@
-// Mounted once at the root: shows notifications that arrive while the app is open, and opens the right screen when the
-// user taps one (also the one that started the app). All routes come from src/lib/linking.ts; anything it does not
-// know is ignored.
+// Mounted once at the root: registers this phone at sign-in when notifications are already allowed, shows notifications
+// that arrive while the app is open, and opens the right screen when the user taps one (also the one that started the
+// app). All routes come from src/lib/linking.ts; anything it does not know is ignored.
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useEffect } from 'react';
 
 import { useSession } from '@/features/auth/sessionStore';
 import { resolvePushData } from '@/lib/linking';
+
+import { syncPushToken } from './pushService';
 
 type Response = { notification?: { request?: { content?: { data?: unknown } } } } | null;
 
@@ -37,6 +39,7 @@ export function PushListener() {
       const route = resolvePushData(response?.notification?.request?.content?.data);
       if (route) router.push(route as never);
     };
+    void syncPushToken();
     const subscription = Notifications.addNotificationResponseReceivedListener(open);
     if (!startupChecked) {
       startupChecked = true;

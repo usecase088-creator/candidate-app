@@ -25,7 +25,9 @@ export async function pushPermission(): Promise<PushPermission> {
   try {
     const p = await Notifications.getPermissionsAsync();
     if (p.granted || p.status === 'granted') return 'granted';
-    return p.status === 'denied' ? 'denied' : 'undetermined';
+    // Android 13+ reports "denied" for a permission that was never requested (notifications are simply off);
+    // only a refusal the app may not ask about again is a real "denied".
+    return p.status === 'denied' && !p.canAskAgain ? 'denied' : 'undetermined';
   } catch {
     return 'unavailable';
   }
@@ -55,6 +57,15 @@ export async function enablePush(): Promise<EnablePushResult> {
   } catch {
     return { ok: false, reason: 'failed' };
   }
+}
+
+/**
+ * At sign-in: when notifications are already allowed (Android 12 and older allow them at install, or an earlier
+ * account on this phone said yes), register this phone for the signed-in person. Never asks, never throws.
+ */
+export async function syncPushToken(): Promise<void> {
+  if ((await pushPermission()) !== 'granted') return;
+  await enablePush();
 }
 
 /** Sign-out / account deletion: this phone stops getting this person's notifications. Best effort. */

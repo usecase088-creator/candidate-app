@@ -16,6 +16,7 @@ import {
   PUSH_ASKED_KEY,
   PUSH_TOKEN_KEY,
   pushPermission,
+  syncPushToken,
 } from '../pushService';
 
 jest.mock('expo-notifications', () => ({
@@ -67,12 +68,19 @@ beforeEach(async () => {
 
 describe('pushPermission', () => {
   it.each([
-    ['granted', true, 'granted'],
-    ['denied', false, 'denied'],
-    ['undetermined', false, 'undetermined'],
-  ])('maps %s', async (status, granted, expected) => {
-    N.getPermissionsAsync.mockResolvedValue({ status, granted, canAskAgain: true } as never);
+    ['granted', true, true, 'granted'],
+    ['denied', false, false, 'denied'],
+    ['undetermined', false, true, 'undetermined'],
+  ])('maps %s', async (status, granted, canAskAgain, expected) => {
+    N.getPermissionsAsync.mockResolvedValue({ status, granted, canAskAgain } as never);
     await expect(pushPermission()).resolves.toBe(expected);
+  });
+
+  it('treats "denied" that can still be asked as not asked yet (Android 13+ before the first question)', async () => {
+    // expo-notifications reports "denied" while the app's notifications are off, which on Android 13+ includes a
+    // permission that was never requested; canAskAgain tells the two apart (seen on the phone, 2026-10-31).
+    N.getPermissionsAsync.mockResolvedValue({ status: 'denied', granted: false, canAskAgain: true } as never);
+    await expect(pushPermission()).resolves.toBe('undetermined');
   });
 
   it('is "unavailable" on an emulator or when the module fails', async () => {
@@ -121,6 +129,31 @@ describe('enablePush', () => {
     server.use(http.post(`${API}/api/push-tokens`, () => HttpResponse.json({ error: 'x' }, { status: 500 })));
     await expect(enablePush()).resolves.toEqual({ ok: false, reason: 'failed' });
     expect(await secureStorage.getItem(PUSH_TOKEN_KEY)).toBeNull();
+  });
+});
+
+describe('syncPushToken', () => {
+  it('registers this phone when notifications are already allowed, without asking', async () => {
+    // Android 12 and older grant notifications at install; another account may sign in on the same phone.
+    N.getPermissionsAsync.mockResolvedValue({ status: 'granted', granted: true, canAskAgain: true } as never);
+    await syncPushToken();
+    expect(N.requestPermissionsAsync).not.toHaveBeenCalled();
+    expect(calls).toEqual(['POST']);
+    expect(await secureStorage.getItem(PUSH_TOKEN_KEY)).toBe(TOKEN);
+  });
+
+  it('does nothing, and asks nothing, when notifications are not allowed', async () => {
+    await syncPushToken();
+    N.getPermissionsAsync.mockResolvedValue({ status: 'denied', granted: false, canAskAgain: false } as never);
+    await syncPushToken();
+    expect(N.requestPermissionsAsync).not.toHaveBeenCalled();
+    expect(calls).toEqual([]);
+  });
+
+  it('never throws when the server cannot be reached', async () => {
+    N.getPermissionsAsync.mockResolvedValue({ status: 'granted', granted: true, canAskAgain: true } as never);
+    server.use(http.post(`${API}/api/push-tokens`, () => HttpResponse.error()));
+    await expect(syncPushToken()).resolves.toBeUndefined();
   });
 });
 
