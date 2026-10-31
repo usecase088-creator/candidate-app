@@ -29,6 +29,8 @@ env:
 - tapOn:
     id: delete.password
 - inputText: 'definitely-wrong'
+# Close the keyboard first: Gboard's backspace key is also named "Delete" and would take the tap below.
+- runFlow: _common/hideKeyboard.yaml
 - tapOn:
     id: delete.submit
 - tapOn: Delete
@@ -40,6 +42,8 @@ env:
     id: delete.password
 - eraseText: 30
 - inputText: ${PASSWORD}
+# Close the keyboard first: Gboard's backspace key is also named "Delete" and would take the tap below.
+- runFlow: _common/hideKeyboard.yaml
 - tapOn:
     id: delete.submit
 - tapOn: Delete

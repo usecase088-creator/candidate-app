@@ -46,6 +46,11 @@ appId: work.apronhanger.candidate.dev
     visible: Response recorded successfully!
     timeout: 15000
 - assertVisible: 'Status: Interview Accepted'
+# The toast sits over the Back button at the top: a tap there only dismisses it. Wait until it has gone.
+- extendedWaitUntil:
+    notVisible:
+      id: toast
+    timeout: 10000
 - tapOn:
     id: application.back
 - extendedWaitUntil:
