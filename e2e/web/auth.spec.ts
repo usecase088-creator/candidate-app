@@ -93,7 +93,9 @@ test('rejects a recruiter account with the website message', async ({ page }) =>
     'This email is registered as a recruiter account. Please sign in on the Recruiter Portal instead.',
   );
   await expect(page.getByTestId('login.screen')).toBeVisible();
-  await expect(page.getByTestId('home.screen')).toHaveCount(0);
+  // The guest Home is still underneath the login screen (guest browsing); the visitor must not have become signed in:
+  // the bell is only shown to a signed-in candidate.
+  await expect(page.getByTestId('topbar.notifications')).toHaveCount(0);
 });
 
 test('shows the backend message for a wrong password', async ({ page }) => {
