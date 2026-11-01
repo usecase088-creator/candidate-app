@@ -266,3 +266,29 @@ Raj was asleep and asked for decisions to be taken and listed. Each can be rever
    system dialog, iOS calendar sheet with Done/Cancel; stored as YYYY-MM-DD like the website; work dates cannot be in the
    future; optional dates can be cleared. Expo web (Playwright only) has no date picker. Replaces D28 item 3; CR-006 date part.
 5. **Store ID `work.apronhanger.candidate` is locked** (D2).
+
+## D30 — Guest browsing and store-launch permissions (2026-11-01, Raj approved)
+
+1. **A signed-out visitor sees the app, like the website.** The app opens on Home with the job feed; Search by role and city
+   works; a job opens with its details (the website's `/jobs/:id` has no sign-in guard). Everything that needs an account asks to
+   sign in and brings the visitor back afterwards (website `useAuthGate`): saving a job, applying, the filter sheet, picking a
+   category, Saved jobs, Govt Jobs, International Jobs, and the Applications and Profile tabs (a "Sign in" prompt in the tab).
+   The top bar shows "Sign in" instead of the bell. The recommended rail is hidden. A guest never asks the server for anything
+   that needs an account. Reason: Apple 5.1.1 (v) "if your app doesn't include significant account-based features, let people
+   use it without a login" (B7).
+2. **One deliberate difference from the website:** the website's job *card* sends a guest to sign-in when tapped (only a direct
+   link to a job works). The app opens the job for a guest, because the page is public on the website and a store reviewer who
+   cannot open a job would raise 5.1.1 (v). Save and Apply are still gated. Raj can revert this to "card tap asks to sign in".
+3. **Where to go after signing in** is kept in memory only (never in storage or a link), is one of our own guest-reachable
+   screens or nothing (Home), and is used once (`src/features/auth/signInGate.ts`).
+4. **Sign-out behaviour is unchanged:** Settings and the other account screens still go to the login screen (with the
+   reason notice). Tabs no longer redirect; a session that ends while a tab is open leaves the visitor as a guest, and the
+   Applications and Profile prompts show the "session expired" notice.
+5. **Blocked Android permissions (B18, closed):** `RECEIVE_BOOT_COMPLETED`, `READ_APP_BADGE` and the 19 launcher badge / shortcut
+   permissions expo-notifications adds. The app sets no icon badge and schedules no local notification (every notification is a
+   remote push), so none of them is needed, and the Play listing would show "run at startup" to users. Kept on purpose:
+   `INTERNET`, `WAKE_LOCK`, `VIBRATE`, `POST_NOTIFICATIONS` and the Firebase receive permission (push delivery).
+6. **Notification permission on Android 13+:** the system reports "denied" before the app has ever asked. "Denied but can be
+   asked again" now counts as "not asked yet", so the permission question and Settings' "Turn on notifications" button show.
+   When notifications are already allowed at sign-in, the phone is registered silently (Android 12 and older, or a second
+   account on the same phone). Found on the phone on 2026-11-01.

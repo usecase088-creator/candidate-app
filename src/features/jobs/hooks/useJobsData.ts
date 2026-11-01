@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import type { Job } from '@/api/schemas/jobs';
+import { useIsSignedIn } from '@/features/auth/sessionStore';
 
 import { jobsApi } from '../jobsApi';
 import { computeJobMatches, toMatchProfile } from '../logic/match';
@@ -33,13 +34,17 @@ export const useGovJobs = () => useQuery({ queryKey: GOV_JOBS_KEY, queryFn: jobs
 export const useIntlJobs = () => useQuery({ queryKey: INTL_JOBS_KEY, queryFn: jobsApi.intlList });
 
 /** The candidate's profile, only to rank "Recommended for you". If it fails the rail uses the server's score. */
-export const useMatchProfile = () =>
-  useQuery({
+export function useMatchProfile() {
+  const signedIn = useIsSignedIn();
+  return useQuery({
     queryKey: MATCH_PROFILE_KEY,
     queryFn: jobsApi.me,
     select: toMatchProfile,
     staleTime: 5 * 60_000,
+    // A signed-out visitor has no profile to ask for.
+    enabled: signedIn,
   });
+}
 
 /** Website RecommendedRail: the 5 best matches. */
 export function useRecommended(jobs: readonly Job[] | undefined) {

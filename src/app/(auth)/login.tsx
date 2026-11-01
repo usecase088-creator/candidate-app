@@ -150,6 +150,16 @@ export default function Login() {
         />
         {success && <LottieAnimation testID="login.success" name="authSuccess" size={64} />}
 
+        <TextButton
+          testID="login.browse"
+          label="Browse jobs without signing in"
+          onPress={() => {
+            // Ends the "you were signed out" state, so the tabs stop sending this visitor back here.
+            useSession.setState({ signOutReason: undefined, signOutMessage: undefined });
+            router.replace('/');
+          }}
+        />
+
         <View style={styles.card}>
           <AppText variant="heading">New to ApronHanger?</AppText>
           <AppText color="mutedForeground">

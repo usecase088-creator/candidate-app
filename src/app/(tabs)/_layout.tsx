@@ -30,11 +30,17 @@ const TABS: Tab[] = [
   },
 ];
 
-/** Signed-in area. A signed-out user (also on a deep link) is sent to login (replace: Back can't return). */
+/**
+ * The four tabs. A visitor who never signed in sees them too (guest browsing, like the website): Home and Search work,
+ * and the Applications and Profile tabs ask them to sign in. Someone whose session just ended (Sign out, expired or
+ * blocked, deleted) goes to the login screen with the reason (replace: Back can't return); "Browse jobs without signing
+ * in" there clears the reason. Restoring shows nothing (the splash is up).
+ */
 export default function TabsLayout() {
   const status = useSession((s) => s.status);
+  const endedReason = useSession((s) => s.signOutReason);
   if (status === 'restoring') return null; // splash is still up
-  if (status === 'signedOut') return <Redirect href="/login" />;
+  if (status === 'signedOut' && endedReason !== undefined) return <Redirect href="/login" />;
   return (
     <Tabs
       screenOptions={{

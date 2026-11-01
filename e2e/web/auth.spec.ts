@@ -43,6 +43,8 @@ test.beforeEach(async ({ page }) => {
 
 async function openLogin(page: Page) {
   await page.goto('/');
+  // A fresh start is a guest on Home (guest browsing): the top bar's Sign in opens the login screen.
+  await page.getByTestId('topbar.signin').click();
   await expect(page.getByTestId('login.screen')).toBeVisible();
 }
 

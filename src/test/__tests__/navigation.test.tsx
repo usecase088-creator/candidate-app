@@ -33,9 +33,10 @@ async function startSignedIn(initialUrl = '/', expectScreen = 'home.screen'): Pr
   return app;
 }
 
-async function startSignedOut(initialUrl = '/'): Promise<App> {
+/** Never signed in on this phone (a guest): `expectScreen` is what shows first. */
+async function startSignedOut(initialUrl = '/', expectScreen = 'login.screen'): Promise<App> {
   const app = await renderRouter(routes, { initialUrl });
-  await screen.findByTestId('login.screen');
+  await screen.findByTestId(expectScreen);
   return app;
 }
 
@@ -47,9 +48,10 @@ beforeEach(() => {
 });
 
 describe('start-up', () => {
-  it('signed out: opens the login screen', async () => {
-    const app = await startSignedOut();
-    expect(app.getPathname()).toBe('/login');
+  it('signed out and never signed in: opens Home as a guest (guest browsing), not the login screen', async () => {
+    const app = await startSignedOut('/', 'home.screen');
+    expect(app.getPathname()).toBe('/');
+    expect(screen.queryByTestId('login.screen')).toBeNull();
   });
 
   it('signed in: restores the session and opens Home', async () => {
@@ -95,13 +97,14 @@ describe('start-up', () => {
 });
 
 describe('guards', () => {
-  it('signed out: a deep link to a tab goes to login', async () => {
-    const app = await startSignedOut('/profile');
-    expect(app.getPathname()).toBe('/login');
+  it('signed out: a deep link to an account tab shows the sign-in prompt', async () => {
+    const app = await startSignedOut('/profile', 'profile.signin');
+    expect(app.getPathname()).toBe('/profile');
+    expect(screen.queryByTestId('login.screen')).toBeNull();
   });
 
   it('signed out: signup and forgot password are reachable', async () => {
-    await startSignedOut();
+    await startSignedOut('/login');
     await act(() => router.push('/signup'));
     expect(await screen.findByTestId('signup.screen')).toBeOnTheScreen();
     await act(() => router.push('/forgot-password'));
@@ -140,7 +143,7 @@ describe('tabs', () => {
 
 describe('login and logout', () => {
   it('after sign-in, Home is shown and back does not return to login', async () => {
-    await startSignedOut();
+    await startSignedOut('/login');
     await act(() => useSession.getState().signIn('new-token', candidateUser));
     expect(await screen.findByTestId('home.screen')).toBeOnTheScreen();
     expect(router.canGoBack()).toBe(false);
@@ -155,6 +158,16 @@ describe('login and logout', () => {
     await expect(secureStorage.getItem(TOKEN_KEY)).resolves.toBeNull();
     // Task 8: no data from the previous user survives a sign-out.
     expect(appQueryClient.getQueryData(['saved-jobs'])).toBeUndefined();
+  });
+
+  it('after signing out, "Browse jobs without signing in" opens Home as a guest and stays there', async () => {
+    await startSignedIn();
+    await act(() => useSession.getState().signOut('user'));
+    await screen.findByTestId('login.screen');
+    await fireEvent.press(screen.getByTestId('login.browse'));
+    expect(await screen.findByTestId('home.screen')).toBeOnTheScreen();
+    expect(screen.queryByTestId('login.screen')).toBeNull();
+    expect(screen.getByTestId('topbar.signin')).toBeOnTheScreen();
   });
 
   it('a 401 anywhere while signed in sends the user to login', async () => {

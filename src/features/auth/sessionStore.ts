@@ -165,6 +165,9 @@ api.setSessionExpiredHandler(() => {
   if (useSession.getState().status !== 'signedOut') void useSession.getState().signOut('expired');
 });
 
+/** True once the saved session is confirmed. Guests (and the moment before the check ends) are not signed in. */
+export const useIsSignedIn = () => useSession((s) => s.status === 'signedIn');
+
 /** Jest only: back to the first-launch state. */
 export function resetSessionForTests() {
   api.setAuthToken(null);

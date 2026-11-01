@@ -5,6 +5,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Screen } from '@/components/ui/Screen';
+import { useIsSignedIn } from '@/features/auth/sessionStore';
+import { goToSignIn } from '@/features/auth/signInGate';
 import { AppText } from '@/components/ui/Text';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -26,6 +28,7 @@ import { useOpenJob } from '../useOpenJob';
  */
 export function HomeScreen() {
   const router = useRouter();
+  const signedIn = useIsSignedIn();
   const openJob = useOpenJob();
   const jobsQuery = useJobs();
   const profileQuery = useMatchProfile();
@@ -71,28 +74,33 @@ export function HomeScreen() {
           label="Saved jobs"
           variant="outline"
           fullWidth={false}
-          onPress={() => router.push('/saved-jobs')}
+          onPress={() => (signedIn ? router.push('/saved-jobs') : goToSignIn('/saved-jobs'))}
         />
         <Button
           testID="home.link.gov"
           label="Govt Jobs"
           variant="outline"
           fullWidth={false}
-          onPress={() => router.push('/gov-jobs')}
+          onPress={() => (signedIn ? router.push('/gov-jobs') : goToSignIn('/gov-jobs'))}
         />
         <Button
           testID="home.link.intl"
           label="International Jobs"
           variant="outline"
           fullWidth={false}
-          onPress={() => router.push('/intl-jobs')}
+          onPress={() => (signedIn ? router.push('/intl-jobs') : goToSignIn('/intl-jobs'))}
         />
       </View>
 
       {view === 'ready' && (
         <>
-          <RecommendedRail jobs={recommended} showPrompt={showPrompt} onOpen={openJob} />
-          <CategoryChips categories={categories} active={category} onChange={setCategory} />
+          {signedIn && <RecommendedRail jobs={recommended} showPrompt={showPrompt} onOpen={openJob} />}
+          <CategoryChips
+            categories={categories}
+            active={category}
+            // Website: picking a category needs an account ("All Roles" has nothing to filter, so it stays open).
+            onChange={(c) => (signedIn || c === null ? setCategory(c) : goToSignIn('/'))}
+          />
           <View style={styles.listHeading}>
             <AppText variant="heading">All Opportunities</AppText>
             <AppText testID="home.count" variant="caption" color="mutedForeground">
@@ -137,7 +145,9 @@ export function HomeScreen() {
         header={header}
         footer={footer}
         refreshing={jobsQuery.isRefetching}
-        onRefresh={() => void Promise.all([jobsQuery.refetch(), profileQuery.refetch()])}
+        onRefresh={() =>
+          void Promise.all([jobsQuery.refetch(), signedIn ? profileQuery.refetch() : undefined])
+        }
       />
     </Screen>
   );

@@ -18,6 +18,9 @@ import { SaveButton } from '../components/SaveButton';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { queryView } from '../hooks/queryView';
 import { useJob, useSimilarJobs } from '../hooks/useJobsData';
+import { useIsSignedIn } from '@/features/auth/sessionStore';
+import { goToSignIn } from '@/features/auth/signInGate';
+
 import { useSavedIdSet, useToggleSave } from '../hooks/useSavedJobs';
 import { applicantsLine, experienceStat, htmlToText, postedLabel } from '../logic/format';
 import { useOpenJob } from '../useOpenJob';
@@ -87,6 +90,7 @@ export function JobDetailsScreen() {
 
 function Details({ job }: { job: Job }) {
   const router = useRouter();
+  const signedIn = useIsSignedIn();
   const savedIds = useSavedIdSet();
   const { toggle } = useToggleSave();
   const openJob = useOpenJob();
@@ -182,7 +186,11 @@ function Details({ job }: { job: Job }) {
           testID="job.apply"
           label={closed ? 'Position closed' : 'Apply Now'}
           disabled={closed}
-          onPress={() => router.push({ pathname: '/apply/[jobId]', params: { jobId: job.id } })}
+          onPress={() =>
+            signedIn
+              ? router.push({ pathname: '/apply/[jobId]', params: { jobId: job.id } })
+              : goToSignIn(`/apply/${job.id}`)
+          }
         />
         <SaveButton
           testID="job.savebutton"

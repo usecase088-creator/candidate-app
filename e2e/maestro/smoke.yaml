@@ -1,4 +1,4 @@
-# Smoke: the dev build launches on the phone and, signed out (clear state), shows the login screen.
+# Smoke: the dev build launches on the phone and, with nothing signed in (clear state), opens Home as a guest.
 appId: work.apronhanger.candidate.dev
 ---
 - launchApp:
@@ -6,6 +6,18 @@ appId: work.apronhanger.candidate.dev
 # 120 s: the first launch after starting Metro bundles from scratch (over 30 s on Raj's laptop).
 - extendedWaitUntil:
     visible:
-      id: login.screen
+      id: home.screen
     timeout: 120000
+- assertVisible: Your next clinical role, curated for you.
+- assertVisible:
+    id: topbar.signin
+- assertNotVisible:
+    id: login.screen
+# "Sign in" opens the login screen.
+- tapOn:
+    id: topbar.signin
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 30000
 - assertVisible: Welcome back

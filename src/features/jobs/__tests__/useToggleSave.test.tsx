@@ -1,11 +1,13 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, screen, waitFor } from '@testing-library/react-native';
+import { act, renderHook, screen, waitFor } from '@testing-library/react-native';
 import { delay, http, HttpResponse } from 'msw';
 import type { ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import type { Job, SavedJob } from '@/api/schemas/jobs';
 import { ToastProvider } from '@/components/ui/Toast';
+import { resetSessionForTests, useSession } from '@/features/auth/sessionStore';
+import { goToSignIn } from '@/features/auth/signInGate';
 import { publicJob } from '@/test/fixtures/jobs';
 import { API } from '@/test/msw/handlers';
 import { server } from '@/test/msw/server';
@@ -13,6 +15,8 @@ import { createTestQueryClient } from '@/test/render';
 
 import { SAVED_JOBS_KEY } from '../hooks/queryKeys';
 import { useSavedIdSet, useToggleSave } from '../hooks/useSavedJobs';
+
+jest.mock('@/features/auth/signInGate', () => ({ goToSignIn: jest.fn() }));
 
 const job = publicJob as unknown as Job;
 const other = { ...job, id: 'other' } as Job;
@@ -64,6 +68,13 @@ async function mount() {
   await waitFor(() => expect(queryClient.getQueryState(SAVED_JOBS_KEY)?.status).toBe('success'));
   return { ...hook, queryClient };
 }
+
+// Saving is an account feature: these tests run signed in (a guest is tested last).
+beforeEach(() => {
+  jest.mocked(goToSignIn).mockClear();
+  resetSessionForTests();
+  useSession.setState({ status: 'signedIn' });
+});
 
 describe('useToggleSave', () => {
   it('save: the job is saved at once, before the server answers; toast "Job saved"', async () => {
@@ -226,5 +237,39 @@ describe('useToggleSave', () => {
     expect(list?.map((s) => s.job.id)).toEqual([job.id, 'other']);
     release();
     await screen.findByText('Job saved');
+  });
+});
+
+describe('useToggleSave signed out', () => {
+  it('sends a guest to sign-in and saves nothing', async () => {
+    const posted: string[] = [];
+    server.use(
+      http.post(`${API}/api/saved-jobs`, () => {
+        posted.push('POST');
+        return HttpResponse.json({}, { status: 201 });
+      }),
+      http.get(`${API}/api/saved-jobs`, () => {
+        posted.push('GET');
+        return HttpResponse.json([]);
+      }),
+    );
+    useSession.setState({ status: 'signedOut' });
+    const queryClient = createTestQueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { x: 0, y: 0, width: 390, height: 844 },
+          insets: { top: 0, left: 0, right: 0, bottom: 0 },
+        }}
+      >
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>{children}</ToastProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    );
+    const hook = await renderHook(() => useToggleSave(), { wrapper });
+    await act(async () => hook.result.current.toggle(job));
+    expect(goToSignIn).toHaveBeenCalledTimes(1);
+    expect(posted).toEqual([]);
   });
 });

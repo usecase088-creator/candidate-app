@@ -363,10 +363,12 @@ describe('Job details: navigation', () => {
 });
 
 describe('Job details: signed out', () => {
-  it('a link to a job while signed out goes to login', async () => {
+  it('a link to a job opens it for a guest (website /jobs/:id is public); no sign-in screen', async () => {
+    installJobsBackend({ jobs: [makeJob({ id: 'j1' })] });
     const { renderRouter } = jest.requireActual('expo-router/testing-library');
     const { appRoutes } = jest.requireActual('@/test/appRoutes');
     await renderRouter(appRoutes, { initialUrl: '/job/j1' });
-    expect(await screen.findByTestId('login.screen')).toBeOnTheScreen();
+    expect(await screen.findByTestId('job.header')).toBeOnTheScreen();
+    expect(screen.queryByTestId('login.screen')).toBeNull();
   });
 });

@@ -9,6 +9,9 @@ import { AppText } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
 import { colors, radius, spacing } from '@/theme/tokens';
 
+import { useIsSignedIn } from '@/features/auth/sessionStore';
+import { goToSignIn } from '@/features/auth/signInGate';
+
 import { FilterSheet } from '../components/FilterSheet';
 import { JobListSkeleton } from '../components/JobCardSkeleton';
 import { JobList } from '../components/JobList';
@@ -26,6 +29,7 @@ import { useOpenJob } from '../useOpenJob';
  * store, so it stays when the user changes tab.
  */
 export function SearchScreen() {
+  const signedIn = useIsSignedIn();
   const openJob = useOpenJob();
   const jobsQuery = useJobs();
   const savedIds = useSavedIdSet();
@@ -74,7 +78,8 @@ export function SearchScreen() {
           accessibilityLabel={active > 0 ? `Filters, ${active} active` : 'Filters'}
           variant="outline"
           fullWidth={false}
-          onPress={() => setSheetOpen(true)}
+          // Website: filters need an account (a guest is sent to sign-in and comes back here).
+          onPress={() => (signedIn ? setSheetOpen(true) : goToSignIn('/search'))}
         />
         {filterState.category ? (
           <Pressable

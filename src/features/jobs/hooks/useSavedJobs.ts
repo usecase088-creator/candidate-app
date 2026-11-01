@@ -2,17 +2,22 @@
 // The website waits for the server before changing the icon; the app changes it at once and puts it back if the
 // server says no (PLAN.md Phase 2). Texts are the website's (lib/savedJobs.ts, SaveJobButton.tsx).
 import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { usePathname } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
 import { isApiError } from '@/api/errors';
 import type { Job, SavedJob } from '@/api/schemas/jobs';
 import { useToast } from '@/components/ui/Toast';
+import { useIsSignedIn } from '@/features/auth/sessionStore';
+import { goToSignIn } from '@/features/auth/signInGate';
 
 import { jobsApi } from '../jobsApi';
 import { SAVED_JOBS_KEY } from './queryKeys';
 
+/** Needs an account: a signed-out visitor never asks the server for it. */
 export function useSavedJobs() {
-  return useQuery({ queryKey: SAVED_JOBS_KEY, queryFn: jobsApi.savedList });
+  const signedIn = useIsSignedIn();
+  return useQuery({ queryKey: SAVED_JOBS_KEY, queryFn: jobsApi.savedList, enabled: signedIn });
 }
 
 /** Ids of saved jobs, for the bookmark icons. Empty until the list has loaded. */
@@ -48,6 +53,8 @@ type Vars = { job: Job; save: boolean };
 export function useToggleSave() {
   const client = useQueryClient();
   const toast = useToast();
+  const signedIn = useIsSignedIn();
+  const pathname = usePathname();
 
   const mutation = useMutation({
     mutationFn: async ({ job, save }: Vars) => {
@@ -79,6 +86,11 @@ export function useToggleSave() {
 
   const toggle = useCallback(
     (job: Job) => {
+      // Saving needs an account: a signed-out visitor is sent to sign-in and brought back to this screen.
+      if (!signedIn) {
+        goToSignIn(pathname);
+        return;
+      }
       // Ignore a second tap on the same job while its request is running.
       if (
         client
@@ -91,7 +103,7 @@ export function useToggleSave() {
         client.getQueryData<SavedJob[]>(SAVED_JOBS_KEY)?.some((s) => s.job.id === job.id) ?? false;
       mutation.mutate({ job, save: !saved });
     },
-    [client, mutation],
+    [client, mutation, signedIn, pathname],
   );
 
   return { toggle };

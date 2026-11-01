@@ -1,0 +1,64 @@
+# Guest browsing (App Store 5.1.1 (v)): nothing signed in, the app opens on Home with jobs; a job opens with its details;
+# save and apply, the filters and the account tabs ask to sign in; signing in brings the visitor back to the same job.
+# Needs: npm run backend:local (or the staging server) and Metro. The seeded job b001 is open and active.
+appId: work.apronhanger.candidate.dev
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 120000
+- assertVisible:
+    id: topbar.signin
+- assertNotVisible:
+    id: topbar.notifications
+- scrollUntilVisible:
+    element:
+      id: job.open.5eed0000-0000-4000-8000-00000000b001
+    timeout: 60000
+
+# A job opens for a guest.
+- tapOn:
+    id: job.open.5eed0000-0000-4000-8000-00000000b001
+- extendedWaitUntil:
+    visible:
+      id: job.screen
+    timeout: 30000
+- assertVisible:
+    id: job.header
+
+# Saving asks to sign in; signing in comes back to the same job.
+- tapOn:
+    id: job.savebutton
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 15000
+- tapOn:
+    id: login.email
+- inputText: applicant@apronhanger.test
+- tapOn:
+    id: login.password
+- inputText: Test@1234
+- runFlow: _common/hideKeyboard.yaml
+- runFlow:
+    when:
+      visible:
+        id: login.submit
+    commands:
+      - tapOn:
+          id: login.submit
+# Google Password Manager may offer to save the password: Back closes it (never "Continue" or "Never").
+- runFlow:
+    when:
+      platform: Android
+      visible: 'Save password.*'
+    commands:
+      - back
+- extendedWaitUntil:
+    visible:
+      id: job.header
+    timeout: 90000
+- assertNotVisible:
+    id: login.screen
