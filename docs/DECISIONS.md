@@ -284,11 +284,15 @@ Raj was asleep and asked for decisions to be taken and listed. Each can be rever
 4. **Sign-out behaviour is unchanged:** Settings and the other account screens still go to the login screen (with the
    reason notice). Tabs no longer redirect; a session that ends while a tab is open leaves the visitor as a guest, and the
    Applications and Profile prompts show the "session expired" notice.
-5. **Blocked Android permissions (B18, closed):** `RECEIVE_BOOT_COMPLETED`, `READ_APP_BADGE` and the 19 launcher badge / shortcut
+5. **Blocked Android permissions (B18, closed 2026-11-01):** `RECEIVE_BOOT_COMPLETED`, `READ_APP_BADGE` and the 19 launcher badge / shortcut
    permissions expo-notifications adds. The app sets no icon badge and schedules no local notification (every notification is a
    remote push), so none of them is needed, and the Play listing would show "run at startup" to users. Kept on purpose:
-   `INTERNET`, `WAKE_LOCK`, `VIBRATE`, `POST_NOTIFICATIONS` and the Firebase receive permission (push delivery).
+   `INTERNET`, `WAKE_LOCK`, `VIBRATE`, `POST_NOTIFICATIONS` and the Firebase receive permission (push delivery). Checked on the
+   phone with EAS build 1c1ad1f7: the APK declares 10 permissions (was 31) and a recruiter action on staging still delivers a push.
 6. **Notification permission on Android 13+:** the system reports "denied" before the app has ever asked. "Denied but can be
    asked again" now counts as "not asked yet", so the permission question and Settings' "Turn on notifications" button show.
    When notifications are already allowed at sign-in, the phone is registered silently (Android 12 and older, or a second
    account on the same phone). Found on the phone on 2026-11-01.
+7. **Large text (font scale 2, 320 pt), found on the phone 2026-11-01:** Android draws expo-symbols icons as text, which
+   grew with the font size and clipped the bell and tab icons (new `Icon` component divides the glyph by the font scale);
+   and the tab bar was too short for its labels (`src/theme/tabBar.ts` adds the room, up to the 1.3x label cap).

@@ -31,8 +31,8 @@ subtitle ≤ 30, promotional text ≤ 170, description ≤ 4000, keywords ≤ 10
 ApronHanger is the candidate app of apronhanger.work, the job portal for healthcare professionals in India: nurses, doctors, paramedics, technicians and hospital staff.
 
 Find the right job
-• Browse jobs posted by hospitals, with role, specialty, city, experience and salary filters
-• Search by role, specialty or city
+• Browse jobs posted by hospitals without creating an account
+• Search by role, specialty or city; filter by experience and salary after you sign in
 • See how well your profile matches a job
 • Save jobs to come back to later
 • Government job and exam notifications, and international openings, with links to the official source

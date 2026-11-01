@@ -1,11 +1,13 @@
 import { type AndroidSymbol, type SFSymbol } from 'expo-symbols';
 import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/Icon';
 import { useSession } from '@/features/auth/sessionStore';
 import { TopBar } from '@/features/notifications/components/TopBar';
+import { tabBarHeight, TAB_LABEL_MAX_SCALE, TAB_LABEL_SIZE } from '@/theme/tabBar';
 import { colors, fonts } from '@/theme/tokens';
 
 type Tab = { name: string; title: string; testID: string; ios: SFSymbol; android: AndroidSymbol };
@@ -39,6 +41,8 @@ const TABS: Tab[] = [
 export default function TabsLayout() {
   const status = useSession((s) => s.status);
   const endedReason = useSession((s) => s.signOutReason);
+  const { fontScale } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   if (status === 'restoring') return null; // splash is still up
   if (status === 'signedOut' && endedReason !== undefined) return <Redirect href="/login" />;
   return (
@@ -51,6 +55,8 @@ export default function TabsLayout() {
         // 4 tabs at 320 pt: no side padding, so "Applications" fits (label size: styles.label below).
         // 4 tabs at 320 pt: "Applications" must not be cut off, so 11 pt and no side padding.
         tabBarItemStyle: { paddingHorizontal: 0 },
+        // The bar must have room for the labels at large font sizes (src/theme/tabBar.ts).
+        tabBarStyle: { height: tabBarHeight(fontScale, insets.bottom) },
       }}
     >
       {TABS.map((tab) => (
@@ -66,7 +72,7 @@ export default function TabsLayout() {
               <Text
                 testID={`${tab.testID}.label`}
                 numberOfLines={1}
-                maxFontSizeMultiplier={1.3}
+                maxFontSizeMultiplier={TAB_LABEL_MAX_SCALE}
                 style={[styles.label, { color }]}
               >
                 {tab.title}
@@ -87,4 +93,4 @@ export default function TabsLayout() {
 }
 
 // 11 pt labels: "Applications" fits under its icon at 320 pt.
-const styles = StyleSheet.create({ label: { fontFamily: fonts.medium, fontSize: 11 } });
+const styles = StyleSheet.create({ label: { fontFamily: fonts.medium, fontSize: TAB_LABEL_SIZE } });
