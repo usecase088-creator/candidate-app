@@ -5,7 +5,7 @@ candidate website, same backend and database. Built with Expo (React Native).
 Goal: live on Play Store and App Store, no crashes, passes store review first time.
 
 - Master plan: `docs/PLAN.md`
-- Current phase: **Launch prep (Phase 5): playbook Stages 0 to 4 run overnight 2026-10-31, phone work and store accounts pending; Phase 4 built, staging runs the 6 backend PRs, production unchanged (`f185fe0`).** Read `docs/HANDOFF.md` top section, then `docs/store/OVERNIGHT-SUMMARY.md` and `docs/store/BLOCKERS.md`. Phase 3 acceptance is still conditional  <- update this line when the phase changes
+- Current phase: **Launch prep (Phase 5): guest browsing, push fix, permissions and large-text fixes built 2026-11-01; EAS preview build `d91e342f` waits for phone tests; store accounts and client approvals pending; Phase 4 built, staging runs the 6 backend PRs, production unchanged (`f185fe0`).** Read `docs/HANDOFF.md` top section, then `docs/store/BLOCKERS.md`. Phase 3 acceptance is still conditional  <- update this line when the phase changes
 - Handoff / current state: `docs/HANDOFF.md` (read it first in a new session)
 - Decisions log: `docs/DECISIONS.md`
 - Machine setup: `docs/SETUP.md`

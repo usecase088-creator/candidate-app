@@ -1,8 +1,21 @@
-# Handoff (updated 2026-10-31 night: launch playbook Stages 0 to 4 run overnight; Phase 3 acceptance still open)
+# Handoff (updated 2026-11-01: guest browsing, push fix, permissions and large-text fixes built; EAS preview build 4 `d91e342f` waiting for phone tests)
 
 Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
+
+- **2026-11-01 (Raj in the session, phone connected):** on the overnight preview build (`ae4de91f`) all 16 Maestro flows passed (2 flow scripts
+  fixed, `05253cf`) and the real push test found a launch-blocker, fixed and confirmed on build `1c1ad1f7`:
+  Android 13+ reports "denied" before the app has asked, so push was never offered (and staging's push switch had not been applied:
+  re-run `npm run staging:deploy`, then a recruiter *rejection* or interview invite sends a push; "Applied to Reviewed" sends none).
+  Also done, all in D30 / CR-013: **guest browsing** (a signed-out visitor sees Home, Search and job details; save, apply, filters and
+  the account tabs ask to sign in and return; an independent review found 4 issues, all fixed), the badge/boot permissions blocked
+  (APK 31 to 10 permissions, B18 closed), large-text fixes (icons drawn as text clipped; tab bar too short; Applications label;
+  guest Sign in button), the client documents (`docs/client/send/` and `docs/client/WHATSAPP-MESSAGE.txt`, git-ignored).
+  **Build 4 `d91e342f` (everything above) is installed on the phone but NOT yet tested: the phone battery fell to 6%.** To do on it:
+  all 17 Maestro flows (`e2e/maestro` incl. the new `guest-browse.yaml`; copy with appId `.preview`, see SETUP.md), tab labels and
+  icons at 320 dp / font scale 2, one push. Jest 1,524 / 101 suites and web specs 10/10 pass. Still with Raj or the client: B1 to B6
+  (sent as one short message plus one Word document), B13 (Sentry consent).
 
 - **2026-10-31 overnight (Raj approved an unattended run of `docs/LAUNCH-PLAYBOOK.md`):** read `docs/store/OVERNIGHT-SUMMARY.md` first,
   then `docs/store/BLOCKERS.md` (what only Raj / the client can give) and `docs/store/STAGE-0-REPORT.md`.
