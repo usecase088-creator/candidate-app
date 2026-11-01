@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/Icon';
 import { AppText } from '@/components/ui/Text';
 import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
 
@@ -21,7 +21,7 @@ export function NotificationBell() {
       onPress={() => router.push('/notifications')}
       style={styles.button}
     >
-      <SymbolView
+      <Icon
         name={{ ios: 'bell', android: 'notifications', web: 'notifications' }}
         tintColor={colors.foreground}
         size={24}

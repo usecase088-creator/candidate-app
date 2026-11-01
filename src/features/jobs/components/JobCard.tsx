@@ -1,7 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/Icon';
 import type { Job } from '@/api/schemas/jobs';
 import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/Text';
@@ -38,7 +38,7 @@ function JobCardView({ job, saved, onToggleSave, onOpen }: Props) {
             </AppText>
             {job.hospitalVerified ? <VerifiedBadge /> : null}
             <View style={styles.location}>
-              <SymbolView
+              <Icon
                 name={{ ios: 'mappin.and.ellipse', android: 'location_on', web: 'location_on' }}
                 tintColor={colors.mutedForeground}
                 size={12}

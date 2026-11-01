@@ -1,6 +1,6 @@
-import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet } from 'react-native';
 
+import { Icon } from '@/components/ui/Icon';
 import { AppText } from '@/components/ui/Text';
 import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
 
@@ -30,7 +30,7 @@ export function SaveButton({ testID, saved, onPress, variant = 'icon' }: Props) 
         onPress={onPress}
         style={[styles.button, saved && styles.buttonSaved]}
       >
-        <SymbolView name={bookmark(saved)} tintColor={tint} size={16} />
+        <Icon name={bookmark(saved)} tintColor={tint} size={16} />
         <AppText variant="label" weight="medium" color={saved ? 'primary' : 'foreground'}>
           {saved ? 'Saved' : 'Save job'}
         </AppText>
@@ -48,7 +48,7 @@ export function SaveButton({ testID, saved, onPress, variant = 'icon' }: Props) 
       hitSlop={4}
       style={styles.icon}
     >
-      <SymbolView name={bookmark(saved)} tintColor={tint} size={20} />
+      <Icon name={bookmark(saved)} tintColor={tint} size={20} />
     </Pressable>
   );
 }

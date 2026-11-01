@@ -1,8 +1,9 @@
-import { type AndroidSymbol, type SFSymbol, SymbolView } from 'expo-symbols';
+import { type AndroidSymbol, type SFSymbol } from 'expo-symbols';
 import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 import { StyleSheet, Text } from 'react-native';
 
+import { Icon } from '@/components/ui/Icon';
 import { useSession } from '@/features/auth/sessionStore';
 import { TopBar } from '@/features/notifications/components/TopBar';
 import { colors, fonts } from '@/theme/tokens';
@@ -66,7 +67,7 @@ export default function TabsLayout() {
               </Text>
             ),
             tabBarIcon: ({ color, size }) => (
-              <SymbolView
+              <Icon
                 name={{ ios: tab.ios, android: tab.android, web: tab.android }}
                 tintColor={color}
                 size={size}

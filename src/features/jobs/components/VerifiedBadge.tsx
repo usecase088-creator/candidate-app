@@ -1,6 +1,6 @@
-import { SymbolView } from 'expo-symbols';
 import { StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/Icon';
 import { AppText } from '@/components/ui/Text';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -8,7 +8,7 @@ import { colors, radius, spacing } from '@/theme/tokens';
 export function VerifiedBadge({ label = 'Verified' }: { label?: string }) {
   return (
     <View style={styles.badge} accessible accessibilityLabel={label}>
-      <SymbolView
+      <Icon
         name={{ ios: 'checkmark.shield.fill', android: 'verified_user', web: 'verified_user' }}
         tintColor={colors.primary}
         size={12}

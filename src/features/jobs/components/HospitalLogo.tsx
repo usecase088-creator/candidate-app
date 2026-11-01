@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
 import { StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/Icon';
 import { colors, radius } from '@/theme/tokens';
 
 /** Hospital logo (cached by expo-image) or the website's building icon when there is none. Decorative. */
@@ -21,7 +21,7 @@ export function HospitalLogo({ uri, size = 44 }: { uri?: string | null; size?: n
   }
   return (
     <View style={[styles.fallback, box]} accessible={false}>
-      <SymbolView
+      <Icon
         name={{ ios: 'building.2', android: 'business', web: 'business' }}
         tintColor={colors.primary}
         size={size * 0.45}

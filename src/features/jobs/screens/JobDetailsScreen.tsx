@@ -1,8 +1,8 @@
-import { SymbolView } from 'expo-symbols';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/Icon';
 import { ERROR_MESSAGES, isApiError } from '@/api/errors';
 import type { Job } from '@/api/schemas/jobs';
 import { Button } from '@/components/ui/Button';
@@ -245,7 +245,7 @@ function CheckList({ items }: { items: string[] }) {
     <View style={styles.list}>
       {items.map((item) => (
         <View key={item} style={styles.listItem}>
-          <SymbolView
+          <Icon
             name={{ ios: 'checkmark.circle', android: 'check_circle', web: 'check_circle' }}
             tintColor={colors.brand}
             size={16}
@@ -271,7 +271,7 @@ function Meta({
 }) {
   return (
     <View style={styles.metaItem}>
-      <SymbolView name={{ ...icon, web: icon.android }} tintColor={colors.mutedForeground} size={12} />
+      <Icon name={{ ...icon, web: icon.android }} tintColor={colors.mutedForeground} size={12} />
       <AppText variant="caption" color="mutedForeground" style={styles.shrink}>
         {text}
       </AppText>

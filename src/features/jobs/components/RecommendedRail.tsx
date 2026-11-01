@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/Icon';
 import type { Job } from '@/api/schemas/jobs';
 import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/Text';
@@ -47,7 +47,7 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
   return (
     <View testID="recommended.rail" style={styles.section}>
       <View style={styles.tag}>
-        <SymbolView
+        <Icon
           name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
           tintColor={colors.primary}
           size={12}
