@@ -23,6 +23,10 @@ export function RequireSession({ children }: { children: ReactNode }) {
 /** For screens a guest may open too (job details): wait for the saved session to be checked, then show the screen to everyone. */
 export function AfterRestore({ children }: { children: ReactNode }) {
   const status = useSession((s) => s.status);
+  const endedReason = useSession((s) => s.signOutReason);
   if (status === 'restoring') return null;
+  // The session ended while this screen was open (expired, blocked, signed out elsewhere): same as the tabs, go to
+  // login with the reason now, not when the visitor later presses Back.
+  if (status === 'signedOut' && endedReason !== undefined) return <Redirect href="/login" />;
   return <>{children}</>;
 }

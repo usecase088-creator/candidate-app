@@ -16,7 +16,7 @@ import { createTestQueryClient } from '@/test/render';
 import { SAVED_JOBS_KEY } from '../hooks/queryKeys';
 import { useSavedIdSet, useToggleSave } from '../hooks/useSavedJobs';
 
-jest.mock('@/features/auth/signInGate', () => ({ goToSignIn: jest.fn() }));
+jest.mock('@/features/auth/signInGate', () => ({ goToSignIn: jest.fn(), isSignInTarget: () => true }));
 
 const job = publicJob as unknown as Job;
 const other = { ...job, id: 'other' } as Job;

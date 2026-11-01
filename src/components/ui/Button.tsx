@@ -25,6 +25,8 @@ export type ButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   variant?: ButtonVariant;
   loading?: boolean;
   fullWidth?: boolean;
+  /** Caps how much the label grows with the phone's font size (for a button in a tight bar). */
+  maxFontSizeMultiplier?: number;
 };
 
 export function Button({
@@ -34,6 +36,7 @@ export function Button({
   loading = false,
   disabled = false,
   fullWidth = true,
+  maxFontSizeMultiplier,
   accessibilityLabel,
   onPress,
   ...rest
@@ -74,7 +77,13 @@ export function Button({
       )}
       <View style={styles.content}>
         {loading && <ActivityIndicator testID={`${testID}.spinner`} color={colors[v.fg]} size="small" />}
-        <AppText variant="label" weight="semibold" color={v.fg} align="center">
+        <AppText
+          variant="label"
+          weight="semibold"
+          color={v.fg}
+          align="center"
+          maxFontSizeMultiplier={maxFontSizeMultiplier}
+        >
           {label}
         </AppText>
       </View>

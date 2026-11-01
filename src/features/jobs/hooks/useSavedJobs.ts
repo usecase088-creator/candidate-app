@@ -9,7 +9,7 @@ import { isApiError } from '@/api/errors';
 import type { Job, SavedJob } from '@/api/schemas/jobs';
 import { useToast } from '@/components/ui/Toast';
 import { useIsSignedIn } from '@/features/auth/sessionStore';
-import { goToSignIn } from '@/features/auth/signInGate';
+import { goToSignIn, isSignInTarget } from '@/features/auth/signInGate';
 
 import { jobsApi } from '../jobsApi';
 import { SAVED_JOBS_KEY } from './queryKeys';
@@ -88,7 +88,8 @@ export function useToggleSave() {
     (job: Job) => {
       // Saving needs an account: a signed-out visitor is sent to sign-in and brought back to this screen.
       if (!signedIn) {
-        goToSignIn(pathname);
+        // Already on the sign-in screen (a second tap before it opened): do nothing, or the target would be lost.
+        if (isSignInTarget(pathname)) goToSignIn(pathname);
         return;
       }
       // Ignore a second tap on the same job while its request is running.

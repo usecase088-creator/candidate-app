@@ -2,9 +2,9 @@
 // (website useAuthGate: /auth?mode=signin&redirect=...). The target is kept in memory only and must be one of our own screens.
 import { router } from 'expo-router';
 
-import { goToSignIn, takeSignInTarget } from '../signInGate';
+import { goToSignIn, isSignInTarget, takeSignInTarget } from '../signInGate';
 
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.mock('expo-router', () => ({ router: { navigate: jest.fn() } }));
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -14,7 +14,7 @@ beforeEach(() => {
 describe('goToSignIn', () => {
   it('opens sign-in and remembers where the visitor was heading', () => {
     goToSignIn('/job/abc123');
-    expect(router.push).toHaveBeenCalledWith('/login');
+    expect(router.navigate).toHaveBeenCalledWith('/login');
     expect(takeSignInTarget()).toBe('/job/abc123');
   });
 
@@ -37,7 +37,7 @@ describe('goToSignIn', () => {
     '',
   ])('forgets a target that is not one of our guest-reachable screens: %s', (target) => {
     goToSignIn(target);
-    expect(router.push).toHaveBeenCalledWith('/login');
+    expect(router.navigate).toHaveBeenCalledWith('/login');
     expect(takeSignInTarget()).toBeNull();
   });
 
@@ -53,5 +53,15 @@ describe('takeSignInTarget', () => {
     goToSignIn('/saved-jobs');
     expect(takeSignInTarget()).toBe('/saved-jobs');
     expect(takeSignInTarget()).toBeNull();
+  });
+});
+
+describe('isSignInTarget', () => {
+  it('says yes to screens a guest can be on, no to the sign-in screens themselves and to anything else', () => {
+    expect(isSignInTarget('/job/abc')).toBe(true);
+    expect(isSignInTarget('/search')).toBe(true);
+    expect(isSignInTarget('/login')).toBe(false);
+    expect(isSignInTarget('/signup')).toBe(false);
+    expect(isSignInTarget(undefined)).toBe(false);
   });
 });

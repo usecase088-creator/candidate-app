@@ -33,6 +33,9 @@ describe('large text (font scale 2, 320 pt)', () => {
       const label = screen.getByTestId(`tabs.${name}.label`);
       expect(label).toHaveProp('maxFontSizeMultiplier', 1.3);
       expect(label).toHaveProp('numberOfLines', 1);
+      // "Applications" is wider than its tab at font scale 2: it shrinks to fit instead of ending in dots.
+      expect(label).toHaveProp('adjustsFontSizeToFit', true);
+      expect(label).toHaveProp('minimumFontScale', 0.75);
     }
   });
 
@@ -49,6 +52,12 @@ describe('large text (font scale 2, 320 pt)', () => {
     await startSignedIn('/', 'home.screen');
     expect(screen.getByTestId('topbar.brand')).toHaveProp('maxFontSizeMultiplier', 1.5);
     expect(await screen.findByTestId('topbar.notifications.count')).toHaveProp('maxFontSizeMultiplier', 1);
+  });
+
+  it('the top bar of a visitor who is not signed in: the Sign in button label grows at most 1.3 times (it shares the bar with the brand)', async () => {
+    await renderRouter(appRoutes, { initialUrl: '/' });
+    await screen.findByTestId('topbar.signin');
+    expect(screen.getByText('Sign in')).toHaveProp('maxFontSizeMultiplier', 1.3);
   });
 
   it('notifications: "Mark all as read" wraps under the count instead of running off the screen', async () => {

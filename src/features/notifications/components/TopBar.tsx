@@ -39,6 +39,8 @@ export function TopBar() {
           accessibilityLabel="Sign in"
           variant="outline"
           fullWidth={false}
+          // Brand and button share 320 pt at font scale 2: the label grows at most 1.3 times.
+          maxFontSizeMultiplier={1.3}
           onPress={() => goToSignIn()}
         />
       )}

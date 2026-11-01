@@ -8,20 +8,26 @@ const WITH_ID = /^\/(job|apply)\/[A-Za-z0-9_-]{1,100}$/;
 
 let target: string | null = null;
 
+/** A screen a guest can be on and come back to after signing in. */
+export function isSignInTarget(path: string | undefined): path is string {
+  return !!path && (FIXED.has(path) || WITH_ID.test(path));
+}
+
 function remember(heading?: string): void {
-  target = heading && (FIXED.has(heading) || WITH_ID.test(heading)) ? heading : null;
+  target = isSignInTarget(heading) ? heading : null;
 }
 
 /** Opens sign-in. `heading`: where to go after signing in (a screen a guest can reach), or nothing for Home. */
 export function goToSignIn(heading?: string): void {
   remember(heading);
-  router.push('/login');
+  // navigate, not push: a second tap goes to the sign-in screen that is already open instead of stacking another.
+  router.navigate('/login');
 }
 
 /** Same, for "Create an account". */
 export function goToSignUp(heading?: string): void {
   remember(heading);
-  router.push('/signup');
+  router.navigate('/signup');
 }
 
 /** Remember where a visitor was heading when something else (a protected screen) already redirects to sign-in. */

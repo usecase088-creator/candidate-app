@@ -72,6 +72,8 @@ export default function TabsLayout() {
               <Text
                 testID={`${tab.testID}.label`}
                 numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
                 maxFontSizeMultiplier={TAB_LABEL_MAX_SCALE}
                 style={[styles.label, { color }]}
               >

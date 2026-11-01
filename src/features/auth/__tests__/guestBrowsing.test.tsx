@@ -194,3 +194,53 @@ describe('searching and filtering (website: text and city are open, filters and 
     expect(screen.queryByTestId('login.screen')).toBeNull();
   });
 });
+
+describe('review findings (independent review, 2026-11-01)', () => {
+  it('job data fetched as a guest is fetched again after signing in (match scores come only with a token)', async () => {
+    await openApp();
+    await screen.findByTestId('job.card.j1');
+    const before = seen.filter((p) => p === '/api/jobs').length;
+    await fireEvent.press(screen.getByTestId('topbar.signin'));
+    await signInNow();
+    await screen.findByTestId('home.screen');
+    await waitFor(() => expect(seen.filter((p) => p === '/api/jobs').length).toBeGreaterThan(before));
+  });
+
+  it('a double tap on Save opens one sign-in screen, and signing in still returns to the job', async () => {
+    const app = await openApp();
+    await fireEvent.press(await screen.findByTestId('job.open.j1'));
+    const save = await screen.findByTestId('job.savebutton');
+    await fireEvent.press(save);
+    await fireEvent.press(save);
+    await screen.findByTestId('login.screen');
+    await signInNow();
+    expect(await screen.findByTestId('job.header')).toBeOnTheScreen();
+    expect(app.getPathname()).toBe('/job/j1');
+    // Back goes to the feed, not to a second sign-in screen.
+    await act(async () => router.back());
+    expect(await screen.findByTestId('home.screen')).toBeOnTheScreen();
+    expect(screen.queryByTestId('login.screen')).toBeNull();
+  });
+
+  it('a session that ends while a job is open sends the visitor to login with the reason', async () => {
+    await renderRouter(appRoutes, { initialUrl: '/' });
+    await screen.findByTestId('topbar');
+    await act(async () => useSession.setState({ status: 'signedIn', user: null as never }));
+    await fireEvent.press(await screen.findByTestId('job.open.j1'));
+    await screen.findByTestId('job.header');
+    await act(async () => useSession.getState().signOut('expired'));
+    expect(await screen.findByTestId('login.screen')).toBeOnTheScreen();
+    expect(screen.getByTestId('login.notice')).toHaveTextContent('Your session has expired. Please sign in again.');
+  });
+
+  it('"Browse jobs without signing in" after signing out of Settings leaves one tabs screen, not two', async () => {
+    await openApp();
+    await act(async () => useSession.setState({ status: 'signedIn', user: null as never }));
+    await act(async () => router.push('/settings'));
+    await fireEvent.press(await screen.findByTestId('settings.signout'));
+    await screen.findByTestId('login.screen');
+    await fireEvent.press(screen.getByTestId('login.browse'));
+    expect(await screen.findByTestId('home.screen')).toBeOnTheScreen();
+    expect(router.canGoBack()).toBe(false);
+  });
+});

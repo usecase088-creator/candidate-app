@@ -36,6 +36,10 @@ export default function RootLayout() {
         appQueryClient.clear();
         useFilterStore.getState().resetAll();
       }
+      // A guest's job lists came without match scores (the server adds them only for a signed-in candidate): fetch again.
+      if (prev.status === 'signedOut' && state.status === 'signedIn') {
+        void appQueryClient.invalidateQueries({ queryKey: ['jobs'] });
+      }
     });
     return () => {
       stopOnline();

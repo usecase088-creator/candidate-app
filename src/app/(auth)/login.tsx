@@ -18,6 +18,7 @@ import { authApi } from '@/features/auth/authApi';
 import { AuthModeTabs } from '@/features/auth/components/AuthModeTabs';
 import { loginErrorMessage, ROLE_MISMATCH_MESSAGE, signOutNotice } from '@/features/auth/messages';
 import { useSession } from '@/features/auth/sessionStore';
+import { takeSignInTarget } from '@/features/auth/signInGate';
 import { firstError, loginSchema, type LoginValues } from '@/features/auth/validation';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -156,7 +157,10 @@ export default function Login() {
           onPress={() => {
             // Ends the "you were signed out" state, so the tabs stop sending this visitor back here.
             useSession.setState({ signOutReason: undefined, signOutMessage: undefined });
-            router.replace('/');
+            takeSignInTarget();
+            // Tabs already under the login screen: go back to them instead of stacking a second set.
+            if (router.canDismiss()) router.dismissTo('/');
+            else router.replace('/');
           }}
         />
 
