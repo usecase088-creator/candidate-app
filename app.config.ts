@@ -170,6 +170,31 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'android.permission.USE_FINGERPRINT',
         // Expo's template adds the screen overlay for the developer menu; store and test builds don't need it.
         ...(variant === 'development' ? [] : ['android.permission.SYSTEM_ALERT_WINDOW']),
+        // expo-notifications' badge library: app-icon badge and shortcut permissions for every launcher maker, and
+        // "run at startup" (re-scheduling local notifications after a reboot). The app sets no badge and schedules
+        // nothing: every notification is a remote push, which needs none of these. The Play listing shows them to users.
+        // Kept on purpose: INTERNET, WAKE_LOCK, VIBRATE, POST_NOTIFICATIONS and the Firebase receive permission.
+        'android.permission.RECEIVE_BOOT_COMPLETED',
+        'android.permission.READ_APP_BADGE',
+        'com.android.launcher.permission.INSTALL_SHORTCUT',
+        'com.android.launcher.permission.UNINSTALL_SHORTCUT',
+        'com.android.launcher.permission.READ_SETTINGS',
+        'com.android.launcher.permission.WRITE_SETTINGS',
+        'com.anddoes.launcher.permission.UPDATE_COUNT',
+        'com.htc.launcher.permission.READ_SETTINGS',
+        'com.htc.launcher.permission.UPDATE_SHORTCUT',
+        'com.huawei.android.launcher.permission.CHANGE_BADGE',
+        'com.huawei.android.launcher.permission.READ_SETTINGS',
+        'com.huawei.android.launcher.permission.WRITE_SETTINGS',
+        'com.majeur.launcher.permission.UPDATE_BADGE',
+        'com.oppo.launcher.permission.READ_SETTINGS',
+        'com.oppo.launcher.permission.WRITE_SETTINGS',
+        'com.sec.android.provider.badge.permission.READ',
+        'com.sec.android.provider.badge.permission.WRITE',
+        'com.sonyericsson.home.permission.BROADCAST_BADGE',
+        'com.sonymobile.home.permission.PROVIDER_INSERT_BADGE',
+        'me.everything.badger.permission.BADGE_COUNT_READ',
+        'me.everything.badger.permission.BADGE_COUNT_WRITE',
       ],
     },
     web: {
