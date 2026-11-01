@@ -28,7 +28,11 @@ appId: work.apronhanger.candidate.dev
 - assertVisible:
     id: job.header
 
-# Saving asks to sign in; signing in comes back to the same job.
+# Saving asks to sign in; signing in comes back to the same job. (The button is below the fold: scroll to it first.)
+- scrollUntilVisible:
+    element:
+      id: job.savebutton
+    timeout: 30000
 - tapOn:
     id: job.savebutton
 - extendedWaitUntil:
@@ -56,9 +60,13 @@ appId: work.apronhanger.candidate.dev
       visible: 'Save password.*'
     commands:
       - back
+# Back on the same job (the page is still scrolled to the buttons), now signed in: the match insight is only shown to a signed-in candidate.
 - extendedWaitUntil:
     visible:
-      id: job.header
+      id: job.savebutton
     timeout: 90000
 - assertNotVisible:
     id: login.screen
+- scrollUntilVisible:
+    element: 'Your profile matches.*'
+    timeout: 30000

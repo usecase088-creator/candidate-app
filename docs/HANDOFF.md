@@ -12,9 +12,10 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
   the account tabs ask to sign in and return; an independent review found 4 issues, all fixed), the badge/boot permissions blocked
   (APK 31 to 10 permissions, B18 closed), large-text fixes (icons drawn as text clipped; tab bar too short; Applications label;
   guest Sign in button), the client documents (`docs/client/send/` and `docs/client/WHATSAPP-MESSAGE.txt`, git-ignored).
-  **Build 4 `d91e342f` (everything above) is installed on the phone but NOT yet tested: the phone battery fell to 6%.** To do on it:
-  all 17 Maestro flows (`e2e/maestro` incl. the new `guest-browse.yaml`; copy with appId `.preview`, see SETUP.md), tab labels and
-  icons at 320 dp / font scale 2, one push. Jest 1,524 / 101 suites and web specs 10/10 pass. Still with Raj or the client: B1 to B6
+  **Build 4 `d91e342f` (everything above) is tested on the phone:** all 17 Maestro flows pass (incl. the new `guest-browse.yaml`;
+  copy of `e2e/maestro` with appId `.preview`, see SETUP.md), tab labels, icons, bell and the guest Sign in button fit at 320 dp /
+  font scale 2, and a real push arrives when notifications are already allowed at sign-in. Jest 1,524 / 101 suites and web specs
+  10/10 pass (Playwright needs port 8081 free; stop any `expo start` first and run with `--workers=1` on this laptop). Still with Raj or the client: B1 to B6
   (sent as one short message plus one Word document), B13 (Sentry consent).
 
 - **2026-10-31 overnight (Raj approved an unattended run of `docs/LAUNCH-PLAYBOOK.md`):** read `docs/store/OVERNIGHT-SUMMARY.md` first,
