@@ -38,6 +38,15 @@ appId: work.apronhanger.candidate.dev
       visible: 'Save password.*'
     commands:
       - back
+# iOS: the system "Save Password?" sheet opens a moment after sign-in: wait for it (it can come late), then close it.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: 'Save Password.*'
+          timeout: 8000
+          optional: true
 # iOS: the system "Save Password?" sheet. Never tap "Save".
 - runFlow:
     when:

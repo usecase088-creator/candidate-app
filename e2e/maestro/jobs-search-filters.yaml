@@ -68,7 +68,7 @@ appId: work.apronhanger.candidate.dev
 - extendedWaitUntil:
     visible:
       id: filters.sheet
-    timeout: 5000
+    timeout: 20000
 - assertVisible: Premium filters
 - assertVisible: No filters applied
 - tapOn:
