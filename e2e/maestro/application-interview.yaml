@@ -37,6 +37,7 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: application.screen
     timeout: 15000
+- runFlow: _common/iosPasswordSheet.yaml
 - assertVisible: Interview Scheduled
 - assertVisible: Join Meeting
 - assertVisible: Dr. Seed Interviewer
@@ -75,7 +76,9 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: application.screen
     timeout: 15000
+- runFlow: _common/iosPasswordSheet.yaml
 - assertVisible: Seed Valley Care Centre, 2nd floor, Bengaluru
+- runFlow: _common/iosPasswordSheet.yaml
 - tapOn:
     id: action.interview.reschedule
 # The form opens below the buttons: on a small iPhone the Send button and the note are not on screen together.
@@ -112,14 +115,6 @@ appId: work.apronhanger.candidate.dev
     centerElement: true
 - tapOn:
     id: action.interview.reschedule.submit
-# iPhone: with the keyboard open the first tap only closes it. If the button is still there, press it again.
-- runFlow:
-    when:
-      visible:
-        id: action.interview.reschedule.submit
-    commands:
-      - tapOn:
-          id: action.interview.reschedule.submit
 - extendedWaitUntil:
     visible: Response recorded successfully!
     timeout: 15000
