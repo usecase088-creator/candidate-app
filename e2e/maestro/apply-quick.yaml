@@ -48,11 +48,13 @@ appId: work.apronhanger.candidate.dev
     timeout: 15000
 
 # Answer the questions (text, number, choice, yes/no; the optional long text stays empty).
+# centerElement: the first field sat at the very top edge after scrolling up, and on an iPhone the typing was lost.
 - scrollUntilVisible:
     element:
       id: apply.questions.q_modality
     direction: UP
     timeout: 15000
+    centerElement: true
 - tapOn:
     id: apply.questions.q_modality
 - inputText: 128-slice CT

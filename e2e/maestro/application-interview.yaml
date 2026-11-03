@@ -78,13 +78,27 @@ appId: work.apronhanger.candidate.dev
 - assertVisible: Seed Valley Care Centre, 2nd floor, Bengaluru
 - tapOn:
     id: action.interview.reschedule
+# The form opens below the buttons: on a small iPhone the Send button and the note are not on screen together.
+- scrollUntilVisible:
+    element:
+      id: action.interview.reschedule.submit
+    timeout: 15000
 - assertVisible:
     id: action.interview.reschedule.submit
     enabled: false
+- scrollUntilVisible:
+    element:
+      id: action.interview.note
+    direction: UP
+    timeout: 15000
 - tapOn:
     id: action.interview.note
 - inputText: Free on Friday after 3 pm
 - runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: action.interview.reschedule.submit
+    timeout: 15000
 - tapOn:
     id: action.interview.reschedule.submit
 - extendedWaitUntil:
