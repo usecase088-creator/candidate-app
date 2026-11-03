@@ -61,6 +61,11 @@ appId: work.apronhanger.candidate.dev
 - assertVisible: Your next clinical role, curated for you.
 - tapOn:
     id: tabs.profile
+# On a small iPhone the button is below the fold; a tap outside the screen would hit the tab bar instead.
+- scrollUntilVisible:
+    element:
+      id: profile.signout
+    timeout: 20000
 - tapOn:
     id: profile.signout
 - extendedWaitUntil:

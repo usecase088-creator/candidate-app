@@ -149,6 +149,10 @@ appId: work.apronhanger.candidate.dev
     id: job.title.5eed0000-0000-4000-8000-00000000b002
 
 # Opening a result shows the job.
+- scrollUntilVisible:
+    element:
+      id: job.open.5eed0000-0000-4000-8000-00000000b002
+    timeout: 15000
 - tapOn:
     id: job.open.5eed0000-0000-4000-8000-00000000b002
 - extendedWaitUntil:

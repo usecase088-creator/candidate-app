@@ -29,7 +29,10 @@ appId: work.apronhanger.candidate.dev
       id: apply.screen
     timeout: 20000
 - assertVisible: Choose one way to apply
-- assertVisible: Answer these job-specific questions
+# Below the fold on a small iPhone: scroll to it (assertVisible does not scroll).
+- scrollUntilVisible:
+    element: Answer these job-specific questions
+    timeout: 15000
 
 # A required question left empty: the website message, nothing is sent.
 - scrollUntilVisible:
@@ -38,7 +41,11 @@ appId: work.apronhanger.candidate.dev
     timeout: 15000
 - tapOn:
     id: apply.quick
-- assertVisible: '"Which imaging machines have you operated?" is required'
+# The message can be above the visible part on a small phone: scroll up to it.
+- scrollUntilVisible:
+    element: '"Which imaging machines have you operated?" is required'
+    direction: UP
+    timeout: 15000
 
 # Answer the questions (text, number, choice, yes/no; the optional long text stays empty).
 - scrollUntilVisible:

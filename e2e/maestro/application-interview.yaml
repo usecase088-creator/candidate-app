@@ -59,9 +59,11 @@ appId: work.apronhanger.candidate.dev
     timeout: 15000
 
 # In-person interview: ask to reschedule (a note is required).
-- extendedWaitUntil:
-    visible:
+# Back to the list on an iPhone keeps the scroll position, so the tab row can be off screen: scroll up to it.
+- scrollUntilVisible:
+    element:
       id: applications.tab.all
+    direction: UP
     timeout: 60000
 - scrollUntilVisible:
     element:
