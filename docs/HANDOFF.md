@@ -16,11 +16,16 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
   copy of `e2e/maestro` with appId `.preview`, see SETUP.md), tab labels, icons, bell and the guest Sign in button fit at 320 dp /
   font scale 2, and a real push arrives when notifications are already allowed at sign-in. Jest 1,524 / 101 suites and web specs
   10/10 pass (Playwright needs port 8081 free; stop any `expo start` first and run with `--workers=1` on this laptop).
-  Stage 2 smoothness is measured and needs no fix (`docs/store/STAGE-2-REPORT.md`). **iPhone simulator run not done yet:** a fresh iOS
-  `e2e-test` build with all of this exists (`dd1840c4`), but three attempts of the `ios-e2e` workflow on 2026-11-02/03 never got a
-  macOS runner (GitHub: "job was not acquired by Runner of type hosted"; capacity). Retry later with
-  `POST /repos/usecase088-creator/candidate-app/actions/workflows/ios-e2e.yml/dispatches` `{"ref":"main","inputs":{"build_id":"dd1840c4-a7fc-44a2-9b1e-c763adaa0147"}}`
-  (token in `.env.local`). Nothing on iOS has been tested since the guest-browsing, Icon and tab-bar changes. Still with Raj or the client: B1 to B6
+  Stage 2 smoothness is measured and needs no fix (`docs/store/STAGE-2-REPORT.md`). **iPhone simulator (build `dd1840c4`, 2026-11-03): 16 of 17 flows pass** (guest browsing, sign-in/out, delete account, profile builder,
+  applying, offer, search, filters, gov list). The first runs failed on iPhone-only or small-screen script problems, not app bugs
+  (iPhone SE 750x1334 vs the tall Android phone: taps below the fold hit the tab bar, `assertVisible` does not scroll, the iOS
+  "Save Password?" sheet can open late, Return does not close a multi-line field). Flows were fixed (`_common/iosPasswordSheet.yaml`, scroll
+  before tap) and re-proved on Android. **Left: `application-interview` on iPhone** (needs the Send button dragged above the
+  keyboard; fixed in `dce4756`, passes on Android; the last iPhone attempts got no macOS runner from GitHub). The `ios-e2e`
+  workflow does not reseed: reseed staging first (`npm run backend:local -- --no-start --source ../job-hotfix/backend`) and run
+  data-changing flows in one batch. Retry: `POST /repos/usecase088-creator/candidate-app/actions/workflows/ios-e2e.yml/dispatches`
+  `{"ref":"main","inputs":{"build_id":"dd1840c4-a7fc-44a2-9b1e-c763adaa0147","flows":"e2e/maestro/application-interview.yaml"}}`
+  (token in `.env.local`). Still with Raj or the client: B1 to B6
   (sent as one short message plus one Word document), B13 (Sentry consent).
 
 - **2026-10-31 overnight (Raj approved an unattended run of `docs/LAUNCH-PLAYBOOK.md`):** read `docs/store/OVERNIGHT-SUMMARY.md` first,
