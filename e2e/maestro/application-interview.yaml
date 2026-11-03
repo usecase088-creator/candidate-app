@@ -95,12 +95,22 @@ appId: work.apronhanger.candidate.dev
     id: action.interview.note
 - inputText: Free on Friday after 3 pm
 - runFlow: _common/hideKeyboard.yaml
+# centerElement: the keyboard (iPhone: Return adds a line in this multi-line field and does not close it) covers the bottom.
 - scrollUntilVisible:
     element:
       id: action.interview.reschedule.submit
     timeout: 15000
+    centerElement: true
 - tapOn:
     id: action.interview.reschedule.submit
+# iPhone: with the keyboard open the first tap only closes it. If the button is still there, press it again.
+- runFlow:
+    when:
+      visible:
+        id: action.interview.reschedule.submit
+    commands:
+      - tapOn:
+          id: action.interview.reschedule.submit
 - extendedWaitUntil:
     visible: Response recorded successfully!
     timeout: 15000

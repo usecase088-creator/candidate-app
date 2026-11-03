@@ -94,8 +94,9 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: applications.screen
     timeout: 20000
-# The list is loaded from the server again: wait for the new row.
+# The list is loaded from the server again: wait for the new row. On an iPhone the card is one element whose text
+# continues with the hospital and date, so match the start of it.
 - extendedWaitUntil:
-    visible: Radiology Technician
+    visible: 'Radiology Technician.*'
     timeout: 90000
 - assertVisible: '9 applications.*'
