@@ -95,7 +95,16 @@ appId: work.apronhanger.candidate.dev
     id: action.interview.note
 - inputText: Free on Friday after 3 pm
 - runFlow: _common/hideKeyboard.yaml
-# centerElement: the keyboard (iPhone: Return adds a line in this multi-line field and does not close it) covers the bottom.
+# iPhone: Return adds a line in this multi-line field and does not close the keyboard, which then covers the Send button
+# (the app pads the page by the keyboard height, so a person scrolls it up). Maestro counts the covered button as visible
+# and would tap the keyboard: drag the page up in the part above the keyboard first.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%, 55%
+          end: 50%, 15%
 - scrollUntilVisible:
     element:
       id: action.interview.reschedule.submit
