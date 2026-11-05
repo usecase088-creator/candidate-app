@@ -14,7 +14,8 @@ on:
       flows:
         description: Demo flow names (no .yaml), space separated, in the order to record
         required: false
-        default: guest-browse auth-signup jobs-search-filters jobs-browse-save jobs-gov-intl profile-builder apply-quick application-documents application-interview application-offer notification-open auth-login
+        # account-delete first: it signs up the test number 9000000002 and deletes it again, which frees the number for auth-signup.
+        default: account-delete auth-signup guest-browse jobs-search-filters jobs-browse-save jobs-gov-intl profile-builder apply-quick application-documents application-interview application-offer notification-open auth-login auth-forgot-password
 
 jobs:
   find-build:
@@ -77,7 +78,7 @@ jobs:
           echo "UDID=$UDID" >> "$GITHUB_ENV"
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID" -b
-          xcrun simctl status_bar "$UDID" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode notSupported --batteryState charged --batteryLevel 100
+          xcrun simctl status_bar "$UDID" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode notSupported --batteryState charged --batteryLevel 100 || echo 'status bar override not accepted: continuing with the default status bar'
           xcrun simctl list devices booted
 
       - name: Install Maestro
