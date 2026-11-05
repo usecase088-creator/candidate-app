@@ -1,0 +1,3 @@
+appId: work.apronhanger.candidate.dev
+---
+- evalScript: '${ output.demoMarker = "Open a job: Radiology Technician" }'

@@ -1,0 +1,3 @@
+appId: work.apronhanger.candidate.dev
+---
+- evalScript: ${ output.demoMarker = "Your sign-in email and mobile number are fixed" }

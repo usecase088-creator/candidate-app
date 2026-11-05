@@ -1,0 +1,3 @@
+appId: work.apronhanger.candidate.dev
+---
+- evalScript: ${ output.demoMarker = "Apply with your saved profile or with a CV file" }

@@ -1,0 +1,3 @@
+appId: work.apronhanger.candidate.dev
+---
+- evalScript: '${ output.demoMarker = "Account deleted: your data is removed" }'

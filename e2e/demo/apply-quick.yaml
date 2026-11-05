@@ -1,0 +1,119 @@
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- runFlow: _demo/start-apply-quick.yaml
+- scrollUntilVisible:
+    element:
+      id: job.open.5eed0000-0000-4000-8000-00000000b003
+    timeout: 30000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-apply-quick-1.yaml
+- tapOn:
+    id: job.open.5eed0000-0000-4000-8000-00000000b003
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: job.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- scrollUntilVisible:
+    element:
+      id: job.apply
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-apply-quick-2.yaml
+- tapOn:
+    id: job.apply
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: apply.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-apply-quick-3.yaml
+- assertVisible: Choose one way to apply
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element: Answer these job-specific questions
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element:
+      id: apply.quick
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: apply.quick
+- runFlow: _demo/pause-900.yaml
+- scrollUntilVisible:
+    element: '"Which imaging machines have you operated?" is required'
+    direction: UP
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element:
+      id: apply.questions.q_modality
+    direction: UP
+    timeout: 15000
+    centerElement: true
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-apply-quick-4.yaml
+- tapOn:
+    id: apply.questions.q_modality
+- runFlow: _demo/pause-900.yaml
+- inputText: 128-slice CT
+- runFlow: _demo/pause-600.yaml
+- runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: apply.questions.q_scans
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: apply.questions.q_scans
+- runFlow: _demo/pause-900.yaml
+- inputText: '12'
+- runFlow: _demo/pause-600.yaml
+- runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: apply.questions.q_shift.option.1
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: apply.questions.q_shift.option.1
+- runFlow: _demo/pause-900.yaml
+- scrollUntilVisible:
+    element:
+      id: apply.questions.q_license.yes
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: apply.questions.q_license.yes
+- runFlow: _demo/pause-900.yaml
+- scrollUntilVisible:
+    element:
+      id: apply.quick
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: apply.quick
+- runFlow: _demo/pause-900.yaml
+- runFlow: _demo/cap-apply-quick-5.yaml
+- extendedWaitUntil:
+    visible: Application submitted!
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- extendedWaitUntil:
+    visible:
+      id: applications.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-apply-quick-6.yaml
+- extendedWaitUntil:
+    visible: Radiology Technician.*
+    timeout: 90000
+- runFlow: _demo/pause-500.yaml
+- assertVisible: 9 applications.*
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/pause-2500.yaml

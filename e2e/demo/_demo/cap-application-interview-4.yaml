@@ -1,0 +1,3 @@
+appId: work.apronhanger.candidate.dev
+---
+- evalScript: ${ output.demoMarker = "The hospital sees your answer at once" }

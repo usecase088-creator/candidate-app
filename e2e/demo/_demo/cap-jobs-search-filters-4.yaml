@@ -1,0 +1,3 @@
+appId: work.apronhanger.candidate.dev
+---
+- evalScript: '${ output.demoMarker = "Filters: city, job type, salary and more" }'

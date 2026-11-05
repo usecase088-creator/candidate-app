@@ -1,0 +1,3 @@
+appId: work.apronhanger.candidate.dev
+---
+- evalScript: ${ output.demoMarker = "Mark everything as read in one tap" }

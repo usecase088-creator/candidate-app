@@ -1,0 +1,94 @@
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- addMedia:
+  - ../../assets/images/icon.png
+- runFlow: _demo/start-application-documents.yaml
+- runFlow: _demo/cap-application-documents-1.yaml
+- tapOn:
+    id: tabs.applications
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: applications.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- extendedWaitUntil:
+    visible:
+      id: applications.tab.all
+    timeout: 90000
+- runFlow: _demo/pause-500.yaml
+- scrollUntilVisible:
+    element:
+      id: application.row.5eed0000-0000-4000-8000-00000000a104
+    timeout: 30000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-application-documents-2.yaml
+- tapOn:
+    id: application.row.5eed0000-0000-4000-8000-00000000a104
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-application-documents-3.yaml
+- assertVisible: Document Request
+- runFlow: _demo/pause-1200.yaml
+- assertVisible: • Medical registration certificate
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element: No files selected
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element:
+      id: action.docs.files.pick.gallery
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: action.docs.files.pick.gallery
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible: Search Google Photos
+    timeout: 30000
+    optional: true
+- runFlow: _demo/pause-500.yaml
+- tapOn:
+    point: 17%,57%
+- runFlow: _demo/pause-900.yaml
+- tapOn:
+    text: Done
+    optional: true
+- runFlow: _demo/pause-900.yaml
+- tapOn:
+    text: Add
+    optional: true
+- runFlow: _demo/pause-900.yaml
+- scrollUntilVisible:
+    element:
+      id: action.docs.upload
+    timeout: 60000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element: 1 file(s) selected
+    direction: UP
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element:
+      id: action.docs.upload
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-application-documents-4.yaml
+- tapOn:
+    id: action.docs.upload
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible: Documents uploaded successfully!
+    timeout: 60000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-application-documents-5.yaml
+- assertVisible: Documents Submitted
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/pause-2500.yaml

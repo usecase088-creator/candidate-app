@@ -1,0 +1,3 @@
+appId: work.apronhanger.candidate.dev
+---
+- evalScript: ${ output.demoMarker = "Back on the same job, now with your match insight" }

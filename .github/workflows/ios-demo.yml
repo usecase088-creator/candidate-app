@@ -1,0 +1,136 @@
+# Client walkthrough video, iPhone part: records ONE video per demo flow (e2e/demo/, built by scripts/demo/build-demo-flows.py)
+# on a modern iPhone simulator with a clean status bar. Also keeps Maestro's command log (timestamps for the captions) and a
+# clock sync (the screen flips to dark mode and back at known times, so the editor can line the log up with the video).
+# The editing happens on the laptop: scripts/demo/make-video.py. Started by hand only. Public repo: runs are free.
+name: ios-demo
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: EAS build id (empty = latest finished iOS e2e-test build)
+        required: false
+        default: ''
+      flows:
+        description: Demo flow names (no .yaml), space separated, in the order to record
+        required: false
+        default: guest-browse auth-signup jobs-search-filters jobs-browse-save jobs-gov-intl profile-builder apply-quick application-documents application-interview application-offer notification-open auth-login
+
+jobs:
+  find-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    outputs:
+      id: ${{ steps.build.outputs.id }}
+      url: ${{ steps.build.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Find the iOS simulator build on EAS
+        id: build
+        run: |
+          if [ -n "${{ inputs.build_id }}" ]; then
+            npx eas-cli build:view "${{ inputs.build_id }}" --json > build.json
+          else
+            npx eas-cli build:list --platform ios --buildProfile e2e-test --status finished --limit 1 --json --non-interactive | jq '.[0]' > build.json
+          fi
+          echo "id=$(jq -r '.id' build.json)" >> "$GITHUB_OUTPUT"
+          echo "url=$(jq -r '.artifacts.buildUrl' build.json)" >> "$GITHUB_OUTPUT"
+          jq '{id, buildProfile, appVersion, gitCommitHash, completedAt}' build.json
+
+  record:
+    needs: find-build
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download and unpack the .app
+        run: |
+          curl -sSL "${{ needs.find-build.outputs.url }}" -o app.tar.gz
+          mkdir app && tar -xzf app.tar.gz -C app
+          APP=$(find app -maxdepth 3 -name '*.app' -type d | head -1)
+          echo "APP=$APP" >> "$GITHUB_ENV"
+          echo "App: $APP"
+
+      # A modern iPhone looks right in a video and fits the screens (the old iPhone SE is small). Falls back to the last iPhone.
+      - name: Boot an iPhone simulator with a clean status bar
+        run: |
+          UDID=""
+          for N in "iPhone 17 Pro" "iPhone 16 Pro" "iPhone 17" "iPhone 16"; do
+            UDID=$(xcrun simctl list devices available -j | jq -r --arg n "$N" '[.devices | to_entries[] | select(.key | test("iOS")) | .value[] | select(.name == $n)] | last | .udid // empty')
+            if [ -n "$UDID" ]; then echo "Device: $N"; break; fi
+          done
+          if [ -z "$UDID" ]; then
+            UDID=$(xcrun simctl list devices available -j | jq -r '[.devices | to_entries[] | select(.key | test("iOS")) | .value[] | select(.name | test("^iPhone"))] | last | .udid')
+            echo "Device: fallback"
+          fi
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode notSupported --batteryState charged --batteryLevel 100
+          xcrun simctl list devices booted
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Wake the staging server
+        run: |
+          for i in $(seq 1 24); do
+            if curl -sf -m 20 https://apronhanger-staging-api.onrender.com/health; then echo; exit 0; fi
+            sleep 5
+          done
+          echo 'staging did not answer'; exit 1
+
+      - name: Record the flows
+        run: |
+          mkdir -p output
+          set +e   # simctl terminate/uninstall fail when there is nothing to stop: that is fine
+          now_ms() { python3 -c 'import time; print(int(time.time()*1000))'; }
+          RESULT=0
+          for n in ${{ inputs.flows }}; do
+            echo "=== $n"
+            xcrun simctl terminate "$UDID" work.apronhanger.candidate.dev 2>/dev/null
+            xcrun simctl uninstall "$UDID" work.apronhanger.candidate.dev 2>/dev/null
+            xcrun simctl keychain "$UDID" reset 2>/dev/null
+            xcrun simctl install "$UDID" "$APP"
+            xcrun simctl ui "$UDID" appearance light
+            rm -rf "$HOME/.maestro/tests"
+            xcrun simctl io "$UDID" recordVideo --codec=h264 --force "output/video-$n.mp4" &
+            REC=$!
+            sleep 3
+            # Clock sync: dark mode on, then off, at known wall-clock times. The editor finds both flips in the video.
+            xcrun simctl ui "$UDID" appearance dark;  T_DARK=$(now_ms)
+            sleep 2
+            xcrun simctl ui "$UDID" appearance light; T_LIGHT=$(now_ms)
+            sleep 2
+            echo "$T_DARK $T_LIGHT" > "output/sync-$n.txt"
+            maestro --device "$UDID" test "e2e/demo/$n.yaml" --format junit --output "output/report-$n.xml"
+            [ $? -ne 0 ] && RESULT=1
+            sleep 2
+            kill -INT $REC; wait $REC || true
+            mkdir -p "output/maestro-$n"
+            cp -R "$HOME/.maestro/tests/." "output/maestro-$n/" 2>/dev/null || true
+            xcrun simctl io "$UDID" screenshot "output/end-$n.png"
+          done
+          xcrun simctl status_bar "$UDID" clear
+          exit $RESULT
+
+      - name: Keep videos and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-demo-${{ needs.find-build.outputs.id }}
+          path: output
+          retention-days: 14

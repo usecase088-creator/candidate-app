@@ -1,0 +1,3 @@
+appId: work.apronhanger.candidate.dev
+---
+- evalScript: '${ output.demoMarker = "Leave any time: your answers stay on the phone" }'

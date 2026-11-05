@@ -1,0 +1,160 @@
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/login.yaml
+- runFlow: _demo/start-jobs-gov-intl.yaml
+- scrollUntilVisible:
+    element:
+      id: home.link.gov
+    timeout: 20000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-jobs-gov-intl-1.yaml
+- tapOn:
+    id: home.link.gov
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: gov.screen
+    timeout: 10000
+- runFlow: _demo/pause-500.yaml
+- assertVisible: 🏛️ Government Jobs & Exams
+- runFlow: _demo/pause-1200.yaml
+- assertVisible: Total Listings
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element: No deadline
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element: Expired · .*
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element: \d+d left
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element: AIIMS
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element:
+      id: gov.search
+    direction: UP
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: gov.search
+- runFlow: _demo/pause-900.yaml
+- inputText: esic
+- runFlow: _demo/pause-600.yaml
+- runFlow: _common/hideKeyboard.yaml
+- assertVisible: Specialist Walk-in (Test, no deadline)
+- runFlow: _demo/pause-1200.yaml
+- assertNotVisible: AIIMS
+- tapOn:
+    id: gov.search
+- runFlow: _demo/pause-900.yaml
+- eraseText: 10
+- runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: gov.apply.5eed0000-0000-4000-8000-00000000c001
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: gov.apply.5eed0000-0000-4000-8000-00000000c001
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    notVisible:
+      id: gov.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow:
+    when:
+      platform: Android
+    commands:
+    - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+    - tapOn: Done
+- extendedWaitUntil:
+    visible:
+      id: gov.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- scrollUntilVisible:
+    element:
+      id: gov.back
+    direction: UP
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: gov.back
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 10000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-jobs-gov-intl-2.yaml
+- scrollUntilVisible:
+    element:
+      id: home.link.intl
+    timeout: 20000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: home.link.intl
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: intl.screen
+    timeout: 10000
+- runFlow: _demo/pause-500.yaml
+- assertVisible: 🌍 International Healthcare Jobs
+- runFlow: _demo/pause-1200.yaml
+- assertVisible: Countries
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element:
+      id: intl.country.UAE
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: intl.country.UAE
+- runFlow: _demo/pause-900.yaml
+- scrollUntilVisible:
+    element: Pharmacist \(Test\)
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- assertNotVisible: Staff Nurse \(Test\)
+- scrollUntilVisible:
+    element:
+      id: intl.apply.5eed0000-0000-4000-8000-00000000d002
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: intl.apply.5eed0000-0000-4000-8000-00000000d002
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    notVisible:
+      id: intl.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow:
+    when:
+      platform: Android
+    commands:
+    - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+    - tapOn: Done
+- extendedWaitUntil:
+    visible:
+      id: intl.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/pause-2500.yaml

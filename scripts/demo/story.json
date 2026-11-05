@@ -1,0 +1,377 @@
+{
+  "title": "ApronHanger candidate app: a walkthrough from first launch to deleting an account",
+  "disclaimer": "Recorded on an iPhone simulator against a test server. Hospitals, jobs and people are sample data.",
+  "chapters": [
+    {
+      "flow": "guest-browse",
+      "title": "Browse jobs without an account",
+      "subtitle": "Anyone can look around before signing up",
+      "captions": [
+        {
+          "at": "id: home\\.screen",
+          "text": "Open the app: jobs are visible without an account"
+        },
+        {
+          "at": "tapOn:\\s+id: job\\.open\\.",
+          "text": "Tap a job to see its full details"
+        },
+        {
+          "at": "tapOn:\\s+id: job\\.savebutton",
+          "text": "Saving a job asks you to sign in"
+        },
+        {
+          "at": "tapOn:\\s+id: login\\.email",
+          "text": "Sign in with your email and password"
+        },
+        {
+          "at": "extendedWaitUntil:\\s+visible:\\s+id: job\\.savebutton",
+          "text": "Back on the same job, now with your match insight"
+        }
+      ]
+    },
+    {
+      "flow": "auth-signup",
+      "title": "Create an account",
+      "subtitle": "Name, mobile number, email and a password",
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: auth\\.tab\\.signup",
+          "text": "Choose Create Account"
+        },
+        {
+          "at": "id: signup\\.screen",
+          "text": "Enter your name, mobile number, email and password"
+        },
+        {
+          "at": "tapOn:\\s+id: signup\\.privacy",
+          "text": "The Terms and Privacy Policy are one tap away"
+        },
+        {
+          "at": "tapOn:\\s+id: signup\\.submit",
+          "text": "A one-time code is sent to your mobile number"
+        },
+        {
+          "at": "tapOn:\\s+id: signup\\.otp",
+          "text": "Enter the 6-digit code to verify the number"
+        },
+        {
+          "at": "assertVisible: Your next clinical role",
+          "text": "Account created: welcome to ApronHanger"
+        }
+      ]
+    },
+    {
+      "flow": "jobs-search-filters",
+      "title": "Search and filter jobs",
+      "subtitle": "By role, city and more",
+      "start": "tapOn:\\s+id: tabs\\.search",
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: tabs\\.search",
+          "text": "Open the Search tab"
+        },
+        {
+          "at": "inputText: CARDIO",
+          "text": "Search by role or specialty"
+        },
+        {
+          "at": "inputText: karnataka",
+          "text": "Or by city or state"
+        },
+        {
+          "at": "tapOn:\\s+id: search\\.filters",
+          "text": "Filters: city, job type, salary and more"
+        },
+        {
+          "at": "tapOn:\\s+id: filters\\.type\\.Locum",
+          "text": "Combine filters to narrow the list"
+        },
+        {
+          "at": "tapOn:\\s+id: filters\\.done",
+          "text": "The list shows only the matching jobs"
+        }
+      ]
+    },
+    {
+      "flow": "jobs-browse-save",
+      "title": "Save jobs for later",
+      "subtitle": "One tap on the bookmark",
+      "start": "assertVisible: Your next clinical role",
+      "captions": [
+        {
+          "at": "assertVisible: Your next clinical role",
+          "text": "The home feed shows open positions"
+        },
+        {
+          "at": "tapOn:\\s+id: job\\.save\\.",
+          "text": "Tap the bookmark to save a job"
+        },
+        {
+          "at": "assertVisible: Verified Hospital",
+          "text": "Open it: the details show it is saved"
+        },
+        {
+          "at": "tapOn:\\s+id: home\\.link\\.saved",
+          "text": "All saved jobs are in one list"
+        },
+        {
+          "at": "assertVisible: No saved jobs yet",
+          "text": "Remove a job from the list any time"
+        }
+      ]
+    },
+    {
+      "flow": "jobs-gov-intl",
+      "title": "Government and international jobs",
+      "subtitle": "With deadlines and links to the official source",
+      "start": "home\\.link\\.gov",
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: home\\.link\\.gov",
+          "text": "Government jobs and exams, with their deadlines"
+        },
+        {
+          "at": "home\\.link\\.intl",
+          "text": "International openings from around the world"
+        }
+      ]
+    },
+    {
+      "flow": "profile-builder",
+      "title": "Build your profile",
+      "subtitle": "A short form, saved on your phone until you finish",
+      "start": "tapOn:\\s+id: tabs\\.profile",
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: tabs\\.profile",
+          "text": "Your profile lives in the Profile tab"
+        },
+        {
+          "at": "tapOn:\\s+id: profile\\.edit",
+          "text": "The profile builder has 16 short steps"
+        },
+        {
+          "at": "id: builder\\.field\\.email",
+          "text": "Your sign-in email and mobile number are fixed"
+        },
+        {
+          "at": "tapOn:\\s+id: builder\\.next",
+          "text": "Next: your medical work profile"
+        },
+        {
+          "at": "tapOn:\\s+id: builder\\.exit",
+          "text": "Leave any time: your answers stay on the phone"
+        },
+        {
+          "at": "Step 2 of 16",
+          "text": "Come back later and continue where you stopped",
+          "nth": 2
+        }
+      ]
+    },
+    {
+      "flow": "apply-quick",
+      "title": "Apply with Quick Apply",
+      "subtitle": "Your saved profile goes to the hospital in one tap",
+      "start": "job\\.open\\.5eed0000-0000-4000-8000-00000000b003",
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: job\\.open\\.",
+          "text": "Open a job: Radiology Technician"
+        },
+        {
+          "at": "tapOn:\\s+id: job\\.apply",
+          "text": "Tap Apply Now"
+        },
+        {
+          "at": "assertVisible: Choose one way to apply",
+          "text": "Apply with your saved profile or with a CV file"
+        },
+        {
+          "at": "tapOn:\\s+id: apply\\.questions\\.q_modality",
+          "text": "Answer the hospital's own questions"
+        },
+        {
+          "at": "visible: Application submitted",
+          "text": "Application submitted"
+        },
+        {
+          "at": "visible:\\s+'?Radiology Technician",
+          "text": "It appears in My Applications"
+        }
+      ]
+    },
+    {
+      "flow": "application-documents",
+      "title": "When a hospital asks for documents",
+      "subtitle": "The request lists exactly what is needed",
+      "start": "tapOn:\\s+id: tabs\\.applications",
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: tabs\\.applications",
+          "text": "Open the Applications tab"
+        },
+        {
+          "at": "tapOn:\\s+id: application\\.row\\.",
+          "text": "This application has a document request"
+        },
+        {
+          "at": "assertVisible: Document Request",
+          "text": "The hospital lists the documents it needs"
+        },
+        {
+          "at": "tapOn:\\s+id: action\\.docs\\.upload",
+          "text": "Attach the files and upload them"
+        },
+        {
+          "at": "assertVisible: Documents Submitted",
+          "text": "Documents submitted: the hospital is notified"
+        }
+      ]
+    },
+    {
+      "flow": "application-interview",
+      "title": "Interview invitations",
+      "subtitle": "Accept, or ask for another time",
+      "start": "tapOn:\\s+id: tabs\\.applications",
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: tabs\\.applications",
+          "text": "Applications are grouped by status"
+        },
+        {
+          "at": "tapOn:\\s+id: application\\.row\\.5eed0000-0000-4000-8000-00000000a102",
+          "text": "An interview invitation: date, venue and interviewer"
+        },
+        {
+          "at": "tapOn:\\s+id: action\\.interview\\.accept",
+          "text": "Accept the interview"
+        },
+        {
+          "at": "visible: Response recorded successfully!",
+          "text": "The hospital sees your answer at once"
+        },
+        {
+          "at": "tapOn:\\s+id: action\\.interview\\.reschedule\\b",
+          "text": "Or ask to reschedule, with a note for the hospital"
+        }
+      ]
+    },
+    {
+      "flow": "application-offer",
+      "title": "Receive an offer",
+      "subtitle": "Read the offer letter and accept in one tap",
+      "start": "tapOn:\\s+id: tabs\\.applications",
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: tabs\\.applications",
+          "text": "The hospital sent an offer letter"
+        },
+        {
+          "at": "assertVisible: Offer Letter Received",
+          "text": "Offers are shown clearly on the application"
+        },
+        {
+          "at": "tapOn:\\s+id: action\\.offer\\.view",
+          "text": "Open and read the offer letter"
+        },
+        {
+          "at": "tapOn:\\s+id: action\\.offer\\.accept",
+          "text": "Accept the offer in one tap"
+        },
+        {
+          "at": "Status: Offer Accepted",
+          "text": "Offer accepted"
+        }
+      ]
+    },
+    {
+      "flow": "notification-open",
+      "title": "Stay up to date",
+      "subtitle": "Updates from hospitals in the notification bell",
+      "start": "tapOn:\\s+id: topbar\\.notifications",
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: topbar\\.notifications",
+          "text": "The bell shows unread updates from hospitals"
+        },
+        {
+          "at": "tapOn:\\s+id: notifications\\.readAll",
+          "text": "Mark everything as read in one tap"
+        }
+      ]
+    },
+    {
+      "flow": "auth-login",
+      "title": "Sign in and sign out",
+      "subtitle": "Come back any time",
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: login\\.email",
+          "text": "Sign in with your email and password"
+        },
+        {
+          "at": "assertVisible: Your next clinical role",
+          "text": "You are back in the jobs feed"
+        },
+        {
+          "at": "tapOn:\\s+id: profile\\.signout",
+          "text": "Sign out whenever you like"
+        }
+      ]
+    },
+    {
+      "flow": "auth-forgot-password",
+      "title": "Forgot your password?",
+      "subtitle": "Reset it with a one-time code",
+      "batch": 2,
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: login\\.forgot",
+          "text": "Tap Forgot password"
+        },
+        {
+          "at": "tapOn:\\s+id: forgot\\.mobile",
+          "text": "Enter your mobile number"
+        },
+        {
+          "at": "tapOn:\\s+id: forgot\\.otp",
+          "text": "Confirm with the one-time code"
+        },
+        {
+          "at": "tapOn:\\s+id: forgot\\.password",
+          "text": "Choose a new password"
+        },
+        {
+          "at": "visible:\\s+'?Success!",
+          "text": "Password changed: sign in again"
+        }
+      ]
+    },
+    {
+      "flow": "account-delete",
+      "title": "Delete your account",
+      "subtitle": "Permanent, and it asks for your password first",
+      "batch": 2,
+      "start": "tapOn:\\s+id: tabs\\.profile",
+      "captions": [
+        {
+          "at": "tapOn:\\s+id: profile\\.settings",
+          "text": "Open Settings from your profile"
+        },
+        {
+          "at": "tapOn:\\s+id: settings\\.delete",
+          "text": "Delete account: permanent, and it asks for your password"
+        },
+        {
+          "at": "visible:\\s+'?Incorrect password",
+          "text": "A wrong password keeps the account safe"
+        },
+        {
+          "at": "assertVisible:\\s+'?Your account has been deleted",
+          "text": "Account deleted: your data is removed"
+        }
+      ]
+    }
+  ]
+}

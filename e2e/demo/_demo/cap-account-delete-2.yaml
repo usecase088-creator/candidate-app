@@ -1,0 +1,3 @@
+appId: work.apronhanger.candidate.dev
+---
+- evalScript: '${ output.demoMarker = "Delete account: permanent, and it asks for your password" }'

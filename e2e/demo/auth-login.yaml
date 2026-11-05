@@ -1,0 +1,81 @@
+appId: work.apronhanger.candidate.dev
+---
+- launchApp:
+    clearState: true
+- runFlow: _demo/pause-1500.yaml
+- runFlow: _common/openSignIn.yaml
+- runFlow: _demo/cap-auth-login-1.yaml
+- tapOn:
+    id: login.email
+- runFlow: _demo/pause-900.yaml
+- inputText: candidate@apronhanger.test
+- runFlow: _demo/pause-600.yaml
+- tapOn:
+    id: login.password
+- runFlow: _demo/pause-900.yaml
+- inputText: Test@1234
+- runFlow: _demo/pause-600.yaml
+- runFlow: _common/hideKeyboard.yaml
+- runFlow:
+    when:
+      visible:
+        id: login.submit
+    commands:
+    - tapOn:
+        id: login.submit
+- extendedWaitUntil:
+    notVisible:
+      id: login.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- extendedWaitUntil:
+    visible: Save password.*
+    timeout: 8000
+    optional: true
+- runFlow: _demo/pause-500.yaml
+- runFlow:
+    when:
+      platform: Android
+      visible: Save password.*
+    commands:
+    - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+    - extendedWaitUntil:
+        visible: Save Password.*
+        timeout: 8000
+        optional: true
+- runFlow:
+    when:
+      platform: iOS
+      visible: Save Password.*
+    commands:
+    - tapOn: Not Now
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-auth-login-2.yaml
+- assertVisible: Your next clinical role, curated for you.
+- runFlow: _demo/pause-1200.yaml
+- tapOn:
+    id: tabs.profile
+- runFlow: _demo/pause-900.yaml
+- scrollUntilVisible:
+    element:
+      id: profile.signout
+    timeout: 20000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-auth-login-3.yaml
+- tapOn:
+    id: profile.signout
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 10000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/pause-2500.yaml

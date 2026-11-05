@@ -1,0 +1,94 @@
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/login.yaml
+- runFlow: _demo/start-jobs-browse-save.yaml
+- runFlow: _demo/cap-jobs-browse-save-1.yaml
+- assertVisible: Your next clinical role, curated for you.
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element:
+      id: recommended.rail
+    timeout: 20000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element:
+      id: job.open.5eed0000-0000-4000-8000-00000000b001
+    timeout: 30000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-jobs-browse-save-2.yaml
+- tapOn:
+    id: job.save.5eed0000-0000-4000-8000-00000000b001
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible: Job saved
+    timeout: 10000
+- runFlow: _demo/pause-500.yaml
+- tapOn:
+    id: job.open.5eed0000-0000-4000-8000-00000000b001
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: job.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- assertVisible: Staff Nurse
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/cap-jobs-browse-save-3.yaml
+- assertVisible: Verified Hospital
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element:
+      id: job.savebutton
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- assertVisible: Saved
+- runFlow: _demo/pause-1200.yaml
+- assertVisible: Apply Now
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element: Match insights
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element:
+      id: job.back
+    direction: UP
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: job.back
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 10000
+- runFlow: _demo/pause-500.yaml
+- scrollUntilVisible:
+    element:
+      id: home.link.saved
+    direction: UP
+    timeout: 20000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-jobs-browse-save-4.yaml
+- tapOn:
+    id: home.link.saved
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: saved.screen
+    timeout: 10000
+- runFlow: _demo/pause-500.yaml
+- assertVisible: 1 role bookmarked for later
+- runFlow: _demo/pause-1200.yaml
+- assertVisible:
+    id: job.title.5eed0000-0000-4000-8000-00000000b001
+- runFlow: _demo/pause-1200.yaml
+- tapOn:
+    id: job.save.5eed0000-0000-4000-8000-00000000b001
+- runFlow: _demo/pause-900.yaml
+- runFlow: _demo/cap-jobs-browse-save-5.yaml
+- assertVisible: No saved jobs yet
+- runFlow: _demo/pause-1200.yaml
+- assertVisible: Tap the bookmark icon on any job to save it here.
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/pause-2500.yaml

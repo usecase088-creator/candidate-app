@@ -1,0 +1,214 @@
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/login.yaml
+- runFlow: _demo/start-jobs-search-filters.yaml
+- runFlow: _demo/cap-jobs-search-filters-1.yaml
+- tapOn:
+    id: tabs.search
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: search.screen
+    timeout: 10000
+- runFlow: _demo/pause-500.yaml
+- scrollUntilVisible:
+    element:
+      id: search.query
+    direction: UP
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- assertVisible: Showing 4 of 4 verified roles
+- runFlow: _demo/pause-1200.yaml
+- tapOn:
+    id: search.query
+- runFlow: _demo/pause-900.yaml
+- runFlow: _demo/cap-jobs-search-filters-2.yaml
+- inputText: CARDIO
+- runFlow: _demo/pause-600.yaml
+- runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: search.query
+    direction: UP
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- assertVisible: Showing 1 of 4 verified roles
+- runFlow: _demo/pause-1200.yaml
+- assertVisible:
+    id: job.title.5eed0000-0000-4000-8000-00000000b002
+- runFlow: _demo/pause-1200.yaml
+- tapOn:
+    id: search.query
+- runFlow: _demo/pause-900.yaml
+- eraseText: 20
+- runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: search.query
+    direction: UP
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- assertVisible: Showing 4 of 4 verified roles
+- runFlow: _demo/pause-1200.yaml
+- tapOn:
+    id: search.city
+- runFlow: _demo/pause-900.yaml
+- runFlow: _demo/cap-jobs-search-filters-3.yaml
+- inputText: karnataka
+- runFlow: _demo/pause-600.yaml
+- runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: search.query
+    direction: UP
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- assertVisible: Showing 2 of 4 verified roles
+- runFlow: _demo/pause-1200.yaml
+- tapOn:
+    id: search.city
+- runFlow: _demo/pause-900.yaml
+- eraseText: 20
+- runFlow: _common/hideKeyboard.yaml
+- scrollUntilVisible:
+    element:
+      id: search.filters
+    direction: UP
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-jobs-search-filters-4.yaml
+- tapOn:
+    id: search.filters
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: filters.sheet
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- assertVisible: Premium filters
+- runFlow: _demo/pause-1200.yaml
+- assertVisible: No filters applied
+- runFlow: _demo/pause-1200.yaml
+- tapOn:
+    id: filters.city.Bengaluru
+- runFlow: _demo/pause-900.yaml
+- assertVisible: 1 applied
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element:
+      id: filters.type.Locum
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-jobs-search-filters-5.yaml
+- tapOn:
+    id: filters.type.Locum
+- runFlow: _demo/pause-900.yaml
+- assertVisible: Show 1 role
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/cap-jobs-search-filters-6.yaml
+- tapOn:
+    id: filters.done
+- runFlow: _demo/pause-900.yaml
+- scrollUntilVisible:
+    element:
+      id: search.query
+    direction: UP
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- assertVisible: Showing 1 of 4 verified roles
+- runFlow: _demo/pause-1200.yaml
+- assertVisible:
+    id: job.title.5eed0000-0000-4000-8000-00000000b004
+- runFlow: _demo/pause-1200.yaml
+- tapOn:
+    id: tabs.home
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 10000
+- runFlow: _demo/pause-500.yaml
+- tapOn:
+    id: tabs.search
+- runFlow: _demo/pause-900.yaml
+- scrollUntilVisible:
+    element:
+      id: search.query
+    direction: UP
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- assertVisible: Showing 1 of 4 verified roles
+- runFlow: _demo/pause-1200.yaml
+- assertVisible: Filters, 2 active
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element:
+      id: search.filters
+    direction: UP
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: search.filters
+- runFlow: _demo/pause-900.yaml
+- tapOn:
+    id: filters.reset
+- runFlow: _demo/pause-900.yaml
+- assertVisible: No filters applied
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element:
+      id: filters.salary.plus
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: filters.salary.plus
+- runFlow: _demo/pause-900.yaml
+- tapOn:
+    id: filters.salary.plus
+- runFlow: _demo/pause-900.yaml
+- tapOn:
+    id: filters.salary.plus
+- runFlow: _demo/pause-900.yaml
+- tapOn:
+    id: filters.salary.plus
+- runFlow: _demo/pause-900.yaml
+- tapOn:
+    id: filters.salary.plus
+- runFlow: _demo/pause-900.yaml
+- assertVisible: ₹10\+ LPA
+- runFlow: _demo/pause-1200.yaml
+- tapOn:
+    id: filters.sort.salary
+- runFlow: _demo/pause-900.yaml
+- tapOn:
+    id: filters.done
+- runFlow: _demo/pause-900.yaml
+- scrollUntilVisible:
+    element:
+      id: search.query
+    direction: UP
+    timeout: 10000
+- runFlow: _demo/pause-400.yaml
+- assertVisible: Showing 1 of 4 verified roles
+- runFlow: _demo/pause-1200.yaml
+- assertVisible:
+    id: job.title.5eed0000-0000-4000-8000-00000000b002
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element:
+      id: job.open.5eed0000-0000-4000-8000-00000000b002
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: job.open.5eed0000-0000-4000-8000-00000000b002
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: job.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- extendedWaitUntil:
+    visible: Consultant Cardiologist
+    timeout: 30000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/pause-2500.yaml

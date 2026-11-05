@@ -1,0 +1,34 @@
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/start-notification-open.yaml
+- runFlow: _demo/cap-notification-open-1.yaml
+- tapOn:
+    id: topbar.notifications
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: notifications.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- assertVisible:
+    id: notifications.unread
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/cap-notification-open-2.yaml
+- tapOn:
+    id: notifications.readAll
+- runFlow: _demo/pause-900.yaml
+- tapOn:
+    id: notifications.back
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/pause-2500.yaml

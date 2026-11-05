@@ -1,0 +1,147 @@
+appId: work.apronhanger.candidate.dev
+---
+- launchApp:
+    clearState: true
+- runFlow: _demo/pause-1500.yaml
+- runFlow: _common/openSignIn.yaml
+- runFlow: _demo/cap-auth-signup-1.yaml
+- tapOn:
+    id: auth.tab.signup
+- runFlow: _demo/pause-900.yaml
+- runFlow: _demo/cap-auth-signup-2.yaml
+- extendedWaitUntil:
+    visible:
+      id: signup.screen
+    timeout: 10000
+- runFlow: _demo/pause-500.yaml
+- runFlow:
+    when:
+      platform: Android
+    commands:
+    - tapOn:
+        id: signup.name
+    - inputText: Maestro Tester
+    - tapOn:
+        id: signup.mobile
+    - inputText: '9000000002'
+    - tapOn:
+        id: signup.email
+    - inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
+    - pressKey: Enter
+    - inputText: Secret@123
+    - runFlow: _common/hideKeyboard.yaml
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+    - tapOn:
+        id: signup.password.toggle
+    - tapOn:
+        id: signup.email
+    - inputText: ${'maestro+' + Date.now() + '@apronhanger.test'}
+    - pressKey: Enter
+    - retry:
+        maxRetries: 3
+        commands:
+        - eraseText: 30
+        - inputText: Secret@123
+        - assertVisible: Secret@123
+    - scrollUntilVisible:
+        element:
+          id: signup.name
+        direction: UP
+        timeout: 10000
+    - tapOn:
+        id: signup.name
+    - inputText: Maestro Tester
+    - pressKey: Enter
+    - inputText: '9000000002'
+- scrollUntilVisible:
+    element:
+      id: signup.privacy
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: signup.terms
+- runFlow: _demo/pause-900.yaml
+- runFlow: _demo/cap-auth-signup-3.yaml
+- tapOn:
+    id: signup.privacy
+- runFlow: _demo/pause-900.yaml
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+    - tapOn:
+        text: Next
+        optional: true
+- scrollUntilVisible:
+    element:
+      id: signup.submit
+    direction: UP
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-auth-signup-4.yaml
+- tapOn:
+    id: signup.submit
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible: Save password.*
+    timeout: 6000
+    optional: true
+- runFlow: _demo/pause-500.yaml
+- runFlow:
+    when:
+      platform: Android
+      visible: Save password.*
+    commands:
+    - back
+- runFlow:
+    when:
+      notVisible: Enter the OTP sent to 9000000002.
+    commands:
+    - tapOn:
+        id: signup.submit
+- extendedWaitUntil:
+    visible: Enter the OTP sent to 9000000002.
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-auth-signup-5.yaml
+- tapOn:
+    id: signup.otp
+- runFlow: _demo/pause-900.yaml
+- inputText: '123456'
+- runFlow: _demo/pause-600.yaml
+- runFlow: _common/hideKeyboard.yaml
+- tapOn:
+    id: signup.submit
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    notVisible:
+      id: signup.screen
+    timeout: 30000
+- runFlow: _demo/pause-500.yaml
+- extendedWaitUntil:
+    visible: Save password.*
+    timeout: 8000
+    optional: true
+- runFlow: _demo/pause-500.yaml
+- runFlow:
+    when:
+      platform: Android
+      visible: Save password.*
+    commands:
+    - back
+- runFlow:
+    when:
+      platform: iOS
+      visible: Save Password.*
+    commands:
+    - tapOn: Not Now
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-auth-signup-6.yaml
+- assertVisible: Your next clinical role, curated for you.
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/pause-2500.yaml

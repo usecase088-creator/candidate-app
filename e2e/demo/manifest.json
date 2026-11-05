@@ -1,0 +1,90 @@
+{
+  "title": "ApronHanger candidate app: a walkthrough from first launch to deleting an account",
+  "disclaimer": "Recorded on an iPhone simulator against a test server. Hospitals, jobs and people are sample data.",
+  "chapters": [
+    {
+      "flow": "guest-browse",
+      "title": "Browse jobs without an account",
+      "subtitle": "Anyone can look around before signing up",
+      "batch": 1
+    },
+    {
+      "flow": "auth-signup",
+      "title": "Create an account",
+      "subtitle": "Name, mobile number, email and a password",
+      "batch": 1
+    },
+    {
+      "flow": "jobs-search-filters",
+      "title": "Search and filter jobs",
+      "subtitle": "By role, city and more",
+      "batch": 1
+    },
+    {
+      "flow": "jobs-browse-save",
+      "title": "Save jobs for later",
+      "subtitle": "One tap on the bookmark",
+      "batch": 1
+    },
+    {
+      "flow": "jobs-gov-intl",
+      "title": "Government and international jobs",
+      "subtitle": "With deadlines and links to the official source",
+      "batch": 1
+    },
+    {
+      "flow": "profile-builder",
+      "title": "Build your profile",
+      "subtitle": "A short form, saved on your phone until you finish",
+      "batch": 1
+    },
+    {
+      "flow": "apply-quick",
+      "title": "Apply with Quick Apply",
+      "subtitle": "Your saved profile goes to the hospital in one tap",
+      "batch": 1
+    },
+    {
+      "flow": "application-documents",
+      "title": "When a hospital asks for documents",
+      "subtitle": "The request lists exactly what is needed",
+      "batch": 1
+    },
+    {
+      "flow": "application-interview",
+      "title": "Interview invitations",
+      "subtitle": "Accept, or ask for another time",
+      "batch": 1
+    },
+    {
+      "flow": "application-offer",
+      "title": "Receive an offer",
+      "subtitle": "Read the offer letter and accept in one tap",
+      "batch": 1
+    },
+    {
+      "flow": "notification-open",
+      "title": "Stay up to date",
+      "subtitle": "Updates from hospitals in the notification bell",
+      "batch": 1
+    },
+    {
+      "flow": "auth-login",
+      "title": "Sign in and sign out",
+      "subtitle": "Come back any time",
+      "batch": 1
+    },
+    {
+      "flow": "auth-forgot-password",
+      "title": "Forgot your password?",
+      "subtitle": "Reset it with a one-time code",
+      "batch": 2
+    },
+    {
+      "flow": "account-delete",
+      "title": "Delete your account",
+      "subtitle": "Permanent, and it asks for your password first",
+      "batch": 2
+    }
+  ]
+}

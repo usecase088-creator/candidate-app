@@ -1,0 +1,14 @@
+# Shared steps: a fresh install opens on Home as a guest (guest browsing); tap "Sign in" in the top bar to reach the login screen.
+# 120 s: the first launch after starting Metro bundles from scratch (over 30 s on Raj's laptop). Used with `runFlow`.
+appId: work.apronhanger.candidate.dev
+---
+- extendedWaitUntil:
+    visible:
+      id: topbar.signin
+    timeout: 120000
+- tapOn:
+    id: topbar.signin
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 30000

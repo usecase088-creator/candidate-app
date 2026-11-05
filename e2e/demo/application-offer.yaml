@@ -1,0 +1,72 @@
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- runFlow: _demo/start-application-offer.yaml
+- runFlow: _demo/cap-application-offer-1.yaml
+- tapOn:
+    id: tabs.applications
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: applications.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- extendedWaitUntil:
+    visible:
+      id: applications.tab.all
+    timeout: 90000
+- runFlow: _demo/pause-500.yaml
+- scrollUntilVisible:
+    element:
+      id: application.row.5eed0000-0000-4000-8000-00000000a106
+    timeout: 30000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: application.row.5eed0000-0000-4000-8000-00000000a106
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-application-offer-2.yaml
+- assertVisible: Offer Letter Received
+- runFlow: _demo/pause-1200.yaml
+- assertVisible: Congratulations! The hospital has sent you an offer letter.
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/cap-application-offer-3.yaml
+- tapOn:
+    id: action.offer.view
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    notVisible:
+      id: application.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow:
+    when:
+      platform: Android
+    commands:
+    - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+    - tapOn: Done
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-application-offer-4.yaml
+- tapOn:
+    id: action.offer.accept
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible: Response recorded successfully!
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-application-offer-5.yaml
+- assertVisible: 'Status: Offer Accepted'
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/pause-2500.yaml

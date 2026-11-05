@@ -1,0 +1,67 @@
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/signupThrowaway.yaml
+- runFlow: _demo/start-account-delete.yaml
+- tapOn:
+    id: tabs.profile
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: profile.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-account-delete-1.yaml
+- tapOn:
+    id: profile.settings
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: settings.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-account-delete-2.yaml
+- tapOn:
+    id: settings.delete
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: delete.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- tapOn:
+    id: delete.password
+- runFlow: _demo/pause-900.yaml
+- inputText: definitely-wrong
+- runFlow: _demo/pause-600.yaml
+- runFlow: _common/hideKeyboard.yaml
+- tapOn:
+    id: delete.submit
+- runFlow: _demo/pause-900.yaml
+- tapOn: Delete
+- runFlow: _demo/pause-900.yaml
+- runFlow: _demo/cap-account-delete-3.yaml
+- extendedWaitUntil:
+    visible: Incorrect password
+    timeout: 30000
+- runFlow: _demo/pause-500.yaml
+- tapOn:
+    id: delete.password
+- runFlow: _demo/pause-900.yaml
+- eraseText: 30
+- inputText: ${PASSWORD}
+- runFlow: _demo/pause-600.yaml
+- runFlow: _common/hideKeyboard.yaml
+- tapOn:
+    id: delete.submit
+- runFlow: _demo/pause-900.yaml
+- tapOn: Delete
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: login.screen
+    timeout: 60000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-account-delete-4.yaml
+- assertVisible: Your account has been deleted.
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/pause-2500.yaml

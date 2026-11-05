@@ -1,0 +1,78 @@
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- runFlow: _demo/start-profile-builder.yaml
+- runFlow: _demo/cap-profile-builder-1.yaml
+- tapOn:
+    id: tabs.profile
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: profile.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _demo/cap-profile-builder-2.yaml
+- tapOn:
+    id: profile.edit
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: builder.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- assertVisible: Step 1 of 16
+- runFlow: _demo/pause-1200.yaml
+- assertVisible: Basic Details
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/cap-profile-builder-3.yaml
+- assertVisible:
+    id: builder.field.email
+- runFlow: _demo/pause-1200.yaml
+- assertVisible:
+    id: builder.field.phone
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element:
+      id: builder.next
+    direction: DOWN
+    timeout: 20000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-profile-builder-4.yaml
+- tapOn:
+    id: builder.next
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible: Step 2 of 16
+    timeout: 30000
+- runFlow: _demo/pause-500.yaml
+- assertVisible: Medical Work Profile
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/cap-profile-builder-5.yaml
+- tapOn:
+    id: builder.exit
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: profile.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- tapOn:
+    id: profile.edit
+- runFlow: _demo/pause-900.yaml
+- runFlow: _demo/cap-profile-builder-6.yaml
+- extendedWaitUntil:
+    visible: Step 2 of 16
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- scrollUntilVisible:
+    element:
+      id: builder.back
+    direction: DOWN
+    timeout: 20000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: builder.back
+- runFlow: _demo/pause-900.yaml
+- assertVisible: Step 1 of 16
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/pause-2500.yaml

@@ -1,0 +1,145 @@
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- runFlow: _demo/start-application-interview.yaml
+- runFlow: _demo/cap-application-interview-1.yaml
+- tapOn:
+    id: tabs.applications
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: applications.screen
+    timeout: 20000
+- runFlow: _demo/pause-500.yaml
+- extendedWaitUntil:
+    visible:
+      id: applications.tab.all
+    timeout: 90000
+- runFlow: _demo/pause-500.yaml
+- tapOn:
+    id: applications.tab.applied
+- runFlow: _demo/pause-900.yaml
+- assertVisible:
+    id: application.row.5eed0000-0000-4000-8000-00000000a101
+- runFlow: _demo/pause-1200.yaml
+- assertNotVisible:
+    id: application.row.5eed0000-0000-4000-8000-00000000a102
+- tapOn:
+    id: applications.tab.all
+- runFlow: _demo/pause-900.yaml
+- scrollUntilVisible:
+    element:
+      id: application.row.5eed0000-0000-4000-8000-00000000a102
+    timeout: 30000
+- runFlow: _demo/pause-400.yaml
+- runFlow: _demo/cap-application-interview-2.yaml
+- tapOn:
+    id: application.row.5eed0000-0000-4000-8000-00000000a102
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _common/iosPasswordSheet.yaml
+- assertVisible: Interview Scheduled
+- runFlow: _demo/pause-1200.yaml
+- assertVisible: Join Meeting
+- runFlow: _demo/pause-1200.yaml
+- assertVisible: Dr. Seed Interviewer
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/cap-application-interview-3.yaml
+- tapOn:
+    id: action.interview.accept
+- runFlow: _demo/pause-900.yaml
+- runFlow: _demo/cap-application-interview-4.yaml
+- extendedWaitUntil:
+    visible: Response recorded successfully!
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- assertVisible: 'Status: Interview Accepted'
+- runFlow: _demo/pause-1200.yaml
+- extendedWaitUntil:
+    notVisible:
+      id: toast
+    timeout: 10000
+- runFlow: _demo/pause-500.yaml
+- tapOn:
+    id: application.back
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: applications.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- scrollUntilVisible:
+    element:
+      id: applications.tab.all
+    direction: UP
+    timeout: 60000
+- runFlow: _demo/pause-400.yaml
+- scrollUntilVisible:
+    element:
+      id: application.row.5eed0000-0000-4000-8000-00000000a103
+    timeout: 30000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: application.row.5eed0000-0000-4000-8000-00000000a103
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- runFlow: _common/iosPasswordSheet.yaml
+- assertVisible: Seed Valley Care Centre, 2nd floor, Bengaluru
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _common/iosPasswordSheet.yaml
+- runFlow: _demo/cap-application-interview-5.yaml
+- tapOn:
+    id: action.interview.reschedule
+- runFlow: _demo/pause-900.yaml
+- scrollUntilVisible:
+    element:
+      id: action.interview.reschedule.submit
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- assertVisible:
+    id: action.interview.reschedule.submit
+    enabled: false
+- runFlow: _demo/pause-1200.yaml
+- scrollUntilVisible:
+    element:
+      id: action.interview.note
+    direction: UP
+    timeout: 15000
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: action.interview.note
+- runFlow: _demo/pause-900.yaml
+- inputText: Free on Friday after 3 pm
+- runFlow: _demo/pause-600.yaml
+- runFlow: _common/hideKeyboard.yaml
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+    - swipe:
+        start: 50%, 55%
+        end: 50%, 15%
+- scrollUntilVisible:
+    element:
+      id: action.interview.reschedule.submit
+    timeout: 15000
+    centerElement: true
+- runFlow: _demo/pause-400.yaml
+- tapOn:
+    id: action.interview.reschedule.submit
+- runFlow: _demo/pause-900.yaml
+- extendedWaitUntil:
+    visible: Response recorded successfully!
+    timeout: 15000
+- runFlow: _demo/pause-500.yaml
+- assertVisible: 'Status: Reschedule Requested'
+- runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/pause-2500.yaml
