@@ -13,7 +13,7 @@ H="Authorization: Bearer $GITHUB_TOKEN"
 API="https://api.github.com/repos/usecase088-creator/candidate-app/actions"
 for attempt in $(seq 1 "$MAX"); do
   echo "attempt $attempt: reseed staging"
-  npm run backend:local -- --no-start --source ../job-hotfix/backend >/dev/null 2>&1 || echo "  (reseed failed, continuing)"
+  npm run backend:local -- --no-start --source ../job-hotfix/backend >"$TMPDIR/reseed.log" 2>&1 && echo "  reseeded" || { echo "  reseed failed:"; tail -3 "$TMPDIR/reseed.log"; }
   if [ -n "$FLOWS" ]; then BODY="{\"ref\":\"main\",\"inputs\":{\"build_id\":\"$BUILD\",\"flows\":\"$FLOWS\"}}"; else BODY="{\"ref\":\"main\",\"inputs\":{\"build_id\":\"$BUILD\"}}"; fi
   code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "$H" -H "Accept: application/vnd.github+json" "$API/workflows/ios-demo.yml/dispatches" -d "$BODY")
   echo "  dispatch HTTP $code"

@@ -63,11 +63,12 @@ jobs:
           echo "APP=$APP" >> "$GITHUB_ENV"
           echo "App: $APP"
 
-      # A modern iPhone looks right in a video and fits the screens (the old iPhone SE is small). Falls back to the last iPhone.
+      # The iPhone SE: every flow is proven on it. On an iPhone 17 Pro the typing came out garbled (doubled characters) and three
+      # flows failed (2026-11-06). Falls back to the newest iPhone if no SE is installed.
       - name: Boot an iPhone simulator with a clean status bar
         run: |
           UDID=""
-          for N in "iPhone 17 Pro" "iPhone 16 Pro" "iPhone 17" "iPhone 16"; do
+          for N in "iPhone SE (3rd generation)" "iPhone SE (2nd generation)"; do
             UDID=$(xcrun simctl list devices available -j | jq -r --arg n "$N" '[.devices | to_entries[] | select(.key | test("iOS")) | .value[] | select(.name == $n)] | last | .udid // empty')
             if [ -n "$UDID" ]; then echo "Device: $N"; break; fi
           done
