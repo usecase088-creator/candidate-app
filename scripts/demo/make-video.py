@@ -72,28 +72,35 @@ def gray_means(path: Path, fps=10, w=24, h=48, max_seconds=None):
     return [sum(data[i : i + n]) / n for i in range(0, len(data) - n + 1, n)]
 
 
+CAPTION_MAX = 9.0
+LIGHT_LAG = 0.25  # the light-mode command returns about this long after the screen has changed
+
+
 def find_sync(video: Path, t_dark_ms: int, t_light_ms: int, warn):
-    """Video time (s) at which the wall-clock t_dark_ms happened. Falls back to a fixed lead-in if the flips are not clear."""
-    means = gray_means(video, max_seconds=20)
-    deltas = [(abs(means[i] - means[i - 1]), i) for i in range(1, len(means))]
-    peaks = []
-    for d, i in sorted(deltas, reverse=True):
-        if d < 3:
-            break
-        if all(abs(i - j) >= 10 for _, j in peaks):
-            peaks.append((d, i))
-        if len(peaks) == 2:
-            break
-    if len(peaks) == 2:
-        a, b = sorted(i for _, i in peaks)
-        gap = (b - a) / 10.0
-        want = (t_light_ms - t_dark_ms) / 1000.0
-        if abs(gap - want) <= 0.8:
-            return a / 10.0
-        warn(f"sync flips {gap:.1f}s apart, expected {want:.1f}s: using the fallback")
-    else:
-        warn("could not find the dark/light flips: using the fallback")
-    return 3.3
+    """Video time (s) that matches the wall-clock t_dark_ms.
+
+    The recording flips the screen to dark mode and back to light at known wall-clock times (sync-<flow>.txt holds the times
+    when each command RETURNED). The dark command takes 0.5 to 0.9 s longer to return than the light one, so the gap between
+    the two flips in the video is not the gap between the timestamps. The light flip is the cleaner one: use it, assume it was
+    visible LIGHT_LAG s before its command returned, and ignore the dark flip except as a sanity check."""
+    means = gray_means(video, max_seconds=25)
+    lo, hi = (min(means), max(means)) if means else (0, 0)
+    dark = [i for i, m in enumerate(means) if m < (lo + hi) / 2] if hi - lo > 30 else []
+    if not dark:
+        warn("could not find the dark phase: using a fixed lead-in")
+        return 3.3
+    # The dark phase is the longest run of dark frames.
+    runs, cur = [], [dark[0]]
+    for i in dark[1:]:
+        if i == cur[-1] + 1:
+            cur.append(i)
+        else:
+            runs.append(cur)
+            cur = [i]
+    runs.append(cur)
+    run = max(runs, key=len)
+    v_light = (run[-1] + 1) / 10.0
+    return v_light + LIGHT_LAG - (t_light_ms - t_dark_ms) / 1000.0
 
 
 def load_log(folder: Path):
@@ -260,7 +267,8 @@ def build(args):
         for i, (t, n) in enumerate(caps):
             a = max(0.0, t - start)
             b = (caps[i + 1][0] - start) if i + 1 < len(caps) else dur
-            rel.append((a, min(dur, b), cap_text[flow][n - 1]))
+            # A caption that outlives its step is worse than none: show each for at most CAPTION_MAX seconds.
+            rel.append((a, min(dur, b, a + CAPTION_MAX), cap_text[flow][n - 1]))
         card = out / "chapters" / f"{idx:02d}-{flow}-card.mp4"
         clip = out / "chapters" / f"{idx:02d}-{flow}-clip.mp4"
         render_card(work, card, [
