@@ -32,6 +32,8 @@ PHONE_H = 960
 PHONE_CX = 1000
 CAPTION_X = 1330
 FONT_BOLD, FONT_REG = Path("C:/Windows/Fonts/arialbd.ttf"), Path("C:/Windows/Fonts/arial.ttf")
+OVERRIDES_FILE = ROOT / "scripts" / "demo" / "sync-overrides.json"
+OVERRIDES = json.loads(OVERRIDES_FILE.read_text("utf-8")) if OVERRIDES_FILE.exists() else {}
 MANIFEST = json.loads((ROOT / "e2e" / "demo" / "manifest.json").read_text("utf-8"))
 
 
@@ -72,7 +74,8 @@ def gray_means(path: Path, fps=10, w=24, h=48, max_seconds=None):
     return [sum(data[i : i + n]) / n for i in range(0, len(data) - n + 1, n)]
 
 
-CAPTION_MAX = 9.0
+CAPTION_MAX = 7.0
+CAPTION_MIN = 2.0
 LIGHT_LAG = 0.25  # the light-mode command returns about this long after the screen has changed
 
 
@@ -113,6 +116,69 @@ def load_log(folder: Path):
         if "timestamp" in md:
             entries.append((int(md["timestamp"]), int(md.get("duration", 0)), json.dumps(e)))
     return sorted(entries)
+
+
+def diff_counts(video: Path, start=0.0, dur=None, fps=10, w=144, h=288):
+    """Per frame (at `fps`): how many pixels changed by more than 12 grey levels since the previous frame. A typed character is
+    dozens of pixels, an identical frame is 0, so this tells typing from waiting (a mean over the picture could not)."""
+    import numpy as np
+    cmd = [FFMPEG, "-v", "error"]
+    if start:
+        cmd += ["-ss", f"{start:.2f}"]
+    if dur:
+        cmd += ["-t", f"{dur:.2f}"]
+    cmd += ["-i", str(video.resolve()), "-vf", f"fps={fps},scale={w}:{h},format=gray", "-f", "rawvideo", "-pix_fmt", "gray", "-"]
+    data = subprocess.run(cmd, capture_output=True).stdout
+    n = w * h
+    count = len(data) // n
+    if count < 2:
+        return []
+    a = np.frombuffer(data[: count * n], dtype=np.uint8).reshape(count, n).astype(np.int16)
+    return [0] + [int(x) for x in (np.abs(a[1:] - a[:-1]) > 12).sum(axis=1)]
+
+
+STILL_PIXELS = 3     # at most this many changed pixels: the screen is still
+BURST_PIXELS = 600   # at least this many: a screen change (navigation, sheet, keyboard)
+
+
+HOLD_MIN = 0.9    # a still stretch longer than this is shortened
+HOLD_KEEP = 0.5   # ...to this much at its start
+HOLD_TAIL = 0.15  # plus this much right before the screen changes again
+STILL = 0.25      # mean grey-level change per frame below which the screen counts as still
+
+
+def static_cuts(video: Path, start: float, dur: float):
+    """Intervals (seconds from the clip start) of dead time to remove: stretches where the screen does not change at all (waiting for
+    the server, a code to arrive, a screen to load). Everything that moves, including typing, is kept."""
+    fps = 10
+    c = diff_counts(video, start, dur, fps)
+    still = [x <= STILL_PIXELS for x in c]
+    cuts, i = [], 0
+    while i < len(still):
+        if not still[i]:
+            i += 1
+            continue
+        j = i
+        while j < len(still) and still[j]:
+            j += 1
+        a_, b_ = i / fps, j / fps
+        if b_ - a_ > HOLD_MIN:
+            lo, hi = a_ + HOLD_KEEP, b_ - HOLD_TAIL
+            if hi - lo > 0.3:
+                cuts.append((lo, hi))
+        i = j
+    return cuts
+
+
+def remap(t: float, cuts) -> float:
+    """Clip time t (before the cuts) -> time after the cuts."""
+    out = t
+    for a, b in cuts:
+        if t >= b:
+            out -= b - a
+        elif t > a:
+            out -= t - a
+    return out
 
 
 def esc_path(p: Path) -> str:
@@ -165,43 +231,167 @@ def render_card(work: Work, out: Path, lines, seconds):
     run(cmd, cwd=work.dir)
 
 
-def render_chapter(work: Work, video: Path, start: float, dur: float, captions, idx: int, titles, out: Path):
-    """captions: [(t_start, t_end, text)] relative to the clip start."""
+def render_chapter(work: Work, video: Path, start: float, dur: float, caption_starts, idx: int, titles, out: Path, cuts=()):
+    """caption_starts: [(t, text)], t in seconds of the clip AFTER the dead time was cut.
+    Stage A cuts the dead time and scales the phone. Stage B pauses on the screen as it was just before each caption's action
+    (a still image of that exact last frame is shown for CAPTION_MIN minus the time the action takes), so each caption can be read
+    even when the steps are quick. Returns ([(start, end, text)] in the finished clip, its duration)."""
     total = len(titles)
     _, (vw, vh) = video_info(video)
-    pw = int(round(PHONE_H * vw / vh / 2) * 2) if vw and vh else 444
-    x_phone = int(PHONE_CX - (pw + 12) / 2)
-    f = [
-        f"[0:v]fps={FPS},scale=-2:{PHONE_H}:flags=lanczos,pad=iw+12:ih+12:6:6:color={PANEL}[ph]",
-        f"[1:v][ph]overlay=x={x_phone}:y=(H-h)/2[bg]",
-    ]
-    chain = []
-    chain.append(drawtext(work.text("ApronHanger"), size=44, color=ACCENT, x=64, y=54, bold=True))
-    chain.append(drawtext(work.text("Candidate app walkthrough"), size=24, color=MUTED, x=64, y=108))
+    drop = "+".join(f"between(t,{a:.3f},{b:.3f})" for a, b in cuts)
+    pick = f"select='not({drop})',setpts=N/({FPS}*TB)," if cuts else ""
+    kept = dur - sum(b - a for a, b in cuts)
+    cutfile = work.dir / f"cut-{out.stem}.mp4"
+    run([FFMPEG, "-y", "-ss", f"{start:.2f}", "-t", f"{dur:.2f}", "-i", video.resolve(), "-vf",
+         f"{pick}fps={FPS},scale=-2:{PHONE_H}:flags=lanczos,pad=iw+12:ih+12:6:6:color={PANEL},setsar=1,format=yuv420p",
+         *encode_args(), cutfile.resolve()])
+    real = video_info(cutfile)[0]
+    kept = min(kept, real)
+    pw, ph = (int(round(PHONE_H * vw / vh / 2) * 2) + 12, PHONE_H + 12) if vw and vh else (456, PHONE_H + 12)
+    x_phone = int(PHONE_CX - pw / 2)
+
+    cs = sorted(caption_starts)
+    bounds = [0.0] + [min(t, kept) for t, _ in cs] + [kept]
+    L = [max(0.0, bounds[k + 1] - bounds[k]) for k in range(len(bounds) - 1)]
+    texts = [None] + [t for _, t in cs]
+    holds = [max(0.0, CAPTION_MIN - L[k]) if texts[k] else 0.0 for k in range(len(L))]
+    inputs = ["-i", cutfile.resolve()]
+    f = [f"[0:v]split={len(L)}" + "".join(f"[s{k}]" for k in range(len(L)))]
+    order, wins, cur, n_in = [], [], 0.0, 1
+    for k in range(len(L)):
+        f.append(f"[s{k}]trim=start={bounds[k]:.3f}:end={bounds[k + 1]:.3f},setpts=PTS-STARTPTS,fps={FPS},setsar=1[v{k}]")
+        order.append(f"[v{k}]")
+        cur_seg_end = cur + L[k]
+        if k + 1 < len(L) and holds[k + 1] > 0:
+            png = work.dir / f"hold-{out.stem}-{k}.png"
+            run([FFMPEG, "-y", "-v", "error", "-ss", f"{max(bounds[k], bounds[k + 1] - 0.3):.3f}", "-i", cutfile.resolve(), "-frames:v", "1", png.resolve()])
+            inputs += ["-loop", "1", "-framerate", str(FPS), "-t", f"{holds[k + 1]:.3f}", "-i", png.resolve()]
+            f.append(f"[{n_in}:v]setpts=PTS-STARTPTS,fps={FPS},setsar=1,format=yuv420p[h{k}]")
+            order.append(f"[h{k}]")
+            n_in += 1
+            cur = cur_seg_end + holds[k + 1]
+        else:
+            cur = cur_seg_end
+        if k + 1 < len(L) and texts[k + 1]:
+            w0 = cur_seg_end
+            wins.append((w0, min(w0 + holds[k + 1] + L[k + 1], w0 + CAPTION_MAX), texts[k + 1]))
+    new_dur = cur
+    f.append("".join(order) + f"concat=n={len(order)}:v=1:a=0[ph]")
+    f.append(f"[{n_in}:v][ph]overlay=x={x_phone}:y=(H-h)/2[bg]")
+    chain = [drawtext(work.text("ApronHanger"), size=44, color=ACCENT, x=64, y=54, bold=True),
+             drawtext(work.text("Candidate app walkthrough"), size=24, color=MUTED, x=64, y=108)]
     for i, title in enumerate(titles, 1):
-        cur = i == idx
-        chain.append(drawtext(work.text(f"{i}. {title}"), size=26, color=WHITE if cur else DIM, x=64, y=190 + (i - 1) * 54, bold=cur))
+        cur_ch = i == idx
+        chain.append(drawtext(work.text(f"{i}. {title}"), size=26, color=WHITE if cur_ch else DIM, x=64, y=190 + (i - 1) * 54, bold=cur_ch))
     chain.append(drawtext(work.text(f"Step {idx} of {total}"), size=30, color=ACCENT, x=CAPTION_X, y=300, bold=True))
     chain.append(drawtext(work.text(wrap(titles[idx - 1], 24)), size=34, color=MUTED, x=CAPTION_X, y=345, bold=True))
-    for a, b, text in captions:
-        chain.append(
-            drawtext(work.text(wrap(text, 21)), size=48, color=WHITE, x=CAPTION_X, y=470, bold=True, enable=f"between(t,{a:.2f},{b:.2f})")
-        )
+    for a_, b_, text in wins:
+        chain.append(drawtext(work.text(wrap(text, 21)), size=48, color=WHITE, x=CAPTION_X, y=470, bold=True, enable=f"between(t,{a_:.2f},{b_:.2f})"))
     chain.append(drawtext(work.text(wrap(MANIFEST["disclaimer"], 44)), size=20, color=DIM, x=64, y=H - 92))
-    chain.append(f"fade=t=in:st=0:d=0.3,fade=t=out:st={dur - 0.3:.2f}:d=0.3")
+    chain.append(f"fade=t=in:st=0:d=0.3,fade=t=out:st={new_dur - 0.3:.2f}:d=0.3")
     f.append("[bg]" + ",".join(chain) + "[v]")
-    cmd = [
-        FFMPEG, "-y", "-ss", f"{start:.2f}", "-t", f"{dur:.2f}", "-i", video.resolve(),
-        "-f", "lavfi", "-i", f"color=c={BG}:s={W}x{H}:r={FPS}:d={dur:.2f}",
-        "-filter_complex", ";".join(f), "-map", "[v]", *encode_args(), out.resolve(),
-    ]
+    cmd = [FFMPEG, "-y", *inputs, "-f", "lavfi", "-i", f"color=c={BG}:s={W}x{H}:r={FPS}:d={new_dur + 1:.2f}",
+           "-filter_complex", ";".join(f), "-map", "[v]", "-t", f"{new_dur:.2f}", *encode_args(), out.resolve()]
     run(cmd, cwd=work.dir)
+    return wins, new_dur
+
+
+def check_sheet(work: Work, clip: Path, caps, path: Path):
+    """One image per chapter: the finished video's frame 1 s after each caption appears, to review that the caption matches the screen."""
+    from PIL import Image
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tiles = []
+    for i, (a, b, text) in enumerate(caps):
+        t = a + 1.0
+        png = work.dir / f"chk-{path.stem}-{i}.png"
+        run([FFMPEG, "-y", "-v", "error", "-ss", f"{t:.2f}", "-i", clip.resolve(), "-vf", "crop=1100:1080:560:0,scale=420:-1", "-frames:v", "1", png.resolve()])
+        if png.exists():
+            tiles.append(Image.open(png).convert("RGB"))
+    if not tiles:
+        return
+    w, h = tiles[0].size
+    cols = min(len(tiles), 4)
+    rows = (len(tiles) + cols - 1) // cols
+    sheet = Image.new("RGB", (w * cols, h * rows), "white")
+    for i, im in enumerate(tiles):
+        sheet.paste(im, ((i % cols) * w, (i // cols) * h))
+    sheet.save(path)
 
 
 def concat(parts, out: Path, tmp: Path):
     lst = tmp / "concat.txt"
     lst.write_text("".join(f"file '{esc_path(p.resolve())}'\n" for p in parts), encoding="utf-8")
     run([FFMPEG, "-y", "-f", "concat", "-safe", "0", "-i", lst.resolve(), "-c", "copy", "-movflags", "+faststart", out.resolve()])
+
+
+def screen_events(video: Path, fps=10):
+    """Times (s) where a real screen change starts (navigation, sheet, keyboard): a burst of changed pixels after a calmer moment."""
+    c = diff_counts(video, fps=fps)
+    ev, i = [], 0
+    while i < len(c):
+        if c[i] >= BURST_PIXELS:
+            j = i
+            while j < len(c) and c[j] > STILL_PIXELS:
+                j += 1
+            ev.append(i / fps)
+            i = max(j, i + 1)
+        else:
+            i += 1
+    return ev
+
+
+ACTION_KEYS = ("tapOnElement", "inputTextCommand", "backPressCommand", "swipeCommand", "scrollUntilVisible")
+
+
+def app_launch_time(video: Path, fps=10):
+    """Video time (s) at which the app first appears: the end of the long still stretch at the start (the simulator sits on the home
+    screen while Maestro starts up). 0.0 if there is no such stretch."""
+    c = diff_counts(video, fps=fps)
+    i = int(4 * fps)  # skip the appearance flips at the very start
+    while i < len(c):
+        if c[i] <= STILL_PIXELS:
+            j = i
+            while j < len(c) and c[j] <= STILL_PIXELS:
+                j += 1
+            if (j - i) / fps >= 6.0:
+                return j / fps
+            i = j
+        else:
+            i += 1
+    return 0.0
+
+
+def refine_shift(video: Path, log, at, warn, flow: str):
+    """The appearance flips used for the first sync can show up on screen many seconds late (a different amount every time), so
+    the recorder and Maestro clocks cannot be tied together by them. Instead find the shift (seconds) that lines the taps in the log
+    up with the moments the screen really changes, scoring a tap higher the sooner a change follows it, and only accepting shifts that
+    put the first tap AFTER the app has launched. Returns the shift to ADD to at()."""
+    ev = screen_events(video)
+    launch = app_launch_time(video)
+    taps = [at(ts) for ts, _, txt in log if any(k in txt for k in ACTION_KEYS) and "runFlowCommand" not in txt[:80]]
+    if not taps or not ev:
+        warn(f"{flow}: no taps or screen changes to line up, keeping the start sync")
+        return 0.0
+    first = min(taps)
+    best, best_s, best_n = -1.0, None, 0
+    for k in range(-600, 151):  # -60 s .. +15 s in 0.1 s steps
+        sh = k / 10.0
+        if first + sh < launch - 0.5:
+            continue  # the app was not running yet
+        score, hit = 0.0, 0
+        for t in taps:
+            nxt = next((e for e in ev if e >= t + sh - 0.2), None)
+            if nxt is not None and nxt - (t + sh) <= 3.0:
+                score += 1.0 - max(0.0, nxt - (t + sh)) / 3.0
+                hit += 1
+        if score > best + 1e-9:
+            best, best_s, best_n = score, sh, hit
+    if best_s is None or best_n < max(3, len(taps) * 0.5):
+        warn(f"{flow}: only {best_n} of {len(taps)} taps line up with screen changes: using the app launch as the anchor")
+        # fall back: the first tap is a little after the app appears
+        return (launch + 1.5) - first if launch else 0.0
+    print(f"  {flow}: shift {best_s:+.1f}s ({best_n}/{len(taps)} taps line up, app launch at {launch:.1f}s)")
+    return best_s
 
 
 def chapter_timeline(flow: str, art: Path, warn, work_dir: Path):
@@ -219,20 +409,35 @@ def chapter_timeline(flow: str, art: Path, warn, work_dir: Path):
     t_dark, t_light = (int(x) for x in sync.read_text().split()[:2])
     v_dark = find_sync(video, t_dark, t_light, lambda m: warn(f"{flow}: {m}"))
 
+    base = lambda ts_ms: v_dark + (ts_ms - t_dark) / 1000.0
+    shift = refine_shift(video, log, base, lambda m: warn(m), flow)
+
+    shift += OVERRIDES.get(flow, 0.0)  # a hand-checked correction for a chapter, see sync-overrides.json
+
     def at(ts_ms):
-        return v_dark + (ts_ms - t_dark) / 1000.0
+        return base(ts_ms) + shift
 
     first_ts = log[0][0]
     last_end = max(ts + dur for ts, dur, _ in log)
     start_marker = next((ts for ts, _, txt in log if f"start-{flow}.yaml" in txt), None)
     start = at(start_marker if start_marker else first_ts) - 0.4
     end = min(vdur - 0.05, at(last_end) + 1.2)
+    # Each caption belongs to the first tap after its marker. The shift for the whole chapter is only good to about a second or two,
+    # so snap each caption to the screen change that really follows its own tap (within a short window), keeping the lead.
+    ev = screen_events(video)
+    tap_ts = [ts for ts, _, txt in log if any(k in txt for k in ACTION_KEYS) and "runFlowCommand" not in txt[:80]]
     caps = []
     for n in range(1, 30):
         ts = next((ts for ts, _, txt in log if f"cap-{flow}-{n}.yaml" in txt), None)
         if ts is None:
             break
-        caps.append((at(ts), n))
+        t = at(ts)
+        tp = next((at(x) for x in tap_ts if x >= ts), None)
+        if tp is not None:
+            e = next((e for e in ev if tp - 0.3 <= e <= tp + 2.5), None)
+            if e is not None and abs(e - tp) > 0.15:
+                t += (e - 0.25) - tp
+        caps.append((t, n))
     return video, max(0.0, start), end, caps
 
 
@@ -263,12 +468,17 @@ def build(args):
             continue
         video, start, end, caps = tl
         dur = max(3.0, end - start)
-        rel = []
-        for i, (t, n) in enumerate(caps):
-            a = max(0.0, t - start)
-            b = (caps[i + 1][0] - start) if i + 1 < len(caps) else dur
-            # A caption that outlives its step is worse than none: show each for at most CAPTION_MAX seconds.
-            rel.append((a, min(dur, b, a + CAPTION_MAX), cap_text[flow][n - 1]))
+        cuts = static_cuts(video, start, dur) if not args.keep_waits else []
+        kept = dur - sum(b - a for a, b in cuts)
+        # Where each caption starts in the clip after the dead time is cut. Two captions closer than 0.4 s apart cannot both be
+        # shown: keep the first.
+        starts = []
+        for t, n in caps:
+            t2 = remap(max(0.0, t - start), cuts)
+            if starts and t2 - starts[-1][0] < 0.4:
+                print(f"  {flow}: caption {n} left out (only {t2 - starts[-1][0]:.1f}s after the previous)")
+                continue
+            starts.append((t2, cap_text[flow][n - 1]))
         card = out / "chapters" / f"{idx:02d}-{flow}-card.mp4"
         clip = out / "chapters" / f"{idx:02d}-{flow}-clip.mp4"
         render_card(work, card, [
@@ -276,11 +486,12 @@ def build(args):
             (wrap(ch["title"], 34), 76, WHITE, True, 450),
             (ch["subtitle"], 36, MUTED, False, 640),
         ], 2.4)
-        render_chapter(work, video, start, dur, rel, idx, titles, clip)
+        rel, new_dur = render_chapter(work, video, start, dur, starts, idx, titles, clip, cuts)
+        check_sheet(work, clip, rel, out / "checks" / f"{idx:02d}-{flow}.png")
         single = out / "chapters" / f"{idx:02d}-{flow}.mp4"
         concat([card, clip], single, out / "_work")
         segments.append((card, clip))
-        print(f"chapter {idx:02d} {flow}: {dur:.1f}s, {len(rel)} captions -> {single.name}")
+        print(f"chapter {idx:02d} {flow}: {dur:.1f}s -> {new_dur:.1f}s ({len(cuts)} waits shortened), {len(rel)} captions")
     if not segments:
         raise SystemExit("nothing to build")
     intro, outro = out / "chapters" / "00-intro.mp4", out / "chapters" / "99-outro.mp4"
@@ -321,6 +532,7 @@ if __name__ == "__main__":
     ap.add_argument("--art", action="append", default=[], help="artifact folder (repeat for several)")
     ap.add_argument("--out", required=True)
     ap.add_argument("--only", default="")
+    ap.add_argument("--keep-waits", action="store_true", help="do not shorten still stretches")
     ap.add_argument("--preview", help="video to lay out for a quick look")
     ap.add_argument("--start", type=float, default=0)
     ap.add_argument("--dur", type=float, default=12)
