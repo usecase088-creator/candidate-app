@@ -14,6 +14,7 @@ Usage:
 Needs: pip install --user imageio-ffmpeg Pillow   (ffmpeg comes with imageio-ffmpeg)
 """
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -23,6 +24,7 @@ import textwrap
 from pathlib import Path
 
 import imageio_ffmpeg
+import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
@@ -35,6 +37,57 @@ FONT_BOLD, FONT_REG = Path("C:/Windows/Fonts/arialbd.ttf"), Path("C:/Windows/Fon
 OVERRIDES_FILE = ROOT / "scripts" / "demo" / "sync-overrides.json"
 OVERRIDES = json.loads(OVERRIDES_FILE.read_text("utf-8")) if OVERRIDES_FILE.exists() else {}
 MANIFEST = json.loads((ROOT / "e2e" / "demo" / "manifest.json").read_text("utf-8"))
+ANDROID = False  # build() sets it: the Android recordings are tied to Maestro by the recorder start time, not by dark-mode flips
+DISCLAIMER = MANIFEST["disclaimer"]  # build() replaces it for the Android edition
+VOICE = {"on": False, "name": "en-IN-NeerjaNeural", "rate": "-5%", "dir": None}
+SR = 24000  # narration sample rate
+
+
+def tts(text: str):
+    """The narration for a text as float32 samples at SR (None when the voice-over is off). Cached by text, so a rebuild is free.
+    Uses the free Microsoft Edge neural voices through the edge-tts package (the text is sent to that online service)."""
+    if not VOICE["on"]:
+        return None
+    VOICE["dir"].mkdir(parents=True, exist_ok=True)
+    key = hashlib.sha1(f"{VOICE['name']}|{VOICE['rate']}|{text}".encode("utf-8")).hexdigest()[:16]
+    raw = VOICE["dir"] / f"{key}.f32"
+    if not raw.exists():
+        mp3 = VOICE["dir"] / f"{key}.mp3"
+        for attempt in range(4):
+            p = subprocess.run([sys.executable, "-m", "edge_tts", "--voice", VOICE["name"], f"--rate={VOICE['rate']}", "--text", text,
+                                "--write-media", str(mp3)], capture_output=True, text=True, encoding="utf-8", errors="replace")
+            if p.returncode == 0 and mp3.exists() and mp3.stat().st_size > 1000:
+                break
+        else:
+            raise SystemExit(f"text-to-speech failed for {text!r}: {p.stderr[-400:]}")
+        run([FFMPEG, "-y", "-i", mp3.resolve(), "-f", "f32le", "-ar", str(SR), "-ac", "1", raw.resolve()])
+    return np.fromfile(raw, dtype="<f4")
+
+
+def track(seconds: float, placed):
+    """A silent track of this length with narrations [(start_s, samples)] laid on it."""
+    n = int(round(seconds * SR))
+    out = np.zeros(n, np.float32)
+    for t, a in placed:
+        i = int(round(t * SR))
+        seg = a[: max(0, n - i)]
+        out[i : i + len(seg)] += seg
+    return out
+
+
+def mux(video: Path, audio, out: Path, tmp: Path):
+    """Puts the narration (float32 samples) under a finished video."""
+    import wave
+    peak = float(np.max(np.abs(audio))) if len(audio) else 0.0
+    pcm = (audio * (0.92 / peak if peak > 0 else 1.0) * 32767).astype("<i2")
+    wav = tmp / f"{out.stem}-voice.wav"
+    with wave.open(str(wav), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SR)
+        w.writeframes(pcm.tobytes())
+    run([FFMPEG, "-y", "-i", video.resolve(), "-i", wav.resolve(), "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k",
+         "-shortest", "-movflags", "+faststart", out.resolve()])
 
 
 def run(cmd, cwd=None, quiet=True):
@@ -231,7 +284,7 @@ def render_card(work: Work, out: Path, lines, seconds):
     run(cmd, cwd=work.dir)
 
 
-def render_chapter(work: Work, video: Path, start: float, dur: float, caption_starts, idx: int, titles, out: Path, cuts=()):
+def render_chapter(work: Work, video: Path, start: float, dur: float, caption_starts, idx: int, titles, out: Path, cuts=(), need=None):
     """caption_starts: [(t, text)], t in seconds of the clip AFTER the dead time was cut.
     Stage A cuts the dead time and scales the phone. Stage B pauses on the screen as it was just before each caption's action
     (a still image of that exact last frame is shown for CAPTION_MIN minus the time the action takes), so each caption can be read
@@ -254,7 +307,9 @@ def render_chapter(work: Work, video: Path, start: float, dur: float, caption_st
     bounds = [0.0] + [min(t, kept) for t, _ in cs] + [kept]
     L = [max(0.0, bounds[k + 1] - bounds[k]) for k in range(len(bounds) - 1)]
     texts = [None] + [t for _, t in cs]
-    holds = [max(0.0, CAPTION_MIN - L[k]) if texts[k] else 0.0 for k in range(len(L))]
+    need = need or {}  # caption text -> seconds the narration needs
+    mins = [max(CAPTION_MIN, need.get(texts[k], 0.0)) if texts[k] else 0.0 for k in range(len(L))]
+    holds = [max(0.0, mins[k] - L[k]) if texts[k] else 0.0 for k in range(len(L))]
     inputs = ["-i", cutfile.resolve()]
     f = [f"[0:v]split={len(L)}" + "".join(f"[s{k}]" for k in range(len(L)))]
     order, wins, cur, n_in = [], [], 0.0, 1
@@ -274,7 +329,7 @@ def render_chapter(work: Work, video: Path, start: float, dur: float, caption_st
             cur = cur_seg_end
         if k + 1 < len(L) and texts[k + 1]:
             w0 = cur_seg_end
-            wins.append((w0, min(w0 + holds[k + 1] + L[k + 1], w0 + CAPTION_MAX), texts[k + 1]))
+            wins.append((w0, min(w0 + holds[k + 1] + L[k + 1], w0 + max(CAPTION_MAX, mins[k + 1])), texts[k + 1]))
     new_dur = cur
     f.append("".join(order) + f"concat=n={len(order)}:v=1:a=0[ph]")
     f.append(f"[{n_in}:v][ph]overlay=x={x_phone}:y=(H-h)/2[bg]")
@@ -287,7 +342,7 @@ def render_chapter(work: Work, video: Path, start: float, dur: float, caption_st
     chain.append(drawtext(work.text(wrap(titles[idx - 1], 24)), size=34, color=MUTED, x=CAPTION_X, y=345, bold=True))
     for a_, b_, text in wins:
         chain.append(drawtext(work.text(wrap(text, 21)), size=48, color=WHITE, x=CAPTION_X, y=470, bold=True, enable=f"between(t,{a_:.2f},{b_:.2f})"))
-    chain.append(drawtext(work.text(wrap(MANIFEST["disclaimer"], 44)), size=20, color=DIM, x=64, y=H - 92))
+    chain.append(drawtext(work.text(wrap(DISCLAIMER, 44)), size=20, color=DIM, x=64, y=H - 92))
     chain.append(f"fade=t=in:st=0:d=0.3,fade=t=out:st={new_dur - 0.3:.2f}:d=0.3")
     f.append("[bg]" + ",".join(chain) + "[v]")
     cmd = [FFMPEG, "-y", *inputs, "-f", "lavfi", "-i", f"color=c={BG}:s={W}x{H}:r={FPS}:d={new_dur + 1:.2f}",
@@ -367,14 +422,15 @@ def refine_shift(video: Path, log, at, warn, flow: str):
     up with the moments the screen really changes, scoring a tap higher the sooner a change follows it, and only accepting shifts that
     put the first tap AFTER the app has launched. Returns the shift to ADD to at()."""
     ev = screen_events(video)
-    launch = app_launch_time(video)
+    launch = 0.0 if ANDROID else app_launch_time(video)
     taps = [at(ts) for ts, _, txt in log if any(k in txt for k in ACTION_KEYS) and "runFlowCommand" not in txt[:80]]
     if not taps or not ev:
         warn(f"{flow}: no taps or screen changes to line up, keeping the start sync")
         return 0.0
     first = min(taps)
     best, best_s, best_n = -1.0, None, 0
-    for k in range(-600, 151):  # -60 s .. +15 s in 0.1 s steps
+    lo, hi = (-40, 41) if ANDROID else (-600, 151)  # Android: the clocks are tied directly, only a small correction is needed
+    for k in range(lo, hi):  # -60 s .. +15 s in 0.1 s steps (iPhone)
         sh = k / 10.0
         if first + sh < launch - 0.5:
             continue  # the app was not running yet
@@ -389,7 +445,7 @@ def refine_shift(video: Path, log, at, warn, flow: str):
     if best_s is None or best_n < max(3, len(taps) * 0.5):
         warn(f"{flow}: only {best_n} of {len(taps)} taps line up with screen changes: using the app launch as the anchor")
         # fall back: the first tap is a little after the app appears
-        return (launch + 1.5) - first if launch else 0.0
+        return (launch + 1.5) - first if launch and not ANDROID else 0.0
     print(f"  {flow}: shift {best_s:+.1f}s ({best_n}/{len(taps)} taps line up, app launch at {launch:.1f}s)")
     return best_s
 
@@ -407,7 +463,8 @@ def chapter_timeline(flow: str, art: Path, warn, work_dir: Path):
         warn(f"{flow}: no sync or command log, cutting by eye is needed")
         return None
     t_dark, t_light = (int(x) for x in sync.read_text().split()[:2])
-    v_dark = find_sync(video, t_dark, t_light, lambda m: warn(f"{flow}: {m}"))
+    # Android: the file holds the wall-clock time (ms) at which screen recording was started, twice; video time 0 is that moment.
+    v_dark = 0.0 if ANDROID else find_sync(video, t_dark, t_light, lambda m: warn(f"{flow}: {m}"))
 
     base = lambda ts_ms: v_dark + (ts_ms - t_dark) / 1000.0
     shift = refine_shift(video, log, base, lambda m: warn(m), flow)
@@ -442,7 +499,14 @@ def chapter_timeline(flow: str, art: Path, warn, work_dir: Path):
 
 
 def build(args):
+    global DISCLAIMER, ANDROID
     out = Path(args.out)
+    android = args.platform == "android"
+    ANDROID = android
+    device = "an Android phone" if android else "an iPhone simulator"
+    DISCLAIMER = f"Recorded on {device} against a test server. Hospitals, jobs and people are sample data."
+    if args.voice:
+        VOICE.update(on=True, name=args.voice_name, dir=Path(args.voice_cache) if args.voice_cache else out / "_voice")
     work = Work(out / "_work")
     (out / "chapters").mkdir(parents=True, exist_ok=True)
     warnings = []
@@ -453,7 +517,8 @@ def build(args):
     arts = [Path(a) for a in args.art]
     story = json.loads((ROOT / "scripts" / "demo" / "story.json").read_text("utf-8"))
     cap_text = {c["flow"]: [x["text"] for x in c["captions"]] for c in story["chapters"]}
-    segments = []
+    cap_voice = {c["flow"]: [x.get("voice", x["text"]) for x in c["captions"]] for c in story["chapters"]}
+    segments, chapter_audio = [], []
     for idx, ch in enumerate(chapters, 1):
         flow = ch["flow"]
         if only and flow not in only:
@@ -472,46 +537,68 @@ def build(args):
         kept = dur - sum(b - a for a, b in cuts)
         # Where each caption starts in the clip after the dead time is cut. Two captions closer than 0.4 s apart cannot both be
         # shown: keep the first.
-        starts = []
+        starts, say = [], {}
         for t, n in caps:
             t2 = remap(max(0.0, t - start), cuts)
             if starts and t2 - starts[-1][0] < 0.4:
                 print(f"  {flow}: caption {n} left out (only {t2 - starts[-1][0]:.1f}s after the previous)")
                 continue
             starts.append((t2, cap_text[flow][n - 1]))
+            say[cap_text[flow][n - 1]] = tts(cap_voice[flow][n - 1])
         card = out / "chapters" / f"{idx:02d}-{flow}-card.mp4"
         clip = out / "chapters" / f"{idx:02d}-{flow}-clip.mp4"
+        card_say = tts(f"Step {idx}. {ch['title']}. {ch['subtitle']}.")
+        card_secs = max(2.4, len(card_say) / SR + 1.1) if card_say is not None else 2.4
         render_card(work, card, [
             (f"Step {idx} of {len(chapters)}", 36, ACCENT, True, 380),
             (wrap(ch["title"], 34), 76, WHITE, True, 450),
             (ch["subtitle"], 36, MUTED, False, 640),
-        ], 2.4)
-        rel, new_dur = render_chapter(work, video, start, dur, starts, idx, titles, clip, cuts)
+        ], card_secs)
+        need = {t: len(a) / SR + 0.6 for t, a in say.items() if a is not None}
+        rel, new_dur = render_chapter(work, video, start, dur, starts, idx, titles, clip, cuts, need)
         check_sheet(work, clip, rel, out / "checks" / f"{idx:02d}-{flow}.png")
         single = out / "chapters" / f"{idx:02d}-{flow}.mp4"
-        concat([card, clip], single, out / "_work")
+        if VOICE["on"]:
+            plain = out / "_work" / f"{idx:02d}-plain.mp4"
+            concat([card, clip], plain, out / "_work")
+            audio_card = track(video_info(card)[0], [(0.5, card_say)])
+            audio_clip = track(video_info(clip)[0], [(a + 0.15, say[text]) for a, _, text in rel if say.get(text) is not None])
+            chapter_audio.append(np.concatenate([audio_card, audio_clip]))
+            mux(plain, chapter_audio[-1], single, out / "_work")
+        else:
+            concat([card, clip], single, out / "_work")
         segments.append((card, clip))
         print(f"chapter {idx:02d} {flow}: {dur:.1f}s -> {new_dur:.1f}s ({len(cuts)} waits shortened), {len(rel)} captions")
     if not segments:
         raise SystemExit("nothing to build")
     intro, outro = out / "chapters" / "00-intro.mp4", out / "chapters" / "99-outro.mp4"
+    intro_say = tts("ApronHanger. A walkthrough of the candidate app, from first launch to deleting an account.")
+    outro_say = tts("That is the whole journey, from first launch to deleting an account. Thank you for watching.")
+    intro_secs = max(5.5, len(intro_say) / SR + 1.6) if intro_say is not None else 5.5
+    outro_secs = max(4.0, len(outro_say) / SR + 1.6) if outro_say is not None else 4.0
     render_card(work, intro, [
         ("ApronHanger", 120, ACCENT, True, 300),
         (wrap(MANIFEST["title"].split(":")[1].strip().capitalize(), 40), 52, WHITE, True, 470),
-        ("Candidate app  |  iPhone", 34, MUTED, False, 620),
-        (MANIFEST["disclaimer"], 26, DIM, False, 930),
-    ], 5.5)
+        (f"Candidate app  |  {'Android' if android else 'iPhone'}", 34, MUTED, False, 620),
+        (DISCLAIMER, 26, DIM, False, 930),
+    ], intro_secs)
     render_card(work, outro, [
         ("That is the whole journey", 70, WHITE, True, 380),
         ("From first launch to deleting an account", 38, MUTED, False, 500),
-        (MANIFEST["disclaimer"], 26, DIM, False, 930),
-    ], 4.0)
+        (DISCLAIMER, 26, DIM, False, 930),
+    ], outro_secs)
     parts = [intro]
     for card, clip in segments:
         parts += [card, clip]
     parts.append(outro)
     final = out / "ApronHanger-walkthrough.mp4"
-    concat(parts, final, out / "_work")
+    if VOICE["on"]:
+        plain = out / "_work" / "all-plain.mp4"
+        concat(parts, plain, out / "_work")
+        full = np.concatenate([track(video_info(intro)[0], [(0.7, intro_say)]), *chapter_audio, track(video_info(outro)[0], [(0.7, outro_say)])])
+        mux(plain, full, final, out / "_work")
+    else:
+        concat(parts, final, out / "_work")
     secs, _ = video_info(final)
     print(f"\nfinal: {final}  ({secs/60:.1f} min, {final.stat().st_size/1e6:.0f} MB)")
     if warnings:
@@ -532,6 +619,10 @@ if __name__ == "__main__":
     ap.add_argument("--art", action="append", default=[], help="artifact folder (repeat for several)")
     ap.add_argument("--out", required=True)
     ap.add_argument("--only", default="")
+    ap.add_argument("--platform", choices=["ios", "android"], default="ios", help="changes the on-screen wording (device)")
+    ap.add_argument("--voice", action="store_true", help="add a spoken narration (needs: pip install --user edge-tts)")
+    ap.add_argument("--voice-name", default="en-IN-NeerjaNeural")
+    ap.add_argument("--voice-cache", default="", help="folder that keeps the narration clips between builds (default: <out>/_voice)")
     ap.add_argument("--keep-waits", action="store_true", help="do not shorten still stretches")
     ap.add_argument("--preview", help="video to lay out for a quick look")
     ap.add_argument("--start", type=float, default=0)
