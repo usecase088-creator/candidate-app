@@ -1,4 +1,6 @@
 appId: work.apronhanger.candidate.dev
+env:
+  PASSWORD: Secret@123
 ---
 - runFlow: _common/signupThrowaway.yaml
 - runFlow: _demo/start-account-delete.yaml

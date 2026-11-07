@@ -40,9 +40,9 @@ def text_of(cmd) -> str:
     return yaml.safe_dump(cmd, sort_keys=False, allow_unicode=True, width=10_000)
 
 
-def write_flow(path: Path, commands: list) -> None:
+def write_flow(path: Path, commands: list, header: dict | None = None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    body = yaml.safe_dump_all([{"appId": APP_ID}, commands], sort_keys=False, allow_unicode=True, width=10_000)
+    body = yaml.safe_dump_all([header or {"appId": APP_ID}, commands], sort_keys=False, allow_unicode=True, width=10_000)
     path.write_text(body, encoding="utf-8", newline="\n")
 
 
@@ -63,7 +63,7 @@ def marker_ref(name: str, label: str) -> dict:
 def build_chapter(ch: dict, warnings: list) -> None:
     flow = ch["flow"]
     docs = list(yaml.safe_load_all((SRC / f"{flow}.yaml").read_text("utf-8")))
-    commands = docs[1]
+    header, commands = docs[0], docs[1]  # the header holds appId and env: variables (account-delete reads ${PASSWORD})
     caps = [dict(c, n=i + 1, seen=0, placed=False) for i, c in enumerate(ch["captions"])]
     start_re = re.compile(ch["start"]) if ch.get("start") else None
     start_placed = start_re is None
@@ -92,7 +92,7 @@ def build_chapter(ch: dict, warnings: list) -> None:
     for c in caps:
         if not c["placed"]:
             warnings.append(f"{flow}: caption {c['n']} anchor {c['at']!r} not found")
-    write_flow(DST / f"{flow}.yaml", out)
+    write_flow(DST / f"{flow}.yaml", out, header)
 
 
 def main() -> int:
