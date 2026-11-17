@@ -39,7 +39,8 @@ export type ApiClientConfig = {
   reportError?: (error: ApiError) => void;
 };
 
-const DEFAULT_TIMEOUT_MS = 20_000;
+// 60 s: the free-plan staging server sleeps and needs about a minute to wake; with 20 s a first open or first sign-in failed (2026-11-17).
+const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_UPLOAD_TIMEOUT_MS = 60_000;
 
 function zodIssues(error: z.ZodError): string[] {

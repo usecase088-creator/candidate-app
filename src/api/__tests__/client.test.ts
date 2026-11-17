@@ -177,8 +177,8 @@ describe('timeout', () => {
     expect(err.kind).toBe('timeout');
   });
 
-  it('defaults to 20 seconds', () => {
-    expect(makeClient().timeoutMs).toBe(20_000);
+  it('defaults to 60 seconds (a sleeping test server needs about a minute to wake)', () => {
+    expect(makeClient().timeoutMs).toBe(60_000);
   });
 
   it('a caller abort is not reported as a timeout', async () => {

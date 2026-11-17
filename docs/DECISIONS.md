@@ -296,3 +296,7 @@ Raj was asleep and asked for decisions to be taken and listed. Each can be rever
 7. **Large text (font scale 2, 320 pt), found on the phone 2026-11-01:** Android draws expo-symbols icons as text, which
    grew with the font size and clipped the bell and tab icons (new `Icon` component divides the glyph by the font scale);
    and the tab bar was too short for its labels (`src/theme/tabBar.ts` adds the room, up to the 1.3x label cap).
+
+## D31 — Request timeout 60 s (2026-11-17)
+
+The default request timeout went from 20 s to 60 s. The free-plan staging server sleeps and takes about 55 s to wake; the client's first open and first sign-in on the preview build ended in a timeout error. Uploads keep their own 60 s. The rule for a retry (network, timeout, 5xx on queries only) is unchanged. A production server that is always on answers in well under a second, so users there are not affected.

@@ -69,7 +69,7 @@ describe('upload request', () => {
     const { client, calls } = setup(json(200, { url: 'u', publicId: 'p' }));
     await client.upload('/x', form(), UploadedSchema);
     expect(calls[0]?.timeoutMs).toBe(60_000);
-    expect(client.timeoutMs).toBe(20_000);
+    expect(client.timeoutMs).toBe(60_000);
     const custom = setup(json(200, { url: 'u', publicId: 'p' }), { uploadTimeoutMs: 5_000 });
     await custom.client.upload('/x', form(), UploadedSchema);
     expect(custom.calls[0]?.timeoutMs).toBe(5_000);
