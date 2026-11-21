@@ -91,6 +91,7 @@
   },
   "jest": {
     "preset": "jest-expo",
+    "maxWorkers": 2,
     "resolver": "react-native-reanimated/jest/resolver",
     "setupFilesAfterEnv": [
       "<rootDir>/src/test/jest.setup.ts"
