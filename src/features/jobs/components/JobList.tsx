@@ -1,6 +1,6 @@
 import { FlashList } from '@shopify/flash-list';
 import type { ReactElement } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { Job } from '@/api/schemas/jobs';
 import { spacing } from '@/theme/tokens';
@@ -42,7 +42,7 @@ export function JobList({
       )}
       extraData={savedIds}
       ListHeaderComponent={header}
-      ListFooterComponent={footer}
+      ListFooterComponent={footer ? <View style={styles.footer}>{footer}</View> : null}
       refreshing={refreshing}
       onRefresh={onRefresh}
       keyboardShouldPersistTaps="handled"
@@ -51,4 +51,8 @@ export function JobList({
   );
 }
 
-const styles = StyleSheet.create({ content: { padding: spacing['4'] } });
+// D32: rows run edge to edge with their own 16-pt inset; headers and footers bring their own margins.
+const styles = StyleSheet.create({
+  content: { paddingBottom: spacing['6'] },
+  footer: { paddingHorizontal: spacing['4'] },
+});

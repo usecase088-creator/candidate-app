@@ -1,17 +1,17 @@
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Icon } from '@/components/ui/Icon';
 import type { Job } from '@/api/schemas/jobs';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
+import { LogoTile } from '@/components/ui/LogoTile';
+import { Pill } from '@/components/ui/Pill';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, shadows, spacing } from '@/theme/tokens';
 
 import { formatLPA } from '../logic/format';
 import type { MatchedJob } from '../logic/match';
-import { HospitalLogo } from './HospitalLogo';
-import { MatchRing } from './MatchRing';
-import { VerifiedBadge } from './VerifiedBadge';
 
 type Props = {
   jobs: MatchedJob[];
@@ -21,7 +21,9 @@ type Props = {
 };
 
 /**
- * Website RecommendedRail. The prompt's "Build my CV" button opens the profile form.
+ * Website RecommendedRail. D32: no panel around it; a section header, then borderless white cards that bleed to the
+ * screen edges, each with the logo, the match as a pill, the role and one meta line. The prompt's "Build my CV"
+ * button opens the profile form.
  */
 export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
   const router = useRouter();
@@ -29,15 +31,23 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
     if (!showPrompt) return null;
     return (
       <View testID="recommended.prompt" style={styles.prompt}>
-        <AppText variant="body" weight="semibold" align="center">
+        <Icon
+          name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
+          tintColor={colors.brand}
+          size={22}
+        />
+        <AppText variant="heading" align="center">
           Unlock personalised recommendations
         </AppText>
-        <AppText color="mutedForeground" align="center">
+        <AppText variant="secondary" color="mutedForeground" align="center">
           Complete your profile and we&apos;ll match you to the best roles instantly.
         </AppText>
         <Button
           testID="recommended.build"
           label="Build my CV"
+          size="md"
+          fullWidth={false}
+          haptic="light"
           onPress={() => router.push('/profile-builder')}
         />
       </View>
@@ -46,44 +56,63 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
 
   return (
     <View testID="recommended.rail" style={styles.section}>
-      <View style={styles.tag}>
-        <Icon
-          name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
-          tintColor={colors.primary}
-          size={12}
-        />
-        <AppText variant="caption" weight="medium" color="primary">
-          Matched to your profile
+      <View style={styles.heading}>
+        <AppText variant="heading" style={styles.flex}>
+          Recommended for you
         </AppText>
+        <View style={styles.tag}>
+          <Icon
+            name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
+            tintColor={colors.brand}
+            size={12}
+          />
+          <AppText variant="caption" color="brand">
+            Matched to your profile
+          </AppText>
+        </View>
       </View>
-      <AppText variant="heading">Recommended for you</AppText>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {jobs.map((j) => (
-          <Pressable
+          <PressableScale
             key={j.id}
             testID={`recommended.job.${j.id}`}
-            accessibilityRole="button"
             accessibilityLabel={`${j.role} at ${j.hospital}, ${j.matchPercent}% match`}
             onPress={() => onOpen(j)}
             style={styles.card}
           >
             <View style={styles.cardTop}>
-              <HospitalLogo uri={j.hospitalLogoUrl} size={36} />
-              <MatchRing value={j.matchPercent} size={36} />
+              <LogoTile
+                testID={`recommended.logo.${j.id}`}
+                name={j.hospital}
+                uri={j.hospitalLogoUrl}
+                size={40}
+              />
+              <Pill
+                testID={`recommended.match.${j.id}`}
+                label={`${j.matchPercent}% match`}
+                tone="brand"
+                tabular
+              />
             </View>
-            <View style={styles.hospital}>
-              <AppText variant="caption" weight="semibold" style={styles.flex}>
-                {j.hospital}
-              </AppText>
-              {j.hospitalVerified ? <VerifiedBadge /> : null}
-            </View>
-            <AppText weight="semibold" numberOfLines={2}>
+            <AppText variant="rowTitle" numberOfLines={2}>
               {j.role}
             </AppText>
-            <AppText variant="caption" color="mutedForeground">
+            <View style={styles.hospital}>
+              <AppText variant="secondary" numberOfLines={1} style={styles.flex}>
+                {j.hospital}
+              </AppText>
+              {j.hospitalVerified ? (
+                <Icon
+                  name={{ ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' }}
+                  tintColor={colors.brand}
+                  size={14}
+                />
+              ) : null}
+            </View>
+            <AppText variant="secondary" color="mutedForeground" numberOfLines={1} tabular>
               {j.city} · {formatLPA(j.salaryMin, j.salaryMax)}
             </AppText>
-          </Pressable>
+          </PressableScale>
         ))}
       </ScrollView>
     </View>
@@ -91,45 +120,39 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
 }
 
 const styles = StyleSheet.create({
-  section: {
-    gap: spacing['2'],
-    backgroundColor: colors.surface2,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing['4'],
-  },
-  tag: {
+  section: { paddingTop: spacing['5'] },
+  heading: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
+    gap: spacing['2'],
+    paddingHorizontal: spacing['4'],
+    paddingBottom: spacing['2'],
+  },
+  flex: { flex: 1 },
+  tag: { flexDirection: 'row', alignItems: 'center', gap: spacing['1'] },
+  row: { gap: spacing['3'], paddingHorizontal: spacing['4'], paddingVertical: spacing['2'] },
+  card: {
+    width: 240,
     gap: spacing['1'],
     backgroundColor: colors.surface,
-    borderRadius: radius.full,
-    paddingHorizontal: spacing['2'],
-    paddingVertical: 2,
-  },
-  row: { gap: spacing['3'], paddingVertical: spacing['1'] },
-  card: {
-    width: 260,
-    gap: spacing['2'],
-    backgroundColor: colors.card,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing['4'],
+    padding: spacing['3'],
+    boxShadow: shadows.soft,
   },
-  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  hospital: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing['2'] },
-  flex: { flexShrink: 1 },
+  cardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing['2'],
+  },
+  hospital: { flexDirection: 'row', alignItems: 'center', gap: spacing['1'] },
   prompt: {
     gap: spacing['2'],
     alignItems: 'center',
+    marginHorizontal: spacing['4'],
+    marginTop: spacing['5'],
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
     backgroundColor: colors.brandSoft,
-    padding: spacing['6'],
+    padding: spacing['5'],
   },
 });

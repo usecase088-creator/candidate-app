@@ -94,7 +94,8 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    // The list content already has the 16-pt screen margin; the bookmark's 44-pt box ends on it.
+    paddingLeft: spacing['4'],
+    paddingRight: spacing['1'],
     paddingVertical: spacing['3'],
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,

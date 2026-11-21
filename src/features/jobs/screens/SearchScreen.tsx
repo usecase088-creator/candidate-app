@@ -156,7 +156,7 @@ export function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: spacing['4'], marginBottom: spacing['4'] },
+  header: { gap: spacing['4'], padding: spacing['4'] },
   toolbar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing['2'] },
   categoryChip: {
     minHeight: 40,

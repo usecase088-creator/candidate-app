@@ -1,10 +1,12 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Icon } from '@/components/ui/Icon';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { Screen } from '@/components/ui/Screen';
+import { SearchField } from '@/components/ui/SearchField';
 import { useIsSignedIn } from '@/features/auth/sessionStore';
 import { goToSignIn } from '@/features/auth/signInGate';
 import { AppText } from '@/components/ui/Text';
@@ -22,8 +24,40 @@ import { useSavedIdSet, useToggleSave } from '../hooks/useSavedJobs';
 import { applyFilters, categoriesOf, DEFAULT_FILTERS } from '../logic/filter';
 import { useOpenJob } from '../useOpenJob';
 
+type QuickLink = {
+  testID: string;
+  label: string;
+  path: '/saved-jobs' | '/gov-jobs' | '/intl-jobs';
+  icon:
+    | { ios: 'bookmark'; android: 'bookmark' }
+    | { ios: 'building.columns'; android: 'account_balance' }
+    | { ios: 'globe'; android: 'public' };
+};
+
+const QUICK_LINKS: QuickLink[] = [
+  {
+    testID: 'home.link.saved',
+    label: 'Saved jobs',
+    path: '/saved-jobs',
+    icon: { ios: 'bookmark', android: 'bookmark' },
+  },
+  {
+    testID: 'home.link.gov',
+    label: 'Govt Jobs',
+    path: '/gov-jobs',
+    icon: { ios: 'building.columns', android: 'account_balance' },
+  },
+  {
+    testID: 'home.link.intl',
+    label: 'International Jobs',
+    path: '/intl-jobs',
+    icon: { ios: 'globe', android: 'public' },
+  },
+];
+
 /**
- * Home (website "Opportunities"): headline, search entry, recommended rail, categories, and every job, newest first.
+ * Home (website "Opportunities"). D32: the headline is one compact line pair, the search field comes first, the three
+ * destinations are a row of tiles, the recommended rail bleeds to the edges, and the jobs are rows (JobRow).
  * Search text, city and filters live on the Search tab (same store, so they stay when switching tabs).
  */
 export function HomeScreen() {
@@ -50,60 +84,54 @@ export function HomeScreen() {
   const showPrompt = !profileQuery.isPending && !(profile && profile.completeness >= 20);
 
   const header = (
-    <View style={styles.header}>
-      <AppText variant="title" accessibilityRole="header">
-        Your next clinical role, curated for you.
-      </AppText>
-      <AppText color="mutedForeground">
-        Browse verified healthcare openings across India — salary disclosed, credentials checked.
-      </AppText>
-
-      <Pressable
-        testID="home.search"
-        accessibilityRole="search"
-        accessibilityLabel="Search jobs by role, specialty or city"
-        onPress={() => router.navigate('/search')}
-        style={styles.searchBar}
-      >
-        <AppText color="mutedForeground">Role or specialty, city or state</AppText>
-      </Pressable>
-
-      <View style={styles.links}>
-        <Button
-          testID="home.link.saved"
-          label="Saved jobs"
-          variant="outline"
-          fullWidth={false}
-          onPress={() => (signedIn ? router.push('/saved-jobs') : goToSignIn('/saved-jobs'))}
+    <View>
+      <View style={styles.hero}>
+        <AppText variant="title" accessibilityRole="header">
+          Your next clinical role, curated for you.
+        </AppText>
+        <AppText variant="secondary" color="mutedForeground">
+          Browse verified healthcare openings across India — salary disclosed, credentials checked.
+        </AppText>
+        <SearchField
+          testID="home.search"
+          accessibilityLabel="Search jobs by role, specialty or city"
+          placeholder="Role or specialty, city or state"
+          onPress={() => router.navigate('/search')}
         />
-        <Button
-          testID="home.link.gov"
-          label="Govt Jobs"
-          variant="outline"
-          fullWidth={false}
-          onPress={() => (signedIn ? router.push('/gov-jobs') : goToSignIn('/gov-jobs'))}
-        />
-        <Button
-          testID="home.link.intl"
-          label="International Jobs"
-          variant="outline"
-          fullWidth={false}
-          onPress={() => (signedIn ? router.push('/intl-jobs') : goToSignIn('/intl-jobs'))}
-        />
+        <View style={styles.tiles}>
+          {QUICK_LINKS.map((link) => (
+            <PressableScale
+              key={link.testID}
+              testID={link.testID}
+              accessibilityLabel={link.label}
+              onPress={() => (signedIn ? router.push(link.path) : goToSignIn(link.path))}
+              style={styles.tile}
+            >
+              <Icon name={{ ...link.icon, web: link.icon.android }} tintColor={colors.brand} size={22} />
+              <AppText variant="label" numberOfLines={2} align="center">
+                {link.label}
+              </AppText>
+            </PressableScale>
+          ))}
+        </View>
       </View>
 
       {view === 'ready' && (
         <>
           {signedIn && <RecommendedRail jobs={recommended} showPrompt={showPrompt} onOpen={openJob} />}
-          <CategoryChips
-            categories={categories}
-            active={category}
-            // Website: picking a category needs an account ("All Roles" has nothing to filter, so it stays open).
-            onChange={(c) => (signedIn || c === null ? setCategory(c) : goToSignIn('/'))}
-          />
+          <View style={styles.chips}>
+            <CategoryChips
+              categories={categories}
+              active={category}
+              // Website: picking a category needs an account ("All Roles" has nothing to filter, so it stays open).
+              onChange={(c) => (signedIn || c === null ? setCategory(c) : goToSignIn('/'))}
+            />
+          </View>
           <View style={styles.listHeading}>
-            <AppText variant="heading">All Opportunities</AppText>
-            <AppText testID="home.count" variant="caption" color="mutedForeground">
+            <AppText variant="heading" style={styles.flex}>
+              All Opportunities
+            </AppText>
+            <AppText testID="home.count" variant="secondary" color="mutedForeground" numberOfLines={1}>
               {`Showing ${visible.length} of ${jobs?.length ?? 0} verified roles`}
             </AppText>
           </View>
@@ -154,16 +182,27 @@ export function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: spacing['4'], marginBottom: spacing['4'] },
-  searchBar: {
-    minHeight: 48,
+  hero: { gap: spacing['3'], paddingHorizontal: spacing['4'], paddingTop: spacing['4'] },
+  tiles: { flexDirection: 'row', gap: spacing['2'], marginTop: spacing['1'] },
+  tile: {
+    flex: 1,
+    minHeight: 72,
+    alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing['1'],
+    paddingHorizontal: spacing['2'],
+    paddingVertical: spacing['2'],
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing['4'],
+    backgroundColor: colors.surface2,
   },
-  links: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['2'] },
-  listHeading: { gap: spacing['1'] },
+  chips: { paddingHorizontal: spacing['4'], paddingTop: spacing['4'] },
+  listHeading: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing['3'],
+    paddingHorizontal: spacing['4'],
+    paddingTop: spacing['5'],
+    paddingBottom: spacing['2'],
+  },
+  flex: { flex: 1 },
 });

@@ -81,4 +81,4 @@ export function SavedJobsScreen() {
   );
 }
 
-const styles = StyleSheet.create({ header: { gap: spacing['2'], marginBottom: spacing['4'] } });
+const styles = StyleSheet.create({ header: { gap: spacing['2'], padding: spacing['4'] } });
