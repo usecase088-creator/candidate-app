@@ -75,14 +75,20 @@ appId: work.apronhanger.candidate.dev
       id: gov.screen
     timeout: 15000
 
-# International jobs
-- scrollUntilVisible:
-    element:
-      id: gov.back
-    direction: UP
-    timeout: 15000
-- tapOn:
-    id: gov.back
+# International jobs. D32: the gov screen has the native header; leave it with the system back (Android) or the
+# edge swipe (iPhone).
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 1%, 50%
+          end: 70%, 50%
 - extendedWaitUntil:
     visible:
       id: home.screen
