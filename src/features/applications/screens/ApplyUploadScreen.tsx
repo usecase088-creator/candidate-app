@@ -1,26 +1,29 @@
 // "Apply with your own CV" (website: routes/apply.$jobId.upload.tsx): contact details, one PDF or Word file, the job's
 // questions. The CV goes up first (progress, cancel, retry), then the application. Email is sent exactly as typed.
+// D32: 17/600 headings, errors under their fields (no toast), Submit in the sticky bar.
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { CustomFieldResponses } from '@/api/schemas/applications';
 import { Button } from '@/components/ui/Button';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { AppText } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
-import { useToast } from '@/components/ui/Toast';
 import { FilePickerField } from '@/features/uploads/components/FilePickerField';
 import { validateCvFile } from '@/features/uploads/logic/files';
 import { pickCv } from '@/features/uploads/pickers';
 import type { PickedAsset } from '@/features/uploads/uploadsApi';
 import { spacing } from '@/theme/tokens';
 
-import { ApplyFrame, type ApplyReady } from '../components/ApplyFrame';
+import { ApplyBody, ApplyFrame, type ApplyReady } from '../components/ApplyFrame';
 import { ApplyingForCard } from '../components/ApplyingForCard';
 import { JobQuestionsForm } from '../components/JobQuestionsForm';
 import { useApplyWithCv } from '../hooks/useApply';
 import { type UploadApplyField, uploadApplyError } from '../logic/apply';
-import { answersForSubmit, validateAnswers } from '../logic/customFields';
+import { type AnswerProblem, answersForSubmit, firstProblem } from '../logic/customFields';
+
+const PREFIX = 'apply.upload';
 
 export function ApplyUploadScreen() {
   const { jobId } = useLocalSearchParams<{ jobId: string }>();
@@ -29,7 +32,7 @@ export function ApplyUploadScreen() {
     router.canGoBack() ? router.back() : router.replace({ pathname: '/apply/[jobId]', params: { jobId } });
   return (
     <ApplyFrame
-      prefix="apply.upload"
+      prefix={PREFIX}
       jobId={jobId}
       appliedMessage={(job) => `You have already submitted an application for ${job.role}.`}
     >
@@ -43,36 +46,39 @@ export function ApplyUploadScreen() {
 function FormRequired({ jobId, onBack }: { jobId: string; onBack: () => void }) {
   const router = useRouter();
   return (
-    <View testID="apply.upload.locked" style={styles.center}>
-      <AppText variant="title" align="center" accessibilityRole="header">
-        Structured Form Required
-      </AppText>
-      <AppText color="mutedForeground" align="center">
-        To maintain quality profiles for recruiters, candidates are not allowed to apply by CV upload without
-        first completing the structured form.
-      </AppText>
-      <View style={styles.row}>
-        <Button
-          testID="apply.upload.locked.back"
-          label="Back"
-          variant="outline"
-          fullWidth={false}
-          onPress={onBack}
-        />
-        <Button
-          testID="apply.upload.locked.form"
-          label="Start structured form"
-          fullWidth={false}
-          onPress={() => router.push({ pathname: '/apply/[jobId]/form', params: { jobId } })}
-        />
+    <ApplyBody prefix={PREFIX}>
+      <View testID="apply.upload.locked" style={styles.center}>
+        <AppText variant="heading" align="center">
+          Structured Form Required
+        </AppText>
+        <AppText color="mutedForeground" align="center">
+          To maintain quality profiles for recruiters, candidates are not allowed to apply by CV upload
+          without first completing the structured form.
+        </AppText>
+        <View style={styles.row}>
+          <Button
+            testID="apply.upload.locked.back"
+            label="Back"
+            variant="secondary"
+            size="md"
+            fullWidth={false}
+            onPress={onBack}
+          />
+          <Button
+            testID="apply.upload.locked.form"
+            label="Start structured form"
+            size="md"
+            fullWidth={false}
+            onPress={() => router.push({ pathname: '/apply/[jobId]/form', params: { jobId } })}
+          />
+        </View>
       </View>
-    </View>
+    </ApplyBody>
   );
 }
 
 function UploadForm({ job, me }: ApplyReady) {
   const router = useRouter();
-  const toast = useToast();
   const apply = useApplyWithCv();
   const [name, setName] = useState(me?.name ?? '');
   const [email, setEmail] = useState(me?.email ?? '');
@@ -81,7 +87,7 @@ function UploadForm({ job, me }: ApplyReady) {
   const [fileError, setFileError] = useState<string>();
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<UploadApplyField, string>>>({});
   const [answers, setAnswers] = useState<CustomFieldResponses>({});
-  const [questionError, setQuestionError] = useState<string>();
+  const [problem, setProblem] = useState<AnswerProblem>();
   const fields = job.customApplicationFields;
   const busy = apply.status.state === 'uploading';
 
@@ -104,25 +110,20 @@ function UploadForm({ job, me }: ApplyReady) {
   };
 
   const submit = () => {
+    // Website order, first problem only; each message sits under its own field (D32).
     const contactProblem = uploadApplyError({ name, email, phone });
     if (contactProblem) {
       setFieldErrors({ [contactProblem.field]: contactProblem.message });
-      toast.show(contactProblem.message, { variant: 'error' });
       return;
     }
     setFieldErrors({});
     if (!file) {
-      const message = 'Please upload your CV (PDF or Word document)';
-      setFileError(message);
-      toast.show(message, { variant: 'error' });
+      setFileError('Please upload your CV (PDF or Word document)');
       return;
     }
-    const problem = validateAnswers(fields, answers);
-    setQuestionError(problem ?? undefined);
-    if (problem) {
-      toast.show(problem, { variant: 'error' });
-      return;
-    }
+    const found = firstProblem(fields, answers);
+    setProblem(found ?? undefined);
+    if (found) return;
     void finish(
       apply.submit({
         jobId: job.id,
@@ -134,49 +135,66 @@ function UploadForm({ job, me }: ApplyReady) {
   };
 
   return (
-    <>
+    <ApplyBody
+      prefix={PREFIX}
+      bar={
+        <StickyActionBar testID="apply.upload.bar">
+          <Button
+            testID="apply.upload.submit"
+            label={busy ? 'Submitting…' : 'Submit application'}
+            accessibilityLabel="Submit application"
+            loading={busy}
+            haptic="medium"
+            onPress={submit}
+          />
+        </StickyActionBar>
+      }
+    >
       <ApplyingForCard job={job} />
       <View style={styles.gap}>
-        <AppText variant="title" accessibilityRole="header">
-          {`Upload CV · ${job.role}`}
-        </AppText>
+        <AppText variant="heading">{`Upload CV · ${job.role}`}</AppText>
         <AppText color="mutedForeground">
           Submit a PDF or Word document — this application uses your uploaded file, not the structured form.
         </AppText>
       </View>
 
-      <TextInput
-        testID="apply.upload.name"
-        label="Full name"
-        value={name}
-        onChangeText={setName}
-        error={fieldErrors.name}
-        editable={!busy}
-        autoCapitalize="words"
-        textContentType="name"
-      />
-      <TextInput
-        testID="apply.upload.email"
-        label="Email"
-        value={email}
-        onChangeText={setEmail}
-        error={fieldErrors.email}
-        editable={!busy}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
-        textContentType="emailAddress"
-      />
-      <TextInput
-        testID="apply.upload.phone"
-        label="Phone"
-        value={phone}
-        onChangeText={setPhone}
-        error={fieldErrors.phone}
-        editable={!busy}
-        keyboardType="phone-pad"
-        textContentType="telephoneNumber"
-      />
+      <View style={styles.fields}>
+        <TextInput
+          testID="apply.upload.name"
+          label="Full name"
+          value={name}
+          onChangeText={setName}
+          error={fieldErrors.name}
+          editable={!busy}
+          autoCapitalize="words"
+          textContentType="name"
+          returnKeyType="next"
+        />
+        <TextInput
+          testID="apply.upload.email"
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          error={fieldErrors.email}
+          editable={!busy}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="emailAddress"
+          returnKeyType="next"
+        />
+        <TextInput
+          testID="apply.upload.phone"
+          label="Phone"
+          value={phone}
+          onChangeText={setPhone}
+          error={fieldErrors.phone}
+          editable={!busy}
+          keyboardType="phone-pad"
+          textContentType="telephoneNumber"
+          returnKeyType="done"
+        />
+      </View>
 
       <FilePickerField
         testID="apply.upload.file"
@@ -204,20 +222,12 @@ function UploadForm({ job, me }: ApplyReady) {
         values={answers}
         onChange={(next) => {
           setAnswers(next);
-          setQuestionError(undefined);
+          setProblem(undefined);
         }}
         disabled={busy}
-        error={questionError}
+        problem={problem}
       />
-
-      <Button
-        testID="apply.upload.submit"
-        label={busy ? 'Submitting…' : 'Submit application'}
-        accessibilityLabel="Submit application"
-        loading={busy}
-        onPress={submit}
-      />
-    </>
+    </ApplyBody>
   );
 }
 
@@ -225,4 +235,6 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', gap: spacing['3'], paddingVertical: spacing['6'] },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['3'], justifyContent: 'center' },
   gap: { gap: spacing['2'] },
+  // D32: fields 20 apart inside a group.
+  fields: { gap: spacing['5'] },
 });

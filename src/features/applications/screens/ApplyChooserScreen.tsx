@@ -1,5 +1,8 @@
 // "Choose one way to apply" (website: routes/apply.$jobId.index.tsx): structured form, upload CV, quick apply, and the
-// job's own questions. Wording is the website's.
+// job's own questions. Wording is the website's. D32: the methods are pressable rows (icon tile, title, one line,
+// CTA as the spoken name), the questions are a flat form with the error under its field, and Quick Apply is the
+// sticky bar at the bottom (`apply.quick.card` keeps its testID for the flows).
+import type { SymbolViewProps } from 'expo-symbols';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -7,15 +10,27 @@ import { StyleSheet, View } from 'react-native';
 import type { CustomFieldResponses } from '@/api/schemas/applications';
 import type { Job } from '@/api/schemas/jobs';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
+import { Panel } from '@/components/ui/Panel';
+import { Pill } from '@/components/ui/Pill';
+import { PressableScale } from '@/components/ui/PressableScale';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { AppText } from '@/components/ui/Text';
-import { useToast } from '@/components/ui/Toast';
+import { haptic } from '@/lib/haptics';
 import { colors, radius, spacing } from '@/theme/tokens';
 
-import { ApplyFrame, type ApplyReady } from '../components/ApplyFrame';
+import { ApplyBody, ApplyFrame, type ApplyReady } from '../components/ApplyFrame';
 import { ApplyingForCard } from '../components/ApplyingForCard';
 import { JobQuestionsForm } from '../components/JobQuestionsForm';
 import { useQuickApply } from '../hooks/useApply';
-import { answersForSubmit, validateAnswers } from '../logic/customFields';
+import { type AnswerProblem, answersForSubmit, firstProblem } from '../logic/customFields';
+
+const ICONS = {
+  form: { ios: 'doc.text', android: 'description', web: 'description' },
+  upload: { ios: 'arrow.up.doc', android: 'upload_file', web: 'upload_file' },
+  lock: { ios: 'lock', android: 'lock', web: 'lock' },
+  chevron: { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' },
+} as const satisfies Record<string, SymbolViewProps['name']>;
 
 export function ApplyChooserScreen() {
   const { jobId } = useLocalSearchParams<{ jobId: string }>();
@@ -28,136 +43,126 @@ export function ApplyChooserScreen() {
 
 function Chooser({ job, me, hasFormCv }: ApplyReady) {
   const router = useRouter();
-  const toast = useToast();
   const quick = useQuickApply();
   const [answers, setAnswers] = useState<CustomFieldResponses>({});
-  const [questionError, setQuestionError] = useState<string>();
+  const [problem, setProblem] = useState<AnswerProblem>();
   const fields = job.customApplicationFields;
+  const quickOpen = hasFormCv && !!me;
 
   useEffect(() => {
-    if (quick.isSuccess) router.replace('/applications');
+    if (quick.isSuccess) {
+      // D32: the outcome lands with a success notification; the toast and the navigation stay as before.
+      haptic('success');
+      router.replace('/applications');
+    }
   }, [quick.isSuccess, router]);
 
   const onQuickApply = () => {
     if (!me) return;
-    const problem = validateAnswers(fields, answers);
-    setQuestionError(problem ?? undefined);
-    if (problem) {
-      toast.show(problem, { variant: 'error' });
-      return;
-    }
+    const found = firstProblem(fields, answers);
+    setProblem(found ?? undefined);
+    if (found) return;
     quick.mutate({ jobId: job.id, me, answers: answersForSubmit(fields, answers) });
   };
 
   const open = (screen: '/apply/[jobId]/form' | '/apply/[jobId]/upload') =>
     router.push({ pathname: screen, params: { jobId: job.id } });
-  const avatar = me?.initials ?? initialsOf(me?.name);
+
+  const bar =
+    quickOpen && me ? (
+      <StickyActionBar
+        testID="apply.quick.card"
+        leading={
+          <View>
+            <AppText variant="label" numberOfLines={1}>
+              {me.name}
+            </AppText>
+            <AppText variant="caption" color="mutedForeground" numberOfLines={2}>
+              One tap with your saved form CV
+            </AppText>
+          </View>
+        }
+      >
+        <Button
+          testID="apply.quick"
+          label={quick.isPending ? 'Submitting…' : 'Quick Apply'}
+          accessibilityLabel="Quick Apply"
+          size="md"
+          loading={quick.isPending}
+          haptic="medium"
+          onPress={onQuickApply}
+        />
+      </StickyActionBar>
+    ) : null;
 
   return (
-    <>
+    <ApplyBody prefix="apply" bar={bar}>
       <ApplyingForCard job={job} />
 
       <View style={styles.heading}>
-        <AppText variant="title" accessibilityRole="header">
-          Choose one way to apply
-        </AppText>
+        <AppText variant="heading">Choose one way to apply</AppText>
         <AppText color="mutedForeground">
           Use the structured form <AppText weight="bold">or</AppText> upload a CV file — not both for the same
           application.
         </AppText>
       </View>
 
-      <ChoiceCard
-        testID="apply.choice.form"
-        title="Structured form"
-        description="15-step form that builds your professional CV and syncs to recruiters."
-        cta={hasFormCv ? 'Edit & apply' : 'Start form'}
-        highlight={!hasFormCv}
-        onPress={() => open('/apply/[jobId]/form')}
-      />
+      <View style={styles.rows}>
+        <ChoiceRow
+          testID="apply.choice.form"
+          icon={ICONS.form}
+          title="Structured form"
+          description="15-step form that builds your professional CV and syncs to recruiters."
+          cta={hasFormCv ? 'Edit & apply' : 'Start form'}
+          highlight={!hasFormCv}
+          onPress={() => open('/apply/[jobId]/form')}
+        />
+        <ChoiceRow
+          testID="apply.choice.upload"
+          icon={ICONS.upload}
+          title="Upload CV"
+          description="Submit a PDF or DOCX only. Your portal form CV won't be used for this application."
+          cta="Upload & apply"
+          disabled={!hasFormCv}
+          disabledReason="You must complete the structured form once before you can use CV upload."
+          onPress={() => open('/apply/[jobId]/upload')}
+        />
+      </View>
 
-      <ChoiceCard
-        testID="apply.choice.upload"
-        title="Upload CV"
-        description="Submit a PDF or DOCX only. Your portal form CV won't be used for this application."
-        cta="Upload & apply"
-        disabled={!hasFormCv}
-        disabledReason="You must complete the structured form once before you can use CV upload."
-        onPress={() => open('/apply/[jobId]/upload')}
-      />
-
-      <JobQuestionsForm
-        testID="apply.questions"
-        title="Answer these job-specific questions"
-        fields={fields}
-        values={answers}
-        onChange={(next) => {
-          setAnswers(next);
-          setQuestionError(undefined);
-        }}
-        disabled={quick.isPending}
-        error={questionError}
-      />
       {fields.length > 0 && (
-        <AppText variant="caption" color="mutedForeground">
-          Required for all application methods (form, upload, or quick apply).
-        </AppText>
-      )}
-
-      {hasFormCv && me ? (
-        <View testID="apply.quick.card" style={styles.card}>
-          <View style={styles.quickRow}>
-            <View style={styles.quickText}>
-              <AppText variant="label" weight="semibold">
-                Quick Apply
-              </AppText>
-              <AppText variant="caption" color="mutedForeground">
-                One tap with your saved form CV
-              </AppText>
-            </View>
-            {avatar ? (
-              <View
-                style={styles.avatar}
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-              >
-                <AppText variant="caption" weight="semibold" color="primaryForeground">
-                  {avatar}
-                </AppText>
-              </View>
-            ) : null}
-          </View>
-          <Button
-            testID="apply.quick"
-            label={quick.isPending ? 'Submitting…' : 'Quick Apply'}
-            accessibilityLabel="Quick Apply"
-            loading={quick.isPending}
-            onPress={onQuickApply}
+        <View style={styles.questions}>
+          <JobQuestionsForm
+            testID="apply.questions"
+            title="Answer these job-specific questions"
+            fields={fields}
+            values={answers}
+            onChange={(next) => {
+              setAnswers(next);
+              setProblem(undefined);
+            }}
+            disabled={quick.isPending}
+            problem={problem}
           />
-        </View>
-      ) : (
-        <View testID="apply.quick.locked" style={styles.locked}>
-          <AppText variant="caption" color="mutedForeground">
-            Quick Apply unlocks after you complete the structured form once.
+          <AppText variant="secondary" color="mutedForeground">
+            Required for all application methods (form, upload, or quick apply).
           </AppText>
         </View>
       )}
-    </>
-  );
-}
 
-function initialsOf(name: string | null | undefined): string {
-  return (name ?? '')
-    .split(' ')
-    .filter(Boolean)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+      {!quickOpen && (
+        <Panel testID="apply.quick.locked" tone="neutral" icon={ICONS.lock} title="Quick Apply">
+          <AppText color="mutedForeground">
+            Quick Apply unlocks after you complete the structured form once.
+          </AppText>
+        </Panel>
+      )}
+    </ApplyBody>
+  );
 }
 
 type ChoiceProps = {
   testID: string;
+  icon: SymbolViewProps['name'];
   title: string;
   description: string;
   cta: string;
@@ -167,8 +172,10 @@ type ChoiceProps = {
   disabledReason?: string;
 };
 
-function ChoiceCard({
+/** A method row: 40-pt icon tile, title, one-line description, the CTA as a brand text link, chevron. */
+function ChoiceRow({
   testID,
+  icon,
   title,
   description,
   cta,
@@ -177,75 +184,72 @@ function ChoiceCard({
   disabled,
   disabledReason,
 }: ChoiceProps) {
+  const recommended = highlight && !disabled;
   return (
-    <View style={[styles.card, highlight && !disabled && styles.highlight, disabled && styles.dim]}>
-      {highlight && !disabled && (
-        <View testID="apply.recommended" style={styles.badge}>
-          <AppText variant="caption" weight="semibold" color="brandForeground">
-            Recommended
+    <PressableScale
+      testID={testID}
+      accessibilityLabel={cta}
+      accessibilityHint={disabled ? disabledReason : description}
+      disabled={disabled}
+      pressScale={0.99}
+      onPress={onPress}
+      style={styles.row}
+    >
+      <View style={styles.tile}>
+        <Icon testID={`${testID}.icon`} name={icon} size={20} tintColor={colors.brand} />
+      </View>
+      <View style={styles.rowText}>
+        <View style={styles.titleRow}>
+          <AppText variant="rowTitle" numberOfLines={2} style={styles.shrink}>
+            {title}
           </AppText>
+          {recommended ? <Pill testID="apply.recommended" label="Recommended" tone="brand" /> : null}
         </View>
-      )}
-      <AppText variant="heading">{title}</AppText>
-      <AppText color="mutedForeground">{description}</AppText>
-      {disabled && disabledReason ? (
-        <AppText variant="caption" weight="medium" color="errorText">
-          {disabledReason}
+        <AppText variant="secondary" color="mutedForeground" numberOfLines={2}>
+          {description}
         </AppText>
-      ) : null}
-      <Button
-        testID={testID}
-        label={cta}
-        variant={highlight ? 'primary' : 'outline'}
-        disabled={disabled}
-        onPress={onPress}
-      />
-    </View>
+        <AppText variant="secondary" weight="semibold" color={disabled ? 'mutedForeground' : 'brand'}>
+          {cta}
+        </AppText>
+        {disabled && disabledReason ? (
+          <View style={styles.reason}>
+            <Icon name={ICONS.lock} size={14} tintColor={colors.mutedForeground} />
+            <AppText variant="secondary" color="mutedForeground" style={styles.shrink}>
+              {disabledReason}
+            </AppText>
+          </View>
+        ) : null}
+      </View>
+      <Icon name={ICONS.chevron} size={16} tintColor={colors.mutedForeground} style={styles.chevron} />
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   heading: { gap: spacing['2'] },
-  card: {
+  rows: { gap: spacing['2'] },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: spacing['3'],
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.surface,
-    padding: spacing['5'],
+    padding: spacing['3'],
   },
-  highlight: { borderColor: colors.brand, borderWidth: 2 },
-  dim: { opacity: 0.7 },
-  badge: {
-    alignSelf: 'flex-start',
-    borderRadius: radius.full,
-    backgroundColor: colors.brand,
-    paddingHorizontal: spacing['2'],
-    paddingVertical: spacing['0.5'],
-  },
-  quickRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing['3'],
-  },
-  quickText: { flexShrink: 1, gap: spacing['0.5'] },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
+  tile: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.sm,
+    backgroundColor: colors.brandSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  locked: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
-    backgroundColor: colors.surface2,
-    padding: spacing['4'],
-  },
+  rowText: { flex: 1, gap: spacing['1'] },
+  titleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing['2'] },
+  shrink: { flexShrink: 1 },
+  reason: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing['1'] },
+  chevron: { marginTop: spacing['3'] },
+  questions: { gap: spacing['2'] },
 });
 
 export type { Job };

@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import * as Network from 'expo-network';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
+import { StyleSheet } from 'react-native';
 
 import { createGate } from '@/test/msw/gate';
 import { API } from '@/test/msw/handlers';
@@ -58,6 +59,7 @@ afterEach(() => {
 
 const open = (id = 'j1') => startSignedIn(`/job/${id}`, 'job.screen');
 const field = (id: string) => within(screen.getByTestId(id));
+const flat = (style: unknown) => StyleSheet.flatten(style as never) ?? {};
 
 describe('Job details: content (website wording)', () => {
   it('header: role, Verified Hospital, hospital · specialty, location, type, posted', async () => {
@@ -165,7 +167,12 @@ describe('Job details: content (website wording)', () => {
     server.use(
       http.get(`${API}/api/jobs/:id`, async () => {
         await gate.wait();
-        return HttpResponse.json({ ...full, experienceMin: 0, experienceMax: 0, experience: '2+ years in ICU' });
+        return HttpResponse.json({
+          ...full,
+          experienceMin: 0,
+          experienceMax: 0,
+          experience: '2+ years in ICU',
+        });
       }),
     );
     await open();
@@ -203,6 +210,61 @@ describe('Job details: content (website wording)', () => {
     installJobsBackend({ jobs: [{ ...full, matchPercent: null }] });
     await open();
     expect(await screen.findByText('Complete your profile for a personalized match.')).toBeOnTheScreen();
+  });
+});
+
+describe('Job details: D32 layout', () => {
+  it('Apply Now and Save sit in the sticky bar at the bottom, not inside the content', async () => {
+    installJobsBackend({ jobs: [full] });
+    await open();
+    await screen.findByRole('header', { name: 'Staff Nurse' });
+    const bar = within(screen.getByTestId('job.bar'));
+    expect(bar.getByTestId('job.apply')).toBeOnTheScreen();
+    expect(bar.getByTestId('job.savebutton')).toBeOnTheScreen();
+    expect(bar.getByText('Save job')).toBeOnTheScreen();
+    expect(bar.getByText('Apply Now')).toBeOnTheScreen();
+    expect(screen.getByTestId('job.bar').props.accessibilityRole).toBe('toolbar');
+    expect(within(screen.getByTestId('job.screen.scroll')).queryByTestId('job.apply')).toBeNull();
+  });
+
+  it('the header has no card border, one brand "Verified Hospital" pill and the tags as pills', async () => {
+    installJobsBackend({ jobs: [full] });
+    await open();
+    const header = await screen.findByTestId('job.header');
+    expect(flat(header.props.style).borderWidth).toBeUndefined();
+    expect(within(header).getByTestId('job.verified')).toHaveTextContent('Verified Hospital');
+    expect(screen.getAllByText('Verified Hospital')).toHaveLength(1);
+    expect(within(header).getByTestId('job.tag.0')).toHaveTextContent('GNM');
+    expect(within(header).getByTestId('job.logo')).toBeOnTheScreen();
+  });
+
+  it('section headers are 17/600 sentence case and the stats are a flat grid without tiles', async () => {
+    installJobsBackend({ jobs: [full] });
+    await open();
+    const heading = await screen.findByText('About the role');
+    expect(flat(heading.props.style).fontSize).toBe(17);
+    expect(flat(heading.props.style).textTransform).toBeUndefined();
+    expect(flat(screen.getByText('Compensation').props.style).fontSize).toBe(17);
+    const stat = screen.getByTestId('job.stats.experience');
+    expect(flat(stat.props.style).borderWidth).toBeUndefined();
+    expect(flat(stat.props.style).backgroundColor).toBeUndefined();
+    expect(flat(screen.getByTestId('job.salary').props.style).fontVariant).toEqual(['tabular-nums']);
+  });
+
+  it('match insights is a tinted panel with its title', async () => {
+    installJobsBackend({ jobs: [full] });
+    await open();
+    const panel = await screen.findByTestId('job.match');
+    expect(within(panel).getByText('Match insights')).toBeOnTheScreen();
+    expect(within(panel).getByText("Your profile matches 82% of this role's criteria.")).toBeOnTheScreen();
+  });
+
+  it('a closed job keeps the bar with a disabled "Position closed"', async () => {
+    installJobsBackend({ jobs: [{ ...full, status: 'Closed' }] });
+    await open();
+    const button = await screen.findByTestId('job.apply');
+    expect(within(screen.getByTestId('job.bar')).getByTestId('job.apply')).toBe(button);
+    expect(button).toBeDisabled();
   });
 });
 

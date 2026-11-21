@@ -5,6 +5,7 @@ import * as Network from 'expo-network';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
 
+import { haptic } from '@/lib/haptics';
 import { applicantMe, applied, jobQuestions } from '@/test/fixtures/applications';
 import { installApplicationsBackend } from '@/test/msw/applications';
 import { API } from '@/test/msw/handlers';
@@ -13,6 +14,8 @@ import { server } from '@/test/msw/server';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
 
 jest.mock('expo-font', () => ({ ...jest.requireActual('expo-font'), useFonts: jest.fn() }));
+// The haptic engine is native: replaced the way JobRow.test does it, so the test can see what fired.
+jest.mock('@/lib/haptics', () => ({ haptic: jest.fn() }));
 jest.mock('expo-splash-screen', () => ({
   hideAsync: jest.fn(() => Promise.resolve()),
   preventAutoHideAsync: jest.fn(() => Promise.resolve()),
@@ -38,6 +41,7 @@ const noProfile = {
 beforeEach(() => {
   resetAppState();
   jest.mocked(useFonts).mockReturnValue([true, null]);
+  jest.mocked(haptic).mockClear();
 });
 afterEach(() => {
   jest
@@ -67,7 +71,7 @@ describe('Apply chooser: content (website wording)', () => {
     expect(screen.getByText(/not both for the same application/)).toBeOnTheScreen();
   });
 
-  it('with a saved form CV: Edit & apply, Upload & apply, and the Quick Apply card', async () => {
+  it('with a saved form CV: Edit & apply, Upload & apply, and Quick Apply in the sticky bar', async () => {
     setup();
     await open();
     expect(await screen.findByText('Structured form')).toBeOnTheScreen();
@@ -84,6 +88,28 @@ describe('Apply chooser: content (website wording)', () => {
     expect(screen.getAllByText('Quick Apply').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('One tap with your saved form CV')).toBeOnTheScreen();
     expect(screen.getByTestId('apply.quick')).toBeEnabled();
+    // D32: the Quick Apply CTA is the sticky bar at the bottom (apply.quick.card keeps its testID), not the last card.
+    const bar = screen.getByTestId('apply.quick.card');
+    expect(bar.props.accessibilityRole).toBe('toolbar');
+    expect(within(bar).getByTestId('apply.quick')).toBeOnTheScreen();
+    expect(within(bar).getByText('One tap with your saved form CV')).toBeOnTheScreen();
+    expect(within(screen.getByTestId('apply.screen.scroll')).queryByTestId('apply.quick')).toBeNull();
+  });
+
+  it('D32: the apply methods are pressable rows with an icon tile and a Recommended pill', async () => {
+    setup({ me: noProfile });
+    await open();
+    const form = await screen.findByTestId('apply.choice.form');
+    expect(form.props.accessibilityRole).toBe('button');
+    expect(within(form).getByTestId('apply.choice.form.icon')).toBeOnTheScreen();
+    expect(within(form).getByTestId('apply.recommended')).toHaveTextContent('Recommended');
+    expect(within(form).getByText('Structured form')).toBeOnTheScreen();
+    const upload = screen.getByTestId('apply.choice.upload');
+    expect(upload).toBeDisabled();
+    expect(within(upload).getByTestId('apply.choice.upload.icon')).toBeOnTheScreen();
+    expect(within(upload).getByText('Upload & apply')).toBeOnTheScreen();
+    // Applying-for row: a logo tile with the hospital's initials when there is no logo.
+    expect(within(screen.getByTestId('apply.job')).getByTestId('apply.job.logo')).toBeOnTheScreen();
   });
 
   it('without a form CV: Start form is Recommended, CV upload is locked with the reason, Quick Apply is locked', async () => {
@@ -211,6 +237,9 @@ describe('Quick Apply', () => {
     await fireEvent.press(await screen.findByTestId('apply.quick'));
     expect(await screen.findByText('Application submitted!')).toBeOnTheScreen();
     expect(await screen.findByTestId('applications.screen')).toBeOnTheScreen();
+    // D32: medium impact when the primary action lands, success notification on the outcome.
+    expect(haptic).toHaveBeenCalledWith('medium');
+    expect(haptic).toHaveBeenCalledWith('success');
     expect(apps.bodies[0]).toMatchObject({
       jobId: 'job-1',
       cvSource: 'form',
@@ -292,13 +321,18 @@ describe('Job questions on the chooser', () => {
     const { apps } = setup({ jobs: [jobWithQuestions] });
     await open();
     await fireEvent.press(await screen.findByTestId('apply.quick'));
-    expect(
-      await screen.findAllByText('"Which imaging machines have you operated?" is required'),
-    ).not.toHaveLength(0);
+    // D32: one error placement, under the field it belongs to (no toast, no summary line under the form).
+    expect(await screen.findByTestId('apply.questions.q_modality.error')).toHaveTextContent(
+      '"Which imaging machines have you operated?" is required',
+    );
+    expect(screen.getAllByText('"Which imaging machines have you operated?" is required')).toHaveLength(1);
     expect(apps.calls).not.toContain('POST /api/applications');
     await fireEvent.changeText(screen.getByTestId('apply.questions.q_modality'), '128-slice CT');
+    expect(screen.queryByTestId('apply.questions.q_modality.error')).toBeNull();
     await fireEvent.press(screen.getByTestId('apply.quick'));
-    expect(await screen.findAllByText('"Scans you handle per day" is required')).not.toHaveLength(0);
+    expect(await screen.findByTestId('apply.questions.q_scans.error')).toHaveTextContent(
+      '"Scans you handle per day" is required',
+    );
   });
 
   it('sends the answers: numbers as numbers, yes/no as true or false, empty optional ones left out', async () => {

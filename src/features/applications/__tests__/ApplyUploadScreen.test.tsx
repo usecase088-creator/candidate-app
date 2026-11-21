@@ -112,6 +112,18 @@ describe('the form', () => {
     expect(screen.queryByTestId('apply.upload.file.pick.camera')).not.toBeOnTheScreen();
   });
 
+  it('D32: Submit sits in the sticky bar, not in the scrolling content', async () => {
+    setup();
+    await open();
+    await screen.findByText('Upload CV · Radiology Technician');
+    const bar = screen.getByTestId('apply.upload.bar');
+    expect(bar.props.accessibilityRole).toBe('toolbar');
+    expect(within(bar).getByTestId('apply.upload.submit')).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('apply.upload.screen.scroll')).queryByTestId('apply.upload.submit'),
+    ).toBeNull();
+  });
+
   it('every field and button has a spoken label', async () => {
     setup();
     await open();
@@ -344,9 +356,11 @@ describe('job questions on this screen', () => {
     await choose();
     await screen.findByText('my-cv.pdf');
     await fireEvent.press(screen.getByTestId('apply.upload.submit'));
-    expect(
-      await screen.findAllByText('"Which imaging machines have you operated?" is required'),
-    ).not.toHaveLength(0);
+    // D32: the message sits under its field, once (no toast).
+    expect(await screen.findByTestId('apply.upload.questions.q_modality.error')).toHaveTextContent(
+      '"Which imaging machines have you operated?" is required',
+    );
+    expect(screen.getAllByText('"Which imaging machines have you operated?" is required')).toHaveLength(1);
     expect(writes(backend.calls)).toEqual([]);
   });
 

@@ -1,3 +1,5 @@
+import { StyleSheet } from 'react-native';
+
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
 
 import { FilePickerField, type FilePickerFieldProps } from '../FilePickerField';
@@ -50,6 +52,25 @@ describe('empty', () => {
     await fireEvent.press(screen.getByTestId('docs.pick.camera'));
     await fireEvent.press(screen.getByTestId('docs.pick.gallery'));
     expect(onPick.mock.calls).toEqual([['camera'], ['gallery']]);
+  });
+});
+
+describe('D32 look', () => {
+  it('has no bordered box of its own, and the source buttons are small tonal buttons', async () => {
+    await renderWithProviders(<FilePickerField {...props()} />);
+    const box = StyleSheet.flatten(screen.getByTestId('docs').props.style) ?? {};
+    expect(box.borderWidth).toBeUndefined();
+    expect(box.backgroundColor).toBeUndefined();
+    const button = StyleSheet.flatten(screen.getByTestId('docs.pick.files').props.style) ?? {};
+    expect(button.minHeight).toBe(36);
+  });
+
+  it('a long file name stays on one line, truncated in the middle so the extension shows', async () => {
+    await renderWithProviders(<FilePickerField {...props({ files })} />);
+    const name = screen.getByText('id-proof.pdf');
+    expect(name.props.numberOfLines).toBe(1);
+    expect(name.props.ellipsizeMode).toBe('middle');
+    expect(screen.getByTestId('docs.file.0.icon')).toBeTruthy();
   });
 });
 

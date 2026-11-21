@@ -1,9 +1,13 @@
 // Chooses files and shows them, with progress, cancel and retry for the upload that follows (Phase 3 task 3).
 // Presentational: the screen owns the files and the upload (see useFileUpload). Website wording where it has some
-// ("Choose Files", "No files selected", "{n} file(s) selected").
-import { Pressable, StyleSheet, View } from 'react-native';
+// ("Choose Files", "No files selected", "{n} file(s) selected"). D32: no box of its own; the sources are small tonal
+// buttons, each file is a row with a document icon and a middle-truncated name, the progress track is 4 pt.
+import type { SymbolViewProps } from 'expo-symbols';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
 import { TextButton } from '@/components/ui/TextButton';
 import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
@@ -36,11 +40,26 @@ export type FilePickerFieldProps = {
   single?: boolean;
 };
 
-const SOURCE_LABELS: Record<PickSource, { label: string; spoken: string }> = {
-  files: { label: 'Files', spoken: 'Choose from files' },
-  gallery: { label: 'Photos', spoken: 'Choose from photos' },
-  camera: { label: 'Camera', spoken: 'Take a photo' },
+const SOURCES: Record<PickSource, { label: string; spoken: string; icon: SymbolViewProps['name'] }> = {
+  files: {
+    label: 'Files',
+    spoken: 'Choose from files',
+    icon: { ios: 'folder', android: 'folder', web: 'folder' },
+  },
+  gallery: {
+    label: 'Photos',
+    spoken: 'Choose from photos',
+    icon: { ios: 'photo', android: 'image', web: 'image' },
+  },
+  camera: {
+    label: 'Camera',
+    spoken: 'Take a photo',
+    icon: { ios: 'camera', android: 'photo_camera', web: 'photo_camera' },
+  },
 };
+
+const DOC_ICON = { ios: 'doc.fill', android: 'description', web: 'description' } as const;
+const XMARK = { ios: 'xmark', android: 'close', web: 'close' } as const;
 
 export function FilePickerField({
   testID,
@@ -62,65 +81,64 @@ export function FilePickerField({
 
   return (
     <View testID={testID} style={styles.box}>
-      <AppText variant="label" weight="semibold">
-        {title}
-      </AppText>
-      {hint ? (
-        <AppText variant="caption" color="mutedForeground">
-          {hint}
-        </AppText>
-      ) : null}
+      <View style={styles.head}>
+        <AppText variant="label">{title}</AppText>
+        {hint ? (
+          <AppText variant="secondary" color="mutedForeground">
+            {hint}
+          </AppText>
+        ) : null}
+      </View>
 
       {!uploading && (
         <View style={styles.sources}>
           {sources.map((source) => (
-            <View key={source} style={styles.source}>
-              <Button
-                testID={`${testID}.pick.${source}`}
-                label={SOURCE_LABELS[source].label}
-                accessibilityLabel={SOURCE_LABELS[source].spoken}
-                variant="outline"
-                disabled={disabled}
-                onPress={() => onPick(source)}
-              />
-            </View>
+            <Button
+              key={source}
+              testID={`${testID}.pick.${source}`}
+              label={SOURCES[source].label}
+              accessibilityLabel={SOURCES[source].spoken}
+              icon={SOURCES[source].icon}
+              variant="secondary"
+              size="sm"
+              fullWidth={false}
+              disabled={disabled}
+              onPress={() => onPick(source)}
+            />
           ))}
         </View>
       )}
 
       {!single && (
-        <AppText variant="caption" color="mutedForeground">
+        <AppText variant="secondary" color="mutedForeground">
           {files.length > 0 ? `${files.length} file(s) selected` : 'No files selected'}
         </AppText>
       )}
 
       {files.map((file, index) => (
         <View key={`${file.uri}-${index}`} style={styles.row}>
+          <Icon testID={`${testID}.file.${index}.icon`} name={DOC_ICON} size={20} tintColor={colors.brand} />
           <View style={styles.rowText}>
-            <AppText variant="label" weight="medium" numberOfLines={2}>
+            <AppText weight="medium" numberOfLines={1} ellipsizeMode="middle">
               {file.name}
             </AppText>
             {formatBytes(file.size) ? (
-              <AppText variant="caption" color="mutedForeground">
+              <AppText variant="caption" color="mutedForeground" tabular>
                 {formatBytes(file.size)}
               </AppText>
             ) : null}
           </View>
           {!uploading && (
-            <Pressable
+            <PressableScale
               testID={`${testID}.remove.${index}`}
-              accessibilityRole="button"
               accessibilityLabel={`Remove ${file.name}`}
-              accessibilityState={{ disabled }}
               disabled={disabled}
-              hitSlop={spacing['2']}
+              pressScale={0.9}
               onPress={() => onRemove(index)}
               style={styles.remove}
             >
-              <AppText variant="caption" weight="semibold" color="errorText">
-                Remove
-              </AppText>
-            </Pressable>
+              <Icon name={XMARK} size={18} tintColor={colors.mutedForeground} />
+            </PressableScale>
           )}
         </View>
       ))}
@@ -128,9 +146,10 @@ export function FilePickerField({
       {error ? (
         <AppText
           testID={`${testID}.error`}
-          variant="caption"
+          variant="secondary"
           color="errorText"
           accessibilityLiveRegion="polite"
+          accessibilityRole="alert"
         >
           {error}
         </AppText>
@@ -147,15 +166,17 @@ export function FilePickerField({
           >
             <View style={[styles.fill, { width: `${percent}%` }]} />
           </View>
-          <AppText variant="caption" color="mutedForeground" accessibilityLiveRegion="polite">
-            {percent > 0 ? `Uploading… ${percent}%` : 'Starting upload…'}
-          </AppText>
-          <TextButton
-            testID={`${testID}.cancel`}
-            label="Cancel upload"
-            color="errorText"
-            onPress={onCancel}
-          />
+          <View style={styles.progressRow}>
+            <AppText variant="caption" color="mutedForeground" tabular accessibilityLiveRegion="polite">
+              {percent > 0 ? `Uploading… ${percent}%` : 'Starting upload…'}
+            </AppText>
+            <TextButton
+              testID={`${testID}.cancel`}
+              label="Cancel upload"
+              color="errorText"
+              onPress={onCancel}
+            />
+          </View>
         </View>
       )}
 
@@ -163,16 +184,18 @@ export function FilePickerField({
         <View style={styles.progressBlock}>
           <AppText
             testID={`${testID}.upload.error`}
-            variant="caption"
+            variant="secondary"
             color="errorText"
             accessibilityLiveRegion="polite"
+            accessibilityRole="alert"
           >
             {upload.message}
           </AppText>
           <Button
             testID={`${testID}.retry`}
             label="Try again"
-            variant="outline"
+            variant="secondary"
+            size="sm"
             fullWidth={false}
             disabled={disabled}
             onPress={onRetry}
@@ -184,29 +207,36 @@ export function FilePickerField({
 }
 
 const styles = StyleSheet.create({
-  box: {
-    gap: spacing['2'],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    padding: spacing['4'],
-  },
+  box: { gap: spacing['3'] },
+  // D32: label-to-content 6.
+  head: { gap: spacing['1'] + spacing['0.5'] },
   sources: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['2'] },
-  source: { flexGrow: 1, flexBasis: 90 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing['3'],
     borderRadius: radius.md,
     backgroundColor: colors.surface2,
-    paddingHorizontal: spacing['3'],
+    paddingLeft: spacing['3'],
+    paddingRight: spacing['1'],
     paddingVertical: spacing['2'],
     minHeight: MIN_TOUCH,
   },
   rowText: { flexShrink: 1, flexGrow: 1 },
-  remove: { minHeight: MIN_TOUCH - 8, justifyContent: 'center', paddingHorizontal: spacing['2'] },
+  remove: {
+    width: MIN_TOUCH - 4,
+    height: MIN_TOUCH - 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.full,
+  },
   progressBlock: { gap: spacing['2'] },
-  track: { height: 8, borderRadius: radius.full, backgroundColor: colors.muted, overflow: 'hidden' },
-  fill: { height: 8, borderRadius: radius.full, backgroundColor: colors.brand },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing['3'],
+  },
+  track: { height: 4, borderRadius: radius.full, backgroundColor: colors.muted, overflow: 'hidden' },
+  fill: { height: 4, borderRadius: radius.full, backgroundColor: colors.brand },
 });

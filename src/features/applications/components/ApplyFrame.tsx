@@ -1,8 +1,11 @@
-// The shell shared by the apply screens: back button, loading, offline, error, "Job not found" and "Already applied"
-// (website: routes/apply.$jobId.tsx loader and the first lines of each apply route). `children` gets what is ready.
+// The shell shared by the apply screens: loading, offline, error, "Job not found" and "Already applied"
+// (website: routes/apply.$jobId.tsx loader and the first lines of each apply route). `children` gets what is ready
+// and renders an `ApplyBody`: the scrolling content plus, when the screen has one primary action, the sticky bar
+// under it (D32: above the bottom inset, hidden while the keyboard is up). The native stack header carries the back
+// chevron and the title (src/features/navigation/pushedScreens.ts).
 import { useRouter } from 'expo-router';
-import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { type ReactNode } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { ERROR_MESSAGES, isApiError } from '@/api/errors';
 import type { CandidateMe } from '@/api/schemas/candidate';
@@ -12,18 +15,19 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Screen } from '@/components/ui/Screen';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { AppText } from '@/components/ui/Text';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { radius, spacing } from '@/theme/tokens';
 
 import { useApplyContext } from '../hooks/useApplyContext';
 
 export type ApplyReady = { job: Job; me: CandidateMe | undefined; hasFormCv: boolean };
 
 type Props = {
-  /** testIDs: `{prefix}.screen`, `.back`, `.loading`, `.offline`, `.error`, `.notfound`, `.applied`. */
+  /** testIDs: `{prefix}.screen`, `.screen.scroll`, `.loading`, `.offline`, `.error`, `.notfound`, `.applied`. */
   prefix: string;
   jobId: string;
   /** Shown instead of the sentence "... for {role} at {hospital}." when set. */
   appliedMessage?: (job: Job) => string;
+  /** The ready screen: render an `ApplyBody` with the same prefix. */
   children: (ready: ApplyReady) => ReactNode;
 };
 
@@ -33,9 +37,17 @@ export function ApplyFrame({ prefix, jobId, appliedMessage, children }: Props) {
   const notFound = isApiError(ctx.jobError) && ctx.jobError.status === 404;
   const failure = ctx.view === 'error' ? (ctx.jobError ?? ctx.meError) : undefined;
 
+  if (ctx.view === 'ready' && ctx.job && !ctx.alreadyApplied) {
+    return (
+      <Screen testID={`${prefix}.screen`} edges={['top']} padded={false}>
+        {children({ job: ctx.job, me: ctx.me, hasFormCv: ctx.hasFormCv })}
+      </Screen>
+    );
+  }
+
   return (
-    <Screen testID={`${prefix}.screen`} scroll>
-      <View style={styles.stack}>
+    <Screen testID={`${prefix}.screen`} edges={['top']} padded={false}>
+      <ApplyBody prefix={prefix}>
         {ctx.view === 'loading' && <ApplySkeleton testID={`${prefix}.loading`} />}
 
         {ctx.view === 'offline' && (
@@ -81,13 +93,31 @@ export function ApplyFrame({ prefix, jobId, appliedMessage, children }: Props) {
             onView={() => router.replace('/applications')}
           />
         )}
-
-        {ctx.view === 'ready' &&
-          ctx.job &&
-          !ctx.alreadyApplied &&
-          children({ job: ctx.job, me: ctx.me, hasFormCv: ctx.hasFormCv })}
-      </View>
+      </ApplyBody>
     </Screen>
+  );
+}
+
+export type ApplyBodyProps = {
+  prefix: string;
+  children: ReactNode;
+  /** A `StickyActionBar`, rendered under the scroll view so it never covers the content. */
+  bar?: ReactNode;
+};
+
+/** The scrolling content of an apply screen (`{prefix}.screen.scroll`) with the optional sticky bar under it. */
+export function ApplyBody({ prefix, children, bar }: ApplyBodyProps) {
+  return (
+    <>
+      <ScrollView
+        testID={`${prefix}.screen.scroll`}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+      >
+        {children}
+      </ScrollView>
+      {bar}
+    </>
   );
 }
 
@@ -113,35 +143,30 @@ function AlreadyApplied({
   );
 }
 
+/** Mirrors the applying-for row, the heading and two method rows. */
 function ApplySkeleton({ testID }: { testID: string }) {
   return (
-    <View testID={testID} style={styles.stack}>
-      <View style={styles.card}>
-        <Skeleton width={48} height={48} radius={radius.md} />
+    <View testID={testID} style={styles.skeleton}>
+      <View style={styles.skeletonRow}>
+        <Skeleton width={40} height={40} radius={radius.sm} />
         <View style={styles.lines}>
-          <Skeleton width="40%" height={12} />
+          <Skeleton width="30%" height={12} />
           <Skeleton width="70%" height={18} />
           <Skeleton width="55%" height={12} />
         </View>
       </View>
-      <Skeleton width="60%" height={22} />
-      <Skeleton width="100%" height={120} radius={radius.md} />
-      <Skeleton width="100%" height={120} radius={radius.md} />
+      <Skeleton width="60%" height={20} />
+      <Skeleton width="100%" height={64} radius={radius.md} />
+      <Skeleton width="100%" height={64} radius={radius.md} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: spacing['4'] },
+  // D32: screen margin 16, section gap 24, room at the end so the last field clears the bar.
+  content: { flexGrow: 1, gap: spacing['6'], padding: spacing['4'], paddingBottom: spacing['8'] },
   center: { alignItems: 'center', gap: spacing['3'], paddingVertical: spacing['6'] },
-  card: {
-    flexDirection: 'row',
-    gap: spacing['4'],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    padding: spacing['4'],
-  },
+  skeleton: { gap: spacing['4'] },
+  skeletonRow: { flexDirection: 'row', gap: spacing['3'] },
   lines: { flexGrow: 1, gap: spacing['2'] },
 });

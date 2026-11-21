@@ -52,8 +52,14 @@ describe('rendering', () => {
 
   it('every input and choice has an accessibility label', async () => {
     await renderWithProviders(<Harness />);
+    // The input is labelled by its visible label (star included); D32 `required` also says so to screen readers.
     expect(screen.getByLabelText('Which imaging machines have you operated? *')).toBeTruthy();
     expect(screen.getByLabelText('Scans you handle per day *')).toBeTruthy();
+    expect(screen.getByTestId('q.q_modality').props.accessibilityLabel).toMatch(/, required$/);
+    expect(screen.getByTestId('q.q_notes').props.accessibilityLabel).not.toMatch(/required/);
+    expect(screen.getByTestId('q.q_modality.required')).toBeTruthy();
+    expect(screen.getByTestId('q.q_shift.required')).toBeTruthy();
+    expect(screen.getByTestId('q.q_license.required')).toBeTruthy();
     expect(screen.getByLabelText('Evening')).toBeTruthy();
     expect(screen.getByLabelText('Yes')).toBeTruthy();
     expect(screen.getByLabelText('No')).toBeTruthy();
@@ -88,6 +94,7 @@ describe('answering', () => {
     const seen: CustomFieldResponses[] = [];
     await renderWithProviders(<Harness onValues={(v) => seen.push(v)} />);
     expect(screen.getByTestId('q.q_scans').props.keyboardType).toBe('decimal-pad');
+    expect(screen.getByTestId('q.q_scans').props.returnKeyType).toBe('done');
     await fireEvent.changeText(screen.getByTestId('q.q_scans'), '1.');
     expect(seen.at(-1)).toEqual({ q_scans: '1.' });
     expect(screen.getByTestId('q.q_scans').props.value).toBe('1.');
@@ -146,7 +153,8 @@ describe('disabled and errors', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('shows a message under the questions (the first problem)', async () => {
+  // D32: one error placement, under the field it belongs to (was a summary line under all the questions).
+  it('shows the first problem under its own field', async () => {
     await renderWithProviders(
       <JobQuestionsForm
         testID="q"
@@ -154,9 +162,29 @@ describe('disabled and errors', () => {
         fields={fields}
         values={{}}
         onChange={jest.fn()}
-        error='"Scans you handle per day" is required'
+        problem={{ fieldId: 'q_scans', message: '"Scans you handle per day" is required' }}
       />,
     );
-    expect(screen.getByTestId('q.error')).toHaveTextContent('"Scans you handle per day" is required');
+    expect(screen.getByTestId('q.q_scans.error')).toHaveTextContent('"Scans you handle per day" is required');
+    expect(screen.queryByTestId('q.q_modality.error')).toBeNull();
+  });
+
+  it('a problem with a choice question sits under its chips', async () => {
+    await renderWithProviders(
+      <JobQuestionsForm
+        testID="q"
+        title="T"
+        fields={fields}
+        values={{}}
+        onChange={jest.fn()}
+        problem={{
+          fieldId: 'q_license',
+          message: '"I hold a valid radiation safety certificate" is required',
+        }}
+      />,
+    );
+    expect(screen.getByTestId('q.q_license.error')).toHaveTextContent(
+      '"I hold a valid radiation safety certificate" is required',
+    );
   });
 });

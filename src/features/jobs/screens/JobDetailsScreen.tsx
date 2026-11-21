@@ -1,31 +1,46 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { Icon } from '@/components/ui/Icon';
 import { ERROR_MESSAGES, isApiError } from '@/api/errors';
 import type { Job } from '@/api/schemas/jobs';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { Icon } from '@/components/ui/Icon';
+import { LogoTile } from '@/components/ui/LogoTile';
+import { Panel } from '@/components/ui/Panel';
+import { Pill } from '@/components/ui/Pill';
 import { Screen } from '@/components/ui/Screen';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { AppText } from '@/components/ui/Text';
-import { colors, radius, spacing } from '@/theme/tokens';
-
-import { HospitalLogo } from '../components/HospitalLogo';
-import { JobRow } from '../components/JobRow';
-import { SaveButton } from '../components/SaveButton';
-import { VerifiedBadge } from '../components/VerifiedBadge';
-import { queryView } from '../hooks/queryView';
-import { useJob, useSimilarJobs } from '../hooks/useJobsData';
 import { useIsSignedIn } from '@/features/auth/sessionStore';
 import { goToSignIn } from '@/features/auth/signInGate';
+import { colors, radius, spacing } from '@/theme/tokens';
 
+import { JobRow } from '../components/JobRow';
+import { SaveButton } from '../components/SaveButton';
+import { queryView } from '../hooks/queryView';
+import { useJob, useSimilarJobs } from '../hooks/useJobsData';
 import { useSavedIdSet, useToggleSave } from '../hooks/useSavedJobs';
 import { applicantsLine, experienceStat, htmlToText, postedLabel } from '../logic/format';
 import { useOpenJob } from '../useOpenJob';
 
-/** Website jobs.$jobId.tsx: every section, in the website's order and wording. */
+/** Website jobs.$jobId.tsx prints the raw numbers on the details page (cards use formatLPA). */
+const salaryOf = (job: Job) => `₹${job.salaryMin}–${job.salaryMax} LPA`;
+
+const ICONS = {
+  seal: { ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' },
+  check: { ios: 'checkmark.circle', android: 'check_circle', web: 'check_circle' },
+  sparkles: { ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' },
+  person: { ios: 'person.crop.circle', android: 'account_circle', web: 'account_circle' },
+} as const;
+
+/**
+ * Website jobs.$jobId.tsx: every section, in the website's order and wording. D32: native header (the role as its
+ * title once loaded), flat header block, 17/600 section headers, a flat stats grid, a tinted match panel, and the
+ * Apply + Save actions in a sticky bar under the scroll view (so it never covers the content).
+ */
 export function JobDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -36,8 +51,9 @@ export function JobDetailsScreen() {
   const notFound = isApiError(query.error) && query.error.status === 404;
 
   return (
-    <Screen testID="job.screen" scroll>
-      <View style={styles.stack}>
+    // The bar pads the bottom inset itself; the native header takes the top.
+    <Screen testID="job.screen" edges={['top']} padded={false}>
+      <ScrollView testID="job.screen.scroll" contentContainerStyle={styles.content}>
         {view === 'loading' && <DetailsSkeleton />}
 
         {view === 'offline' && (
@@ -73,61 +89,86 @@ export function JobDetailsScreen() {
           ))}
 
         {job && <Details job={job} />}
-      </View>
+      </ScrollView>
+      {job && <ActionBar job={job} />}
     </Screen>
   );
 }
 
 function Details({ job }: { job: Job }) {
-  const router = useRouter();
-  const signedIn = useIsSignedIn();
   const savedIds = useSavedIdSet();
   const { toggle } = useToggleSave();
   const openJob = useOpenJob();
   const similar = useSimilarJobs(job);
   const applicants = applicantsLine(job.applicants);
-  const closed = job.status === 'Closed';
 
   return (
     <>
-      <View testID="job.header" style={styles.card}>
+      <Stack.Screen options={{ title: job.role }} />
+
+      <View testID="job.header" style={styles.header}>
         <View style={styles.headerRow}>
-          <HospitalLogo uri={job.hospitalLogoUrl} size={56} />
+          <LogoTile testID="job.logo" name={job.hospital} uri={job.hospitalLogoUrl} size={56} />
           <View style={styles.flex}>
-            <AppText variant="title" accessibilityRole="header">
-              {job.role}
-            </AppText>
-            {job.hospitalVerified ? <VerifiedBadge label="Verified Hospital" /> : null}
-            <AppText color="mutedForeground">{`${job.hospital} · ${job.specialty}`}</AppText>
+            <AppText variant="title">{job.role}</AppText>
+            <AppText numberOfLines={2}>{`${job.hospital} · ${job.specialty}`}</AppText>
           </View>
         </View>
-        <View style={styles.meta}>
-          <Meta icon={{ ios: 'mappin.and.ellipse', android: 'location_on' }} text={job.location} />
-          <Meta icon={{ ios: 'briefcase', android: 'work' }} text={job.type} />
-          <Meta
-            icon={{ ios: 'calendar', android: 'calendar_today' }}
-            text={`Posted ${postedLabel(job.postedDays, { sentence: true })}`}
-          />
+        {job.hospitalVerified ? (
+          <Pill testID="job.verified" label="Verified Hospital" tone="brand" icon={ICONS.seal} />
+        ) : null}
+        <View style={styles.meta} accessible accessibilityRole="text">
+          <Meta text={job.location} />
+          <Dot />
+          <Meta text={job.type} />
+          <Dot />
+          <Meta text={`Posted ${postedLabel(job.postedDays, { sentence: true })}`} />
         </View>
+        {job.tags.length > 0 && (
+          <View style={styles.pills}>
+            {job.tags.map((t, i) => (
+              <Pill key={t} testID={`job.tag.${i}`} label={t} tone="neutral" />
+            ))}
+          </View>
+        )}
       </View>
 
-      {job.tags.length > 0 && (
-        <View style={styles.chips}>
-          {job.tags.map((t) => (
-            <View key={t} style={styles.tag}>
-              <AppText variant="caption" weight="medium" color="mutedForeground">
-                {t}
-              </AppText>
-            </View>
-          ))}
+      <Section title="Compensation">
+        <AppText testID="job.salary" variant="title" tabular>
+          {salaryOf(job)}
+        </AppText>
+        <AppText variant="secondary" color="mutedForeground">
+          Salary disclosed by hospital · Verified
+        </AppText>
+        {applicants ? (
+          <AppText variant="secondary" color="mutedForeground">
+            {applicants}
+          </AppText>
+        ) : null}
+        <View testID="job.stats" style={styles.stats}>
+          <Stat id="experience" label="Experience" value={experienceStat(job)} />
+          <Stat id="type" label="Job type" value={job.type || '—'} />
+          <Stat id="location" label="Location" value={job.city || '—'} />
+          <Stat id="posted" label="Posted" value={postedLabel(job.postedDays)} />
         </View>
-      )}
+      </Section>
+
+      <Panel
+        testID="job.match"
+        tone={job.matchPercent ? 'info' : 'neutral'}
+        icon={job.matchPercent ? ICONS.sparkles : ICONS.person}
+        title="Match insights"
+      >
+        <AppText>
+          {job.matchPercent
+            ? `Your profile matches ${job.matchPercent}% of this role's criteria.`
+            : 'Complete your profile for a personalized match.'}
+        </AppText>
+      </Panel>
 
       {job.description ? (
         <Section title="About the role">
-          <AppText testID="job.description" color="mutedForeground">
-            {htmlToText(job.description)}
-          </AppText>
+          <AppText testID="job.description">{htmlToText(job.description)}</AppText>
         </Section>
       ) : null}
 
@@ -145,11 +186,9 @@ function Details({ job }: { job: Job }) {
 
       {job.perks.length > 0 && (
         <Section title="Perks & benefits">
-          <View style={styles.chips}>
-            {job.perks.map((p) => (
-              <View key={p} style={styles.perk}>
-                <AppText variant="caption">{p}</AppText>
-              </View>
+          <View style={styles.pills}>
+            {job.perks.map((p, i) => (
+              <Pill key={p} testID={`job.perk.${i}`} label={p} tone="neutral" />
             ))}
           </View>
         </Section>
@@ -157,61 +196,15 @@ function Details({ job }: { job: Job }) {
 
       {job.hospitalAbout ? (
         <Section title={`About ${job.hospital}`}>
-          <AppText color="mutedForeground">{job.hospitalAbout}</AppText>
+          <AppText>{job.hospitalAbout}</AppText>
         </Section>
       ) : null}
 
-      <View style={styles.card}>
-        <AppText variant="caption" weight="medium" color="mutedForeground" style={styles.upper}>
-          Compensation
-        </AppText>
-        <AppText testID="job.salary" variant="title">{`₹${job.salaryMin}–${job.salaryMax} LPA`}</AppText>
-        <View testID="job.stats" style={styles.stats}>
-          <Stat label="Experience" value={experienceStat(job)} />
-          <Stat label="Job type" value={job.type || '—'} />
-          <Stat label="Location" value={job.city || '—'} />
-          <Stat label="Posted" value={postedLabel(job.postedDays)} />
-        </View>
-        <Button
-          testID="job.apply"
-          label={closed ? 'Position closed' : 'Apply Now'}
-          disabled={closed}
-          onPress={() =>
-            signedIn
-              ? router.push({ pathname: '/apply/[jobId]', params: { jobId: job.id } })
-              : goToSignIn(`/apply/${job.id}`)
-          }
-        />
-        <SaveButton
-          testID="job.savebutton"
-          variant="button"
-          saved={savedIds.has(job.id)}
-          onPress={() => toggle(job)}
-        />
-        <AppText variant="caption" color="mutedForeground" align="center">
-          Salary disclosed by hospital · Verified
-        </AppText>
-        {applicants ? (
-          <AppText variant="caption" color="mutedForeground" align="center">
-            {applicants}
-          </AppText>
-        ) : null}
-      </View>
-
-      <View style={styles.card}>
-        <AppText variant="caption" weight="medium" color="mutedForeground" style={styles.upper}>
-          Match insights
-        </AppText>
-        <AppText color="mutedForeground">
-          {job.matchPercent
-            ? `Your profile matches ${job.matchPercent}% of this role's criteria.`
-            : 'Complete your profile for a personalized match.'}
-        </AppText>
-      </View>
-
       {similar.data && similar.data.length > 0 && (
-        <View testID="job.similar" style={styles.stack}>
-          <AppText variant="heading">Similar opportunities</AppText>
+        <View testID="job.similar" style={styles.similar}>
+          <AppText variant="heading" style={styles.similarTitle}>
+            Similar opportunities
+          </AppText>
           {similar.data.map((j) => (
             <JobRow key={j.id} job={j} saved={savedIds.has(j.id)} onToggleSave={toggle} onOpen={openJob} />
           ))}
@@ -221,18 +214,56 @@ function Details({ job }: { job: Job }) {
   );
 }
 
+/** Apply Now + Save pinned at the bottom; the salary on the left when there is room for all three (D32). */
+function ActionBar({ job }: { job: Job }) {
+  const router = useRouter();
+  const signedIn = useIsSignedIn();
+  const savedIds = useSavedIdSet();
+  const { toggle } = useToggleSave();
+  const { width, fontScale } = useWindowDimensions();
+  const closed = job.status === 'Closed';
+  // At 320 pt, or with large text, two buttons already fill the bar: the salary stays in the Compensation section.
+  const roomForSalary = width / Math.max(1, fontScale) >= 360;
+
+  return (
+    <StickyActionBar
+      testID="job.bar"
+      leading={
+        roomForSalary ? (
+          <AppText variant="rowTitle" tabular numberOfLines={1}>
+            {salaryOf(job)}
+          </AppText>
+        ) : undefined
+      }
+    >
+      <SaveButton
+        testID="job.savebutton"
+        variant="button"
+        size="md"
+        saved={savedIds.has(job.id)}
+        onPress={() => toggle(job)}
+      />
+      <Button
+        testID="job.apply"
+        label={closed ? 'Position closed' : 'Apply Now'}
+        size="md"
+        disabled={closed}
+        haptic="medium"
+        onPress={() =>
+          signedIn
+            ? router.push({ pathname: '/apply/[jobId]', params: { jobId: job.id } })
+            : goToSignIn(`/apply/${job.id}`)
+        }
+      />
+    </StickyActionBar>
+  );
+}
+
+/** Flat section: 17/600 sentence-case header, 8 to the content (the heading variant carries the header role). */
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <View style={styles.card}>
-      <AppText
-        variant="label"
-        weight="semibold"
-        color="mutedForeground"
-        style={styles.upper}
-        accessibilityRole="header"
-      >
-        {title}
-      </AppText>
+    <View style={styles.section}>
+      <AppText variant="heading">{title}</AppText>
       {children}
     </View>
   );
@@ -243,62 +274,60 @@ function CheckList({ items }: { items: string[] }) {
     <View style={styles.list}>
       {items.map((item) => (
         <View key={item} style={styles.listItem}>
-          <Icon
-            name={{ ios: 'checkmark.circle', android: 'check_circle', web: 'check_circle' }}
-            tintColor={colors.brand}
-            size={16}
-          />
-          <AppText color="mutedForeground" style={styles.flex}>
-            {item}
-          </AppText>
+          <Icon name={ICONS.check} tintColor={colors.brand} size={16} style={styles.listIcon} />
+          <AppText style={styles.flex}>{item}</AppText>
         </View>
       ))}
     </View>
   );
 }
 
-function Meta({
-  icon,
-  text,
-}: {
-  icon: {
-    ios: 'mappin.and.ellipse' | 'briefcase' | 'calendar';
-    android: 'location_on' | 'work' | 'calendar_today';
-  };
-  text: string;
-}) {
+function Meta({ text }: { text: string }) {
   return (
-    <View style={styles.metaItem}>
-      <Icon name={{ ...icon, web: icon.android }} tintColor={colors.mutedForeground} size={12} />
-      <AppText variant="caption" color="mutedForeground" style={styles.shrink}>
-        {text}
-      </AppText>
-    </View>
+    <AppText variant="secondary" color="mutedForeground" style={styles.shrink}>
+      {text}
+    </AppText>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Dot() {
   return (
-    <View style={styles.stat}>
-      <AppText variant="caption" color="mutedForeground" style={styles.upper}>
+    <AppText variant="secondary" color="mutedForeground" accessibilityElementsHidden>
+      {' · '}
+    </AppText>
+  );
+}
+
+/** One cell of the flat stats grid: 12/500 muted label over a 15/600 value, no tile. */
+function Stat({ id, label, value }: { id: string; label: string; value: string }) {
+  return (
+    <View testID={`job.stats.${id}`} style={styles.stat}>
+      <AppText variant="caption" color="mutedForeground">
         {label}
       </AppText>
-      <AppText weight="medium">{value}</AppText>
+      <AppText weight="semibold" tabular>
+        {value}
+      </AppText>
     </View>
   );
 }
 
+/** Shaped like the header block, the salary line and the first paragraph. */
 function DetailsSkeleton() {
   return (
-    <View testID="job.loading" style={styles.card}>
+    <View testID="job.loading" style={styles.header}>
       <View style={styles.headerRow}>
         <Skeleton width={56} height={56} radius={radius.md} />
         <View style={styles.flex}>
           <Skeleton width="70%" height={22} />
           <View style={styles.gap} />
-          <Skeleton width="50%" height={14} />
+          <Skeleton width="50%" height={15} />
         </View>
       </View>
+      <Skeleton width="60%" height={13} />
+      <View style={styles.gap} />
+      <Skeleton width="40%" height={22} />
+      <View style={styles.gap} />
       <Skeleton width="100%" height={14} />
       <Skeleton width="90%" height={14} />
       <Skeleton width="60%" height={14} />
@@ -307,52 +336,24 @@ function DetailsSkeleton() {
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: spacing['4'] },
+  // D32: screen margin 16, section gap 24; the similar list bleeds to the edges.
+  content: { flexGrow: 1, gap: spacing['6'], paddingVertical: spacing['4'] },
   center: { alignItems: 'center', gap: spacing['4'], padding: spacing['6'] },
   flex: { flex: 1, flexShrink: 1 },
   // In a content-sized row `flex: 1` collapses the text to zero width on Android; shrink only.
   shrink: { flexShrink: 1 },
   gap: { height: spacing['2'] },
-  card: {
-    gap: spacing['3'],
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing['5'],
-  },
+  header: { gap: spacing['3'], paddingHorizontal: spacing['4'] },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing['3'] },
-  meta: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['3'] },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: spacing['1'], flexShrink: 1 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['2'] },
-  tag: {
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.muted,
-    paddingHorizontal: spacing['3'],
-    paddingVertical: spacing['1'],
-  },
-  perk: {
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface2,
-    paddingHorizontal: spacing['3'],
-    paddingVertical: spacing['1'],
-  },
+  meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['2'] },
+  section: { gap: spacing['2'], paddingHorizontal: spacing['4'] },
   list: { gap: spacing['2'] },
   listItem: { flexDirection: 'row', gap: spacing['2'], alignItems: 'flex-start' },
-  upper: { textTransform: 'uppercase', letterSpacing: 0.6 },
-  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['3'] },
-  stat: {
-    flexGrow: 1,
-    flexBasis: '40%',
-    gap: spacing['1'],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface2,
-    padding: spacing['3'],
-  },
+  // Centres a 16-pt icon on the 20-pt first line.
+  listIcon: { marginTop: 2 },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['3'], paddingTop: spacing['2'] },
+  stat: { flexGrow: 1, flexBasis: '40%', gap: spacing['0.5'] },
+  similar: { gap: 0 },
+  similarTitle: { paddingHorizontal: spacing['4'], paddingBottom: spacing['2'] },
 });

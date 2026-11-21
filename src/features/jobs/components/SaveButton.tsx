@@ -12,13 +12,15 @@ type Props = {
   onPress: () => void;
   /** "icon": the bookmark on cards. "button": "Save job" / "Saved" on job details. */
   variant?: 'icon' | 'button';
+  /** Button variant height: lg 48 (default) or md 44, to sit next to a md Button in a sticky bar (D32). */
+  size?: 'lg' | 'md';
 };
 
 const bookmark = (saved: boolean) =>
   ({ ios: saved ? 'bookmark.fill' : 'bookmark', android: 'bookmark', web: 'bookmark' }) as const;
 
 /** Website SaveJobButton. Labels: "Save job" / "Remove from saved jobs" (icon), "Save job" / "Saved" (button). */
-export function SaveButton({ testID, saved, onPress, variant = 'icon' }: Props) {
+export function SaveButton({ testID, saved, onPress, variant = 'icon', size = 'lg' }: Props) {
   // D32: the one accent for interactive state; a light haptic when the bookmark lands.
   const tint = saved ? colors.brand : colors.mutedForeground;
 
@@ -30,7 +32,7 @@ export function SaveButton({ testID, saved, onPress, variant = 'icon' }: Props) 
         accessibilityState={{ selected: saved }}
         haptic="light"
         onPress={onPress}
-        style={[styles.button, saved && styles.buttonSaved]}
+        style={[styles.button, size === 'md' && styles.buttonMd, saved && styles.buttonSaved]}
       >
         <Icon name={bookmark(saved)} tintColor={tint} size={16} />
         <AppText variant="label" color={saved ? 'brand' : 'foreground'}>
@@ -75,5 +77,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: spacing['4'],
   },
+  buttonMd: { minHeight: 44, paddingHorizontal: spacing['3'] },
   buttonSaved: { borderColor: colors.brand, backgroundColor: colors.brandSoft },
 });

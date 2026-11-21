@@ -4,10 +4,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { AppText } from '@/components/ui/Text';
 import { spacing } from '@/theme/tokens';
 
-import { ApplyFrame } from '../components/ApplyFrame';
+import { ApplyBody, ApplyFrame } from '../components/ApplyFrame';
 import { ApplyingForCard } from '../components/ApplyingForCard';
 
 export function ApplyFormScreen() {
@@ -22,29 +23,36 @@ export function ApplyFormScreen() {
       appliedMessage={(job) => `You have already submitted an application for ${job.role}.`}
     >
       {({ job }) => (
-        <>
+        <ApplyBody
+          prefix="apply.form"
+          bar={
+            // D32: the one primary action sits in the sticky bar.
+            <StickyActionBar testID="apply.form.bar">
+              <Button
+                testID="apply.form.build"
+                label="Fill in my profile"
+                haptic="medium"
+                onPress={() => router.push('/profile-builder')}
+              />
+            </StickyActionBar>
+          }
+        >
           <ApplyingForCard job={job} />
           <View style={styles.box}>
-            <AppText variant="title" accessibilityRole="header">
-              Application form
-            </AppText>
+            <AppText variant="heading">Application form</AppText>
             <AppText color="mutedForeground">
               Fill in the profile form first. When it is saved, come back here: Quick Apply and apply with
               your CV will be ready.
             </AppText>
             <Button
-              testID="apply.form.build"
-              label="Fill in my profile"
-              onPress={() => router.push('/profile-builder')}
-            />
-            <Button
               testID="apply.form.choose"
               label="Choose another way to apply"
-              variant="outline"
+              variant="secondary"
+              size="md"
               onPress={back}
             />
           </View>
-        </>
+        </ApplyBody>
       )}
     </ApplyFrame>
   );
