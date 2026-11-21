@@ -1,78 +1,127 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
+import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
-import { colors, MIN_TOUCH, radius, shadows, spacing } from '@/theme/tokens';
+import { colors, motion, radius, shadows, spacing } from '@/theme/tokens';
 
 type Mode = 'signin' | 'signup';
 
-/** Website auth.tsx mode tabs: "Sign In" | "Create Account" (+ "New" badge). Separate routes in the app. */
+const TABS: { mode: Mode; label: string; href: '/login' | '/signup' }[] = [
+  { mode: 'signin', label: 'Sign In', href: '/login' },
+  { mode: 'signup', label: 'Create Account', href: '/signup' },
+];
+
+/** D32 segmented control: a 40-pt track, the selected segment is a white tile. */
+const TRACK_HEIGHT = 40;
+const INSET = spacing['1'];
+
+/**
+ * Website auth.tsx mode tabs "Sign In" | "Create Account" (separate routes in the app). D32: segmented control, the
+ * white segment slides to the tapped tab (220 ms ease-out; Reduce Motion: no slide) while the other route replaces
+ * this one. testIDs: `auth.tabs`, `auth.tabs.indicator`, `auth.tab.{mode}`.
+ */
 export function AuthModeTabs({ active }: { active: Mode }) {
-  const tab = (mode: Mode, label: string, href: '/login' | '/signup') => {
-    const selected = mode === active;
-    return (
-      <Pressable
-        testID={`auth.tab.${mode}`}
-        accessibilityRole="tab"
-        accessibilityLabel={label}
-        accessibilityState={{ selected }}
-        onPress={() => !selected && router.replace(href)}
-        style={[styles.tab, selected && styles.selected]}
-      >
-        <AppText
-          variant="label"
-          weight="semibold"
-          align="center"
-          color={selected ? 'foreground' : 'mutedForeground'}
-          style={styles.label}
-        >
-          {label}
-        </AppText>
-        {mode === 'signup' && (
-          <View style={styles.badge}>
-            <AppText variant="caption" weight="semibold" color="brand">
-              New
-            </AppText>
-          </View>
-        )}
-      </Pressable>
+  const reduceMotion = useReducedMotion();
+  const [selected, setSelected] = useState<Mode>(active);
+  const [segment, setSegment] = useState(0);
+  const x = useSharedValue(0);
+
+  const index = TABS.findIndex((t) => t.mode === selected);
+  useEffect(() => {
+    const to = index * segment;
+    x.set(
+      reduceMotion
+        ? to
+        : withTiming(to, { duration: motion.duration.enter, easing: Easing.out(Easing.cubic) }),
     );
+  }, [index, segment, reduceMotion, x]);
+
+  const slide = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    const width = (e.nativeEvent.layout.width - INSET * 2) / TABS.length;
+    // First layout: jump into place, no slide in from the left.
+    x.set(index * width);
+    setSegment(width);
   };
 
   return (
-    <View accessibilityRole="tablist" style={styles.bar}>
-      {tab('signin', 'Sign In', '/login')}
-      {tab('signup', 'Create Account', '/signup')}
+    <View testID="auth.tabs" accessibilityRole="tablist" onLayout={onLayout} style={styles.track}>
+      <Animated.View
+        testID="auth.tabs.indicator"
+        pointerEvents="none"
+        style={[styles.indicator, { width: segment }, slide]}
+      />
+      {TABS.map(({ mode, label, href }) => {
+        const isSelected = mode === selected;
+        return (
+          <PressableScale
+            key={mode}
+            testID={`auth.tab.${mode}`}
+            accessibilityRole="tab"
+            accessibilityLabel={label}
+            accessibilityState={{ selected: isSelected }}
+            haptic={isSelected ? 'none' : 'selection'}
+            pressScale={1}
+            // 32-pt segment inside the 40-pt track: the slop takes the touch target to the track's full height.
+            hitSlop={INSET}
+            onPress={() => {
+              if (mode === active) return;
+              setSelected(mode);
+              router.replace(href);
+            }}
+            style={styles.tab}
+          >
+            <AppText
+              variant="button"
+              align="center"
+              color={isSelected ? 'foreground' : 'mutedForeground'}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+              style={styles.label}
+            >
+              {label}
+            </AppText>
+          </PressableScale>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: {
+  track: {
     flexDirection: 'row',
-    backgroundColor: colors.muted,
+    height: TRACK_HEIGHT,
+    padding: INSET,
+    backgroundColor: colors.surface2,
     borderRadius: radius.md,
-    padding: spacing['1'],
-    gap: spacing['1'],
+  },
+  indicator: {
+    position: 'absolute',
+    top: INSET,
+    bottom: INSET,
+    left: INSET,
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    boxShadow: shadows.soft,
   },
   tab: {
     flex: 1,
-    minHeight: MIN_TOUCH - spacing['2'],
-    borderRadius: radius.md,
-    flexDirection: 'row',
-    // At 320 pt and font scale 2 the label and the "New" badge wrap inside the tab instead of overflowing it.
-    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing['1'],
+    borderRadius: radius.sm,
     paddingHorizontal: spacing['2'],
-    paddingVertical: spacing['1'],
   },
   label: { flexShrink: 1 },
-  selected: { backgroundColor: colors.surface, boxShadow: shadows.soft },
-  badge: {
-    backgroundColor: colors.brandSoft,
-    borderRadius: radius.full,
-    paddingHorizontal: spacing['2'],
-  },
 });

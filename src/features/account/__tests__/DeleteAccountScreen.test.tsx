@@ -2,7 +2,7 @@ import { useFonts } from 'expo-font';
 import { router } from 'expo-router';
 import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
 import { http, HttpResponse } from 'msw';
-import { Alert } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 
 import { secureStorage } from '@/lib/secureStorage';
 import { applicantMe } from '@/test/fixtures/applications';
@@ -11,6 +11,7 @@ import { installJobsBackend } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
 import { REFRESH_KEY, TOKEN_KEY } from '@/features/auth/sessionStore';
+import { colors } from '@/theme/tokens';
 
 jest.mock('expo-font', () => ({ ...jest.requireActual('expo-font'), useFonts: jest.fn() }));
 jest.mock('expo-splash-screen', () => ({
@@ -60,6 +61,22 @@ describe('Delete account', () => {
     expect(warning).toHaveTextContent(/hospital's own notes/);
     expect(warning).toHaveTextContent(/interview history/);
     expect(warning).toHaveTextContent(/offer letter/);
+  });
+
+  it('D32: an error-tone warning panel with an icon, then what is removed and what is kept as icon rows', async () => {
+    await open();
+    expect(StyleSheet.flatten(screen.getByTestId('delete.warning.panel').props.style)).toMatchObject({
+      backgroundColor: colors.destructiveSoft,
+    });
+    expect(screen.getByTestId('delete.warning.panel.icon')).toBeOnTheScreen();
+    expect(screen.getByTestId('delete.removed')).toHaveTextContent(/CV/);
+    expect(screen.getByTestId('delete.kept')).toHaveTextContent(/interview history/);
+    expect(screen.getByTestId('delete.removed.0.icon')).toBeOnTheScreen();
+    expect(screen.getByTestId('delete.kept.0.icon')).toBeOnTheScreen();
+    expect(StyleSheet.flatten(screen.getByTestId('delete.submit').props.style)).toMatchObject({
+      backgroundColor: colors.destructive,
+      alignSelf: 'stretch',
+    });
   });
 
   it('cannot be sent without a password', async () => {

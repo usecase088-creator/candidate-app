@@ -1,8 +1,9 @@
 import { useFonts } from 'expo-font';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { http, HttpResponse } from 'msw';
+import { StyleSheet } from 'react-native';
 
 import { resetSessionForTests, TOKEN_KEY } from '@/features/auth/sessionStore';
 import { secureStorage } from '@/lib/secureStorage';
@@ -10,6 +11,7 @@ import { appRoutes } from '@/test/appRoutes';
 import { candidateUser } from '@/test/fixtures/auth';
 import { API } from '@/test/msw/handlers';
 import { server } from '@/test/msw/server';
+import { colors } from '@/theme/tokens';
 
 jest.mock('expo-font', () => ({ ...jest.requireActual('expo-font'), useFonts: jest.fn() }));
 jest.mock('expo-splash-screen', () => ({
@@ -94,6 +96,18 @@ describe('details step', () => {
     expect(screen.getByRole('button', { name: 'Send OTP' })).toBeOnTheScreen();
     expect(screen.getAllByRole('checkbox')).toHaveLength(3);
     expect(screen.getByTestId('auth.tab.signup').props.accessibilityState).toMatchObject({ selected: true });
+  });
+
+  it('D32: 28-pt hero title, "Candidate" as a brand pill, Send OTP is the navy primary button (no gradient)', async () => {
+    await openSignup();
+    expect(
+      StyleSheet.flatten(screen.getByRole('header', { name: 'Create your account' }).props.style),
+    ).toMatchObject({ fontSize: 28 });
+    expect(screen.getByTestId('signup.role')).toHaveTextContent('Candidate');
+    expect(StyleSheet.flatten(screen.getByTestId('signup.submit').props.style).backgroundColor).toBe(
+      colors.primary,
+    );
+    expect(screen.queryByTestId('signup.submit.gradient')).toBeNull();
   });
 
   it('validates with the website rules; the red box shows the first error in website order (email first)', async () => {
@@ -212,6 +226,23 @@ describe('OTP step', () => {
     });
     expect(await screen.findByTestId('home.screen')).toBeOnTheScreen();
     await expect(secureStorage.getItem(TOKEN_KEY)).resolves.toBe('new-token');
+  });
+
+  it('typing the 6th digit verifies on its own, once, even if Verify is pressed as well', async () => {
+    await reachOtpStep();
+    const verify = mockPost('/api/auth/signup/verify-otp', () =>
+      HttpResponse.json({ message: 'OTP verified', signup_token: 'sig-tok' }),
+    );
+    const register = mockPost('/api/auth/register', () =>
+      HttpResponse.json({ token: 'new-token', user: candidateUser }, { status: 201 }),
+    );
+    await fireEvent.changeText(screen.getByTestId('signup.otp'), '123456');
+    // No press yet: the 6th digit alone sends the code.
+    await waitFor(() => expect(verify).toHaveLength(1));
+    await submit();
+    expect(await screen.findByText('Account created!')).toBeOnTheScreen();
+    expect(verify).toHaveLength(1);
+    expect(register).toHaveLength(1);
   });
 
   it('shows register errors with the website mapping (409 email taken)', async () => {

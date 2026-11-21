@@ -1,7 +1,8 @@
 import { useFonts } from 'expo-font';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
 import * as SecureStore from 'expo-secure-store';
 import { http, HttpResponse } from 'msw';
+import { StyleSheet } from 'react-native';
 
 import { resetSessionForTests } from '@/features/auth/sessionStore';
 import { appRoutes } from '@/test/appRoutes';
@@ -55,8 +56,8 @@ async function toResetStep() {
     '/api/auth/verify-otp',
     ok({ message: 'OTP verified', reset_token: 'reset-tok', maskedEmail: 'c***e@apronhanger.test' }),
   );
+  // Typing the 6th digit submits the code (D32 OtpInput onComplete); no press needed.
   await fireEvent.changeText(screen.getByTestId('forgot.otp'), '123456');
-  await submit();
   await screen.findByTestId('forgot.password');
 }
 
@@ -123,6 +124,8 @@ describe('phone step', () => {
 
   it('"Back to Sign In" returns to login', async () => {
     await open();
+    // D32: an in-content 44-pt back control at the top; its spoken name stays the website text.
+    expect(screen.getByRole('button', { name: 'Back to Sign In' })).toBeOnTheScreen();
     await fireEvent.press(screen.getByTestId('forgot.back'));
     expect(await screen.findByTestId('login.screen')).toBeOnTheScreen();
   });
@@ -144,6 +147,20 @@ describe('OTP step', () => {
     await fireEvent.changeText(screen.getByTestId('forgot.otp'), '000000');
     await submit();
     await expectToast('Invalid or expired OTP');
+  });
+
+  it('typing the 6th digit verifies on its own, once, even if Verify OTP is pressed as well', async () => {
+    await toOtpStep();
+    const sent = mockPost(
+      '/api/auth/verify-otp',
+      ok({ message: 'OTP verified', reset_token: 'reset-tok', maskedEmail: 'c***e@apronhanger.test' }),
+    );
+    await fireEvent.changeText(screen.getByTestId('forgot.otp'), '123456');
+    // No press yet: the 6th digit alone sends the code.
+    await waitFor(() => expect(sent).toHaveLength(1));
+    await submit();
+    expect(await screen.findByTestId('forgot.password')).toBeOnTheScreen();
+    expect(sent).toHaveLength(1);
   });
 
   it('"Change Mobile Number" goes back to the phone step', async () => {
@@ -191,5 +208,33 @@ describe('reset step', () => {
       jest.advanceTimersByTime(2500);
     });
     expect(await screen.findByTestId('login.screen')).toBeOnTheScreen();
+  });
+
+  it('the success step has a Sign in button that goes to login right away (D32)', async () => {
+    await toResetStep();
+    mockPost('/api/auth/reset-password', ok({ message: 'Password reset successfully' }));
+    await fireEvent.changeText(screen.getByTestId('forgot.password'), 'NewSecret@1');
+    await submit();
+    // Only the success step is centred.
+    expect(
+      StyleSheet.flatten((await screen.findByRole('header', { name: 'Success!' })).props.style),
+    ).toMatchObject({ textAlign: 'center' });
+    await fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByTestId('login.screen')).toBeOnTheScreen();
+  });
+});
+
+describe('layout (D32)', () => {
+  it('keeps the hero in a fixed slot so the title does not jump between steps', async () => {
+    await toOtpStep();
+    const otpHero = StyleSheet.flatten(screen.getByTestId('forgot.hero').props.style);
+    await fireEvent.press(screen.getByTestId('forgot.change'));
+    const phoneHero = StyleSheet.flatten(screen.getByTestId('forgot.hero').props.style);
+    expect(phoneHero.height).toBeGreaterThan(0);
+    expect(phoneHero.height).toBe(otpHero.height);
+    // Form steps: title left-aligned with the form.
+    expect(
+      StyleSheet.flatten(screen.getByRole('header', { name: 'Reset Password' }).props.style),
+    ).toMatchObject({ fontSize: 28 });
   });
 });

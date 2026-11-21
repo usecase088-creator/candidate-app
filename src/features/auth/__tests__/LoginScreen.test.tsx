@@ -1,7 +1,8 @@
 import { useFonts } from 'expo-font';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
 import * as SecureStore from 'expo-secure-store';
 import { http, HttpResponse } from 'msw';
+import { StyleSheet } from 'react-native';
 
 import { resetSessionForTests, TOKEN_KEY, useSession } from '@/features/auth/sessionStore';
 import { secureStorage } from '@/lib/secureStorage';
@@ -9,6 +10,7 @@ import { appRoutes } from '@/test/appRoutes';
 import { loginResponse, recruiterUser } from '@/test/fixtures/auth';
 import { API } from '@/test/msw/handlers';
 import { server } from '@/test/msw/server';
+import { colors } from '@/theme/tokens';
 
 jest.mock('expo-font', () => ({ ...jest.requireActual('expo-font'), useFonts: jest.fn() }));
 jest.mock('expo-splash-screen', () => ({
@@ -41,6 +43,7 @@ async function fill(email: string, password: string) {
 
 const submit = () => fireEvent.press(screen.getByTestId('login.submit'));
 const redBox = () => screen.getByTestId('login.error');
+const tint = (id: string) => StyleSheet.flatten(screen.getByTestId(id).props.style).backgroundColor;
 
 beforeEach(() => {
   fake.__reset();
@@ -66,6 +69,20 @@ describe('layout (website wording)', () => {
     expect(screen.getByRole('button', { name: 'Forgot password?' })).toBeOnTheScreen();
     expect(screen.getByText('New to ApronHanger?')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Create an account' })).toBeOnTheScreen();
+  });
+
+  it('D32: 28-pt hero title, "Forgot password?" on the Password label row, one navy primary button', async () => {
+    await openLogin();
+    expect(
+      StyleSheet.flatten(screen.getByRole('header', { name: 'Welcome back' }).props.style),
+    ).toMatchObject({
+      fontSize: 28,
+    });
+    expect(
+      within(screen.getByTestId('login.password.labelRow')).getByTestId('login.forgot'),
+    ).toBeOnTheScreen();
+    expect(tint('login.submit')).toBe(colors.primary);
+    expect(screen.queryByTestId('login.submit.gradient')).toBeNull();
   });
 
   it('has the Sign In / Create Account tabs, Sign In selected', async () => {
@@ -180,6 +197,20 @@ describe('why the user is here (D18)', () => {
     await act(() => useSession.getState().signOut('blocked', 'Account not found.'));
     await openLogin();
     expect(screen.getByTestId('login.notice')).toHaveTextContent('Account not found.');
+  });
+
+  it('an expired session or a deleted account is a neutral notice, not the red error box (D32)', async () => {
+    await act(() => useSession.getState().signOut('deleted'));
+    await openLogin();
+    expect(screen.getByTestId('login.notice')).toHaveTextContent('Your account has been deleted.');
+    expect(tint('login.notice')).toBe(colors.skySoft);
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('a blocked account keeps the error tone', async () => {
+    await act(() => useSession.getState().signOut('blocked', 'Account not found.'));
+    await openLogin();
+    expect(tint('login.notice')).toBe(colors.destructiveSoft);
   });
 
   it('says nothing after a normal sign-out', async () => {

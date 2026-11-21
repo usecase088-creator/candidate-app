@@ -8,10 +8,11 @@ import { StyleSheet, View } from 'react-native';
 import { isApiError } from '@/api/errors';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
-import { FormErrorBox } from '@/components/ui/FormErrorBox';
+import { Icon } from '@/components/ui/Icon';
 import { LottieAnimation } from '@/components/ui/LottieAnimation';
 import { OtpInput } from '@/components/ui/OtpInput';
 import { PasswordInput } from '@/components/ui/PasswordInput';
+import { Pill } from '@/components/ui/Pill';
 import { Screen } from '@/components/ui/Screen';
 import { AppText } from '@/components/ui/Text';
 import { TextButton } from '@/components/ui/TextButton';
@@ -19,6 +20,7 @@ import { TextInput, type TextInputRef } from '@/components/ui/TextInput';
 import { useToast } from '@/components/ui/Toast';
 import { authApi } from '@/features/auth/authApi';
 import { AuthModeTabs } from '@/features/auth/components/AuthModeTabs';
+import { FormMessage } from '@/features/auth/components/FormMessage';
 import { loginErrorMessage } from '@/features/auth/messages';
 import { useSession } from '@/features/auth/sessionStore';
 import { firstError, otpError, signupSchema, type SignupValues } from '@/features/auth/validation';
@@ -53,6 +55,9 @@ export default function Signup() {
   const emailRef = useRef<TextInputRef>(null);
   const passwordRef = useRef<TextInputRef>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // True from the moment a code is sent for checking until it fails: the 6th digit submits on its own (onComplete),
+  // so a press on Verify that lands before the button re-renders as disabled must not send the code twice.
+  const verifying = useRef(false);
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -65,6 +70,7 @@ export default function Signup() {
     setFormError(message);
     toast.show(message, { variant: 'error' });
     setBusy(false);
+    verifying.current = false;
   };
 
   const sendOtp = async (values: SignupValues) => {
@@ -83,16 +89,18 @@ export default function Signup() {
     }
   };
 
-  const verifyAndRegister = async () => {
+  const verifyAndRegister = async (code = otp) => {
+    if (verifying.current) return;
     if (!draft) return setStep('details');
-    const invalid = otpError(otp);
+    const invalid = otpError(code);
     if (invalid) return setFormError(invalid);
+    verifying.current = true;
     setFormError(undefined);
     setBusy(true);
 
     let signupToken: string;
     try {
-      signupToken = await authApi.verifySignupOtp(draft.mobile, otp);
+      signupToken = await authApi.verifySignupOtp(draft.mobile, code);
     } catch (e) {
       // Website: the server's message or "Invalid OTP."; network as for sign-in.
       if (isApiError(e) && e.kind === 'http') return fail(e.serverMessage ?? 'Invalid OTP.');
@@ -122,221 +130,236 @@ export default function Signup() {
 
   return (
     <Screen testID="signup.screen" scroll>
-      <View style={styles.stack}>
+      <View style={styles.page}>
         <AuthModeTabs active="signup" />
-        <View style={styles.heading}>
-          <View style={styles.titleRow}>
-            <AppText variant="title">Create your account</AppText>
-            <View style={styles.badge}>
-              <AppText variant="caption" weight="semibold" color="brand">
-                Candidate
-              </AppText>
-            </View>
-          </View>
+        <View style={styles.group}>
+          <Pill testID="signup.role" label="Candidate" tone="brand" />
+          <AppText variant="display">Create your account</AppText>
           <AppText color="mutedForeground">
             Join 1.2L+ verified healthcare professionals across India.
           </AppText>
         </View>
 
-        <FormErrorBox testID="signup.error" message={formError} />
+        <FormMessage testID="signup.error" tone="error" message={formError} />
 
         {step === 'details' ? (
           <>
-            <Controller
-              control={control}
-              name="name"
-              render={({ field }) => (
-                <TextInput
-                  testID="signup.name"
-                  label="Full name *"
-                  accessibilityLabel="Full name"
-                  placeholder="Dr. Aarav Mehta"
-                  autoComplete="name"
-                  textContentType="name"
-                  returnKeyType="next"
-                  submitBehavior="submit"
-                  onSubmitEditing={() => mobileRef.current?.focus()}
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  error={errors.name?.message}
-                  editable={!working}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="mobile"
-              render={({ field }) => (
-                <TextInput
-                  ref={mobileRef}
-                  testID="signup.mobile"
-                  label="Mobile Number *"
-                  accessibilityLabel="Mobile number"
-                  placeholder="+91 9876543210"
-                  keyboardType="phone-pad"
-                  autoComplete="tel"
-                  textContentType="telephoneNumber"
-                  returnKeyType="next"
-                  submitBehavior="submit"
-                  onSubmitEditing={() => emailRef.current?.focus()}
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  error={errors.mobile?.message}
-                  editable={!working}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="email"
-              render={({ field }) => (
-                <TextInput
-                  ref={emailRef}
-                  testID="signup.email"
-                  label="Email *"
-                  accessibilityLabel="Email"
-                  placeholder="you@example.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="email"
-                  textContentType="emailAddress"
-                  returnKeyType="next"
-                  submitBehavior="submit"
-                  onSubmitEditing={() => passwordRef.current?.focus()}
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  error={errors.email?.message}
-                  editable={!working}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="password"
-              render={({ field }) => (
-                <PasswordInput
-                  ref={passwordRef}
-                  testID="signup.password"
-                  label="Password *"
-                  accessibilityLabel="Password"
-                  placeholder="Min. 8 chars, 1 upper, 1 lower, 1 special"
-                  isNew
-                  returnKeyType="done"
-                  onSubmitEditing={() => void submitDetails()}
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  error={errors.password?.message}
-                  editable={!working}
-                />
-              )}
-            />
-            <View testID="signup.requirements" style={styles.requirements}>
-              <AppText variant="caption" weight="semibold">
-                Password Requirements:
-              </AppText>
-              {REQUIREMENTS.map((r) => (
-                <View key={r} style={styles.requirement}>
-                  <AppText variant="caption" color="mutedForeground" importantForAccessibility="no">
-                    •
+            <View style={styles.fields}>
+              <Controller
+                control={control}
+                name="name"
+                render={({ field }) => (
+                  <TextInput
+                    testID="signup.name"
+                    label="Full name *"
+                    accessibilityLabel="Full name"
+                    placeholder="Dr. Aarav Mehta"
+                    autoComplete="name"
+                    textContentType="name"
+                    returnKeyType="next"
+                    submitBehavior="submit"
+                    onSubmitEditing={() => mobileRef.current?.focus()}
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    error={errors.name?.message}
+                    editable={!working}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="mobile"
+                render={({ field }) => (
+                  <TextInput
+                    ref={mobileRef}
+                    testID="signup.mobile"
+                    label="Mobile Number *"
+                    accessibilityLabel="Mobile number"
+                    placeholder="+91 9876543210"
+                    keyboardType="phone-pad"
+                    autoComplete="tel"
+                    textContentType="telephoneNumber"
+                    returnKeyType="next"
+                    submitBehavior="submit"
+                    onSubmitEditing={() => emailRef.current?.focus()}
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    error={errors.mobile?.message}
+                    editable={!working}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="email"
+                render={({ field }) => (
+                  <TextInput
+                    ref={emailRef}
+                    testID="signup.email"
+                    label="Email *"
+                    accessibilityLabel="Email"
+                    placeholder="you@example.com"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="email"
+                    textContentType="emailAddress"
+                    returnKeyType="next"
+                    submitBehavior="submit"
+                    onSubmitEditing={() => passwordRef.current?.focus()}
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    error={errors.email?.message}
+                    editable={!working}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="password"
+                render={({ field }) => (
+                  <PasswordInput
+                    ref={passwordRef}
+                    testID="signup.password"
+                    label="Password *"
+                    accessibilityLabel="Password"
+                    placeholder="Min. 8 chars, 1 upper, 1 lower, 1 special"
+                    isNew
+                    returnKeyType="done"
+                    onSubmitEditing={() => void submitDetails()}
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    error={errors.password?.message}
+                    editable={!working}
+                  />
+                )}
+              />
+              <View testID="signup.requirements" style={styles.requirements}>
+                <AppText variant="secondary" weight="semibold">
+                  Password Requirements:
+                </AppText>
+                {REQUIREMENTS.map((r, i) => (
+                  <View key={r} style={styles.requirement}>
+                    <Icon
+                      testID={`signup.requirement.${i}.icon`}
+                      name={DOT}
+                      size={DOT_SIZE}
+                      tintColor={colors.mutedForeground}
+                    />
+                    <AppText variant="secondary" color="mutedForeground" style={styles.flex}>
+                      {r}
+                    </AppText>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            <View testID="signup.consent" style={styles.group}>
+              <Checkbox
+                testID="signup.terms"
+                checked={terms}
+                onChange={setTerms}
+                invalid={formError === CONSENT_ERROR}
+                accessibilityLabel="I have read and agree to the Terms & Conditions."
+              >
+                <AppText variant="label" weight="regular">
+                  I have read and agree to the{' '}
+                  <AppText
+                    testID="signup.terms.link"
+                    variant="label"
+                    weight="semibold"
+                    color="brand"
+                    accessibilityRole="link"
+                    onPress={() => void WebBrowser.openBrowserAsync(TERMS_URL)}
+                  >
+                    Terms & Conditions
                   </AppText>
-                  <AppText variant="caption" color="mutedForeground" style={styles.flex}>
-                    {r}
+                  .
+                </AppText>
+              </Checkbox>
+              <Checkbox
+                testID="signup.privacy"
+                checked={privacy}
+                onChange={setPrivacy}
+                invalid={formError === CONSENT_ERROR}
+                accessibilityLabel="I consent to the collection, processing, storage and sharing of my personal and professional information for recruitment purposes as described in the Privacy Policy."
+              >
+                <AppText variant="label" weight="regular">
+                  I consent to the collection, processing, storage and sharing of my personal and professional
+                  information for recruitment purposes as described in the{' '}
+                  <AppText
+                    testID="signup.privacy.link"
+                    variant="label"
+                    weight="semibold"
+                    color="brand"
+                    accessibilityRole="link"
+                    onPress={() => void WebBrowser.openBrowserAsync(PRIVACY_URL)}
+                  >
+                    Privacy Policy
                   </AppText>
-                </View>
-              ))}
+                  .
+                </AppText>
+              </Checkbox>
+              <Checkbox
+                testID="signup.alerts"
+                checked={alerts}
+                onChange={setAlerts}
+                accessibilityLabel="I would like to receive relevant job alerts, career opportunities and updates from APRONHANGER. (Optional)"
+              >
+                <AppText variant="label" weight="regular">
+                  I would like to receive relevant job alerts, career opportunities and updates from
+                  APRONHANGER. (Optional)
+                </AppText>
+              </Checkbox>
             </View>
 
             <Button
               testID="signup.submit"
               label={busy ? 'Please wait…' : 'Send OTP'}
-              variant="gradient"
+              haptic="medium"
               loading={busy}
               disabled={working}
               onPress={() => void submitDetails()}
             />
-
-            <Checkbox
-              testID="signup.terms"
-              checked={terms}
-              onChange={setTerms}
-              invalid={formError === CONSENT_ERROR}
-              accessibilityLabel="I have read and agree to the Terms & Conditions."
-            >
-              <AppText variant="caption">
-                I have read and agree to the{' '}
-                <AppText
-                  testID="signup.terms.link"
-                  variant="caption"
-                  weight="semibold"
-                  color="brand"
-                  accessibilityRole="link"
-                  onPress={() => void WebBrowser.openBrowserAsync(TERMS_URL)}
-                >
-                  Terms & Conditions
-                </AppText>
-                .
-              </AppText>
-            </Checkbox>
-            <Checkbox
-              testID="signup.privacy"
-              checked={privacy}
-              onChange={setPrivacy}
-              invalid={formError === CONSENT_ERROR}
-              accessibilityLabel="I consent to the collection, processing, storage and sharing of my personal and professional information for recruitment purposes as described in the Privacy Policy."
-            >
-              <AppText variant="caption">
-                I consent to the collection, processing, storage and sharing of my personal and professional
-                information for recruitment purposes as described in the{' '}
-                <AppText
-                  testID="signup.privacy.link"
-                  variant="caption"
-                  weight="semibold"
-                  color="brand"
-                  accessibilityRole="link"
-                  onPress={() => void WebBrowser.openBrowserAsync(PRIVACY_URL)}
-                >
-                  Privacy Policy
-                </AppText>
-                .
-              </AppText>
-            </Checkbox>
-            <Checkbox
-              testID="signup.alerts"
-              checked={alerts}
-              onChange={setAlerts}
-              accessibilityLabel="I would like to receive relevant job alerts, career opportunities and updates from APRONHANGER. (Optional)"
-            >
-              I would like to receive relevant job alerts, career opportunities and updates from APRONHANGER.
-              (Optional)
-            </Checkbox>
           </>
         ) : (
           <>
-            <AppText color="mutedForeground">{`Enter the OTP sent to ${draft?.mobile ?? ''}.`}</AppText>
-            <TextButton
-              testID="signup.edit"
-              label="Edit signup details"
-              onPress={() => {
-                setFormError(undefined);
-                setStep('details');
-              }}
-              disabled={working}
-            />
-            <OtpInput testID="signup.otp" label="Mobile OTP *" value={otp} onChangeText={setOtp} autoFocus />
-            <Button
-              testID="signup.submit"
-              label={working ? 'Please wait…' : 'Verify & create account'}
-              variant="gradient"
-              loading={busy}
-              disabled={working}
-              onPress={() => void verifyAndRegister()}
-            />
-            {success && <LottieAnimation testID="signup.success" name="authSuccess" size={64} />}
+            <View style={styles.group}>
+              <AppText color="mutedForeground">{`Enter the OTP sent to ${draft?.mobile ?? ''}.`}</AppText>
+              <TextButton
+                testID="signup.edit"
+                label="Edit signup details"
+                onPress={() => {
+                  setFormError(undefined);
+                  setStep('details');
+                }}
+                disabled={working}
+              />
+            </View>
+            {/* One field: the button stays inline right under it, so it is never hidden by the keyboard. */}
+            <View style={styles.fields}>
+              <OtpInput
+                testID="signup.otp"
+                label="Mobile OTP *"
+                value={otp}
+                onChangeText={setOtp}
+                onComplete={(code) => void verifyAndRegister(code)}
+                autoFocus
+              />
+              <Button
+                testID="signup.submit"
+                label={working ? 'Please wait…' : 'Verify & create account'}
+                haptic="medium"
+                loading={busy}
+                disabled={working}
+                onPress={() => void verifyAndRegister()}
+              />
+              {success && <LottieAnimation testID="signup.success" name="authSuccess" size={64} />}
+            </View>
           </>
         )}
       </View>
@@ -344,22 +367,20 @@ export default function Signup() {
   );
 }
 
+const DOT = { ios: 'circle.fill', android: 'circle', web: 'circle' } as const;
+const DOT_SIZE = 6;
+
 const styles = StyleSheet.create({
-  stack: { gap: spacing['4'] },
-  heading: { gap: spacing['2'] },
-  titleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing['2'] },
-  badge: {
-    backgroundColor: colors.brandSoft,
-    borderRadius: radius.full,
-    paddingHorizontal: spacing['2'],
-    paddingVertical: spacing['0.5'],
-  },
-  requirement: { flexDirection: 'row', gap: spacing['2'] },
+  // D32 rhythm: sections 24 apart, items inside a group 8, fields 16.
+  page: { gap: spacing['6'] },
+  group: { gap: spacing['2'] },
+  fields: { gap: spacing['4'] },
+  requirement: { flexDirection: 'row', alignItems: 'center', gap: spacing['2'] },
   flex: { flex: 1 },
   requirements: {
     gap: spacing['1'],
     padding: spacing['3'],
     borderRadius: radius.md,
-    backgroundColor: colors.muted,
+    backgroundColor: colors.surface2,
   },
 });

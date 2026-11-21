@@ -6,7 +6,6 @@ import { Controller, type FieldErrors, useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
-import { FormErrorBox } from '@/components/ui/FormErrorBox';
 import { LottieAnimation } from '@/components/ui/LottieAnimation';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Screen } from '@/components/ui/Screen';
@@ -16,11 +15,12 @@ import { TextInput, type TextInputRef } from '@/components/ui/TextInput';
 import { useToast } from '@/components/ui/Toast';
 import { authApi } from '@/features/auth/authApi';
 import { AuthModeTabs } from '@/features/auth/components/AuthModeTabs';
+import { FormMessage } from '@/features/auth/components/FormMessage';
 import { loginErrorMessage, ROLE_MISMATCH_MESSAGE, signOutNotice } from '@/features/auth/messages';
 import { useSession } from '@/features/auth/sessionStore';
 import { takeSignInTarget } from '@/features/auth/signInGate';
 import { firstError, loginSchema, type LoginValues } from '@/features/auth/validation';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 
 /** Website: success animation, then go in after 1.2 s (D19). */
 const SUCCESS_DELAY_MS = 1200;
@@ -78,43 +78,49 @@ export default function Login() {
 
   return (
     <Screen testID="login.screen" scroll>
-      <View style={styles.stack}>
+      <View style={styles.page}>
         <AuthModeTabs active="signin" />
-        <View style={styles.heading}>
-          <AppText variant="title">Welcome back</AppText>
+        <View style={styles.group}>
+          <AppText variant="display">Welcome back</AppText>
           <AppText color="mutedForeground">Sign in to access your saved jobs and applications.</AppText>
         </View>
 
-        <FormErrorBox testID="login.notice" message={formError ? undefined : notice} />
-        <FormErrorBox testID="login.error" message={formError} />
+        {formError ? (
+          <FormMessage testID="login.error" tone="error" message={formError} />
+        ) : (
+          <FormMessage
+            testID="login.notice"
+            tone={reason === 'blocked' ? 'error' : 'info'}
+            message={notice}
+          />
+        )}
 
-        <Controller
-          control={control}
-          name="email"
-          render={({ field }) => (
-            <TextInput
-              testID="login.email"
-              label="Email *"
-              accessibilityLabel="Email"
-              placeholder="you@example.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-              textContentType="username"
-              returnKeyType="next"
-              submitBehavior="submit"
-              onSubmitEditing={() => passwordRef.current?.focus()}
-              value={field.value}
-              onChangeText={field.onChange}
-              onBlur={field.onBlur}
-              error={formState.errors.email?.message}
-              editable={!working}
-            />
-          )}
-        />
-
-        <View>
+        <View style={styles.fields}>
+          <Controller
+            control={control}
+            name="email"
+            render={({ field }) => (
+              <TextInput
+                testID="login.email"
+                label="Email *"
+                accessibilityLabel="Email"
+                placeholder="you@example.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                textContentType="username"
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                error={formState.errors.email?.message}
+                editable={!working}
+              />
+            )}
+          />
           <Controller
             control={control}
             name="password"
@@ -132,49 +138,63 @@ export default function Login() {
                 onBlur={field.onBlur}
                 error={formState.errors.password?.message}
                 editable={!working}
+                labelAccessory={
+                  // Website: the link sits on the label row. The negative margin keeps the row at the label's height;
+                  // the link's hit slop still gives it a 44-pt target.
+                  <View style={styles.labelLink}>
+                    <TextButton
+                      testID="login.forgot"
+                      label="Forgot password?"
+                      onPress={() => router.push('/forgot-password')}
+                    />
+                  </View>
+                }
               />
             )}
           />
-          <TextButton
-            testID="login.forgot"
-            label="Forgot password?"
-            onPress={() => router.push('/forgot-password')}
-          />
         </View>
 
-        <Button
-          testID="login.submit"
-          label={working ? 'Please wait…' : 'Sign in'}
-          loading={busy}
-          disabled={working}
-          onPress={() => void submit()}
-        />
-        {success && <LottieAnimation testID="login.success" name="authSuccess" size={64} />}
+        <View style={styles.fields}>
+          <Button
+            testID="login.submit"
+            label={working ? 'Please wait…' : 'Sign in'}
+            haptic="medium"
+            loading={busy}
+            disabled={working}
+            onPress={() => void submit()}
+          />
+          {success && <LottieAnimation testID="login.success" name="authSuccess" size={64} />}
+          <View style={styles.centre}>
+            <TextButton
+              testID="login.browse"
+              label="Browse jobs without signing in"
+              onPress={() => {
+                // Ends the "you were signed out" state, so the tabs stop sending this visitor back here.
+                useSession.setState({ signOutReason: undefined, signOutMessage: undefined });
+                takeSignInTarget();
+                // Tabs already under the login screen: go back to them instead of stacking a second set.
+                if (router.canDismiss()) router.dismissTo('/');
+                else router.replace('/');
+              }}
+            />
+          </View>
+        </View>
 
-        <TextButton
-          testID="login.browse"
-          label="Browse jobs without signing in"
-          onPress={() => {
-            // Ends the "you were signed out" state, so the tabs stop sending this visitor back here.
-            useSession.setState({ signOutReason: undefined, signOutMessage: undefined });
-            takeSignInTarget();
-            // Tabs already under the login screen: go back to them instead of stacking a second set.
-            if (router.canDismiss()) router.dismissTo('/');
-            else router.replace('/');
-          }}
-        />
-
-        <View style={styles.card}>
-          <AppText variant="heading">New to ApronHanger?</AppText>
-          <AppText color="mutedForeground">
+        <View style={styles.footer}>
+          <View style={styles.footerLine}>
+            <AppText color="mutedForeground" align="center">
+              New to ApronHanger?
+            </AppText>
+            <TextButton
+              testID="login.signup"
+              label="Create an account"
+              onPress={() => router.replace('/signup')}
+            />
+          </View>
+          {/* Website wording kept (login page card). */}
+          <AppText variant="secondary" color="mutedForeground" align="center">
             Build your verified candidate profile and unlock one-click applications to top hospitals.
           </AppText>
-          <Button
-            testID="login.signup"
-            label="Create an account"
-            variant="outline"
-            onPress={() => router.replace('/signup')}
-          />
           <AppText variant="caption" color="mutedForeground" align="center">
             100% Free • Verified Hospitals • Fast Response
           </AppText>
@@ -185,14 +205,19 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: spacing['4'] },
-  heading: { gap: spacing['2'] },
-  card: {
-    gap: spacing['3'],
-    padding: spacing['4'],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+  // D32 rhythm: sections 24 apart, items inside a group 8, fields 16.
+  page: { flexGrow: 1, gap: spacing['6'] },
+  group: { gap: spacing['2'] },
+  fields: { gap: spacing['4'] },
+  labelLink: { marginVertical: -spacing['2'] },
+  centre: { alignItems: 'center' },
+  // Pushed to the bottom of a tall screen; on a short one it follows the form.
+  footer: { marginTop: 'auto', gap: spacing['2'], alignItems: 'center' },
+  footerLine: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    columnGap: spacing['1'],
   },
 });

@@ -75,10 +75,15 @@ describe('large text (font scale 2, 320 pt)', () => {
     expect(style('notifications.actions')).toMatchObject({ flexWrap: 'wrap' });
   });
 
-  it('sign in: "Create Account" and its "New" badge wrap inside their tab instead of overflowing', async () => {
+  it('sign in: "Create Account" stays on one line inside its tab instead of overflowing', async () => {
     await renderRouter(appRoutes, { initialUrl: '/login' });
     await screen.findByTestId('login.screen');
-    expect(style('auth.tab.signup')).toMatchObject({ flexWrap: 'wrap' });
-    expect(StyleSheet.flatten(screen.getByText('Create Account').props.style)).toMatchObject({ flexShrink: 1 });
+    // D32: the "New" badge is gone and the segmented control has a fixed 40-pt track, so the label no longer wraps:
+    // it is capped at 1.3x and shrinks to fit its segment (like the tab bar labels).
+    const label = screen.getByText('Create Account');
+    expect(label).toHaveProp('numberOfLines', 1);
+    expect(label).toHaveProp('maxFontSizeMultiplier', 1.3);
+    expect(label).toHaveProp('adjustsFontSizeToFit', true);
+    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ flexShrink: 1 });
   });
 });
