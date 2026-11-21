@@ -300,3 +300,7 @@ Raj was asleep and asked for decisions to be taken and listed. Each can be rever
 ## D31 — Request timeout 60 s (2026-11-17)
 
 The default request timeout went from 20 s to 60 s. The free-plan staging server sleeps and takes about 55 s to wake; the client's first open and first sign-in on the preview build ended in a timeout error. Uploads keep their own 60 s. The rule for a retry (network, timeout, 5xx on queries only) is unchanged. A production server that is always on answers in well under a second, so users there are not affected.
+
+## D32 — Premium UI redesign (decided 2026-11-21, details pending Raj; see docs/design/UI-REDESIGN.md)
+
+The client found the preview build working but not premium (spacing, oversized text). Raj: the app may look better than the website; colours and theme stay close to the website (navy + brand blue, Inter); layout, type ramp, spacing, chrome, feedback and motion are the app's own. Website wording stays. Treated as included in launch prep (no change request). The system, the screen plan and the five open decisions (native headers, expo-haptics, react-native-svg, sentence case, status colour by need) are in `docs/design/UI-REDESIGN.md`; the audits and research live locally (scratchpad) and the installed design skills in `.claude/skills/`.
