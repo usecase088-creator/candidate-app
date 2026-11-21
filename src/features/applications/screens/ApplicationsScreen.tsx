@@ -116,7 +116,7 @@ function ApplicationListSkeleton({ testID }: { testID: string }) {
       {[0, 1, 2].map((i) => (
         <View key={i} style={styles.skeleton}>
           <View style={styles.skeletonTop}>
-            <Skeleton width={44} height={44} radius={radius.lg} />
+            <Skeleton width={44} height={44} radius={radius.md} />
             <View style={styles.skeletonLines}>
               <Skeleton width="65%" height={14} />
               <Skeleton width="45%" height={12} />
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   skeletons: { gap: spacing['3'] },
   skeleton: {
     gap: spacing['3'],
-    borderRadius: radius['2xl'],
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,

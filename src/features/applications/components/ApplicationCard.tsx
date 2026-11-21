@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   card: {
     gap: spacing['3'],
     minHeight: MIN_TOUCH,
-    borderRadius: radius['2xl'],
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,

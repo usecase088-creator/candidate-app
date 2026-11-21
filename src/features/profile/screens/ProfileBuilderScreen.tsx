@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     padding: spacing['3'],
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
   },
   nav: { gap: spacing['2'] },
   bar: { height: 6, borderRadius: radius.full, backgroundColor: colors.muted, overflow: 'hidden' },

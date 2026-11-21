@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   header: {
     gap: spacing['1'],
     padding: spacing['4'],
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     backgroundColor: colors.primary,
   },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['2'] },

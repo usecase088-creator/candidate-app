@@ -6,7 +6,7 @@ import { colors, radius } from '@/theme/tokens';
 
 /** Hospital logo (cached by expo-image) or the website's building icon when there is none. Decorative. */
 export function HospitalLogo({ uri, size = 44 }: { uri?: string | null; size?: number }) {
-  const box = { width: size, height: size, borderRadius: radius.lg };
+  const box = { width: size, height: size, borderRadius: radius.md };
   if (uri) {
     return (
       <Image

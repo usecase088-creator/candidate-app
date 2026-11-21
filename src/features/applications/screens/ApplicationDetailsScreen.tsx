@@ -130,7 +130,7 @@ function DetailsSkeleton({ testID }: { testID: string }) {
   return (
     <View testID={testID} style={styles.card}>
       <View style={styles.top}>
-        <Skeleton width={48} height={48} radius={radius.lg} />
+        <Skeleton width={48} height={48} radius={radius.md} />
         <View style={styles.text}>
           <Skeleton width="70%" height={18} />
           <Skeleton width="50%" height={12} />
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', gap: spacing['3'], paddingVertical: spacing['6'] },
   card: {
     gap: spacing['3'],
-    borderRadius: radius['2xl'],
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,

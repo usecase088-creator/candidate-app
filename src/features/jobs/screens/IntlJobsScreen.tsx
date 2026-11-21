@@ -100,8 +100,8 @@ export function IntlJobsScreen() {
             <AppText color="mutedForeground" align="center">
               Loading international jobs…
             </AppText>
-            <Skeleton width="100%" height={160} radius={radius.xl} />
-            <Skeleton width="100%" height={160} radius={radius.xl} />
+            <Skeleton width="100%" height={160} radius={radius.md} />
+            <Skeleton width="100%" height={160} radius={radius.md} />
           </View>
         }
       />
@@ -152,7 +152,7 @@ const IntlCard = memo(function IntlCard({ job, onOpen }: { job: IntlJob; onOpen:
   const visa = visaColors(job.visaSponsorship);
   return (
     <View testID={`intl.card.${job.id}`} style={styles.card}>
-      <AppText variant="bodyLg" weight="semibold">
+      <AppText variant="body" weight="semibold">
         {job.jobPosition}
       </AppText>
       <Row label="Specialty" value={job.specialty} />
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     gap: spacing['2'],
     alignItems: 'flex-start',
     backgroundColor: colors.card,
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing['4'],

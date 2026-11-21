@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   lineDone: { backgroundColor: colors.brand },
   lineTodo: { backgroundColor: colors.border },
   message: {
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderWidth: 1,
     paddingHorizontal: spacing['3'],
     paddingVertical: spacing['2'],

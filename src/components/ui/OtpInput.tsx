@@ -71,7 +71,7 @@ export function OtpInput({
             const borderColor = error ? colors.destructive : active ? colors.ring : colors.input;
             return (
               <View key={i} testID={`${testID}.box.${i}`} style={[styles.box, { borderColor }]}>
-                <AppText variant="bodyLg" weight="semibold">
+                <AppText variant="body" weight="semibold">
                   {value[i] ?? ''}
                 </AppText>
               </View>

@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   card: {
     gap: spacing['3'],
     padding: spacing['4'],
-    borderRadius: radius['2xl'],
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,

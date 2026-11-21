@@ -1,4 +1,4 @@
-import { colors, fonts, gradients, radius, shadows, spacing } from '../tokens';
+import { colors, fonts, gradients, logoTints, motion, radius, shadows, spacing } from '../tokens';
 
 // WCAG 2.x contrast ratio.
 function luminance(hex: string): number {
@@ -56,9 +56,34 @@ describe('colours (docs/reference/THEME.md)', () => {
   });
 });
 
-describe('radius (12 px base)', () => {
-  it('follows the website scale', () => {
-    expect(radius).toMatchObject({ sm: 8, md: 10, lg: 12, xl: 16, '2xl': 20, '3xl': 24, full: 9999 });
+// D32: the website's six radii (8/10/12/16/20/24) read as six different components on a phone; the app keeps one family.
+describe('radius (D32 family)', () => {
+  it('has exactly four radii: 8 / 12 / 20 / pill', () => {
+    expect(radius).toEqual({ sm: 8, md: 12, lg: 20, full: 9999 });
+  });
+});
+
+describe('D32 additions', () => {
+  it('adds the roles the redesign needs and drops the second blue', () => {
+    expect(colors.separator).toBe('#E5E9EF');
+    expect(colors.placeholder).toBe('#8A94A6');
+    expect(colors.successSoft).toBe('#E6F8F1');
+    expect(colors.successText).toBe('#047857');
+    expect('checkbox' in colors).toBe(false);
+    expect(contrast(colors.successText, colors.successSoft)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(colors.placeholder, colors.surface)).toBeGreaterThanOrEqual(3);
+  });
+
+  it('has six logo tints (initials fallback), each readable', () => {
+    expect(logoTints).toHaveLength(6);
+    for (const t of logoTints) expect(contrast(t.fg, t.bg)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('motion: short, ease-out, one press spring', () => {
+    expect(motion.duration).toEqual({ press: 120, enter: 220, exit: 180, step: 250 });
+    expect(motion.pressScale).toBe(0.97);
+    expect(motion.pressOpacity).toBe(0.9);
+    expect(motion.spring).toEqual({ damping: 15, stiffness: 300, mass: 1 });
   });
 });
 

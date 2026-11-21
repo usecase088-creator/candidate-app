@@ -14,7 +14,7 @@ describe('AppText', () => {
     expect(flat(screen.getByTestId('t').props.style)).toMatchObject({
       fontFamily: fonts.regular,
       color: colors.foreground,
-      fontSize: 14,
+      fontSize: 15,
     });
   });
 

@@ -134,7 +134,7 @@ export function JobQuestionsForm({
 const styles = StyleSheet.create({
   box: {
     gap: spacing['4'],
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.brandSoft,
     backgroundColor: colors.surface,

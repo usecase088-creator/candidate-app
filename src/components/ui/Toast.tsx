@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   host: { position: 'absolute', left: spacing['4'], right: spacing['4'] },
   toast: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderLeftWidth: 4,
     paddingHorizontal: spacing['4'],
     paddingVertical: spacing['3'],

@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   heading: { gap: spacing['2'] },
   card: {
     gap: spacing['3'],
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   locked: {
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.border,

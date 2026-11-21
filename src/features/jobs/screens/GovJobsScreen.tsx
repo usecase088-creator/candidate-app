@@ -86,8 +86,8 @@ export function GovJobsScreen() {
             <AppText color="mutedForeground" align="center">
               Loading government jobs…
             </AppText>
-            <Skeleton width="100%" height={110} radius={radius.xl} />
-            <Skeleton width="100%" height={110} radius={radius.xl} />
+            <Skeleton width="100%" height={110} radius={radius.md} />
+            <Skeleton width="100%" height={110} radius={radius.md} />
           </View>
         }
       />
@@ -156,7 +156,7 @@ const GovCard = memo(function GovCard({ job, onOpen }: { job: GovJob; onOpen: (u
 const styles = StyleSheet.create({
   disclaimer: {
     backgroundColor: colors.muted,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     padding: spacing['3'],
   },
   content: { padding: spacing['4'] },
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     gap: spacing['2'],
     alignItems: 'flex-start',
     backgroundColor: colors.card,
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing['4'],

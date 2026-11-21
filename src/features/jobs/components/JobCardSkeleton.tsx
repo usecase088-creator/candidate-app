@@ -8,7 +8,7 @@ export function JobCardSkeleton({ testID }: { testID?: string }) {
   return (
     <View testID={testID} style={styles.card}>
       <View style={styles.top}>
-        <Skeleton width={44} height={44} radius={radius.lg} />
+        <Skeleton width={44} height={44} radius={radius.md} />
         <View style={styles.lines}>
           <Skeleton width="70%" height={14} />
           <Skeleton width="45%" height={12} />
@@ -39,7 +39,7 @@ export function JobListSkeleton({ testID }: { testID: string }) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius['2xl'],
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing['5'],

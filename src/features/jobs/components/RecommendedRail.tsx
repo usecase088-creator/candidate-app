@@ -29,7 +29,7 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
     if (!showPrompt) return null;
     return (
       <View testID="recommended.prompt" style={styles.prompt}>
-        <AppText variant="bodyLg" weight="semibold" align="center">
+        <AppText variant="body" weight="semibold" align="center">
           Unlock personalised recommendations
         </AppText>
         <AppText color="mutedForeground" align="center">
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing['2'],
     backgroundColor: colors.surface2,
-    borderRadius: radius['2xl'],
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing['4'],
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     width: 260,
     gap: spacing['2'],
     backgroundColor: colors.card,
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing['4'],
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   prompt: {
     gap: spacing['2'],
     alignItems: 'center',
-    borderRadius: radius['2xl'],
+    borderRadius: radius.md,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.border,

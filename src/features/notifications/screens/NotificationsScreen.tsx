@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     padding: spacing['3'],
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     backgroundColor: colors.surface,
   },
   unread: { borderColor: colors.brand, backgroundColor: colors.background },

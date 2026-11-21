@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   searchBar: {
     minHeight: 48,
     justifyContent: 'center',
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,

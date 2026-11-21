@@ -49,8 +49,8 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: colors.overlay },
   sheet: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    borderTopLeftRadius: radius.md,
+    borderTopRightRadius: radius.md,
     padding: spacing['4'],
     gap: spacing['3'],
   },

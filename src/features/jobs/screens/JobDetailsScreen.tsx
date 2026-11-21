@@ -302,7 +302,7 @@ function DetailsSkeleton() {
   return (
     <View testID="job.loading" style={styles.card}>
       <View style={styles.headerRow}>
-        <Skeleton width={56} height={56} radius={radius.lg} />
+        <Skeleton width={56} height={56} radius={radius.md} />
         <View style={styles.flex}>
           <Skeleton width="70%" height={22} />
           <View style={styles.gap} />
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   card: {
     gap: spacing['3'],
     backgroundColor: colors.card,
-    borderRadius: radius['2xl'],
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing['5'],

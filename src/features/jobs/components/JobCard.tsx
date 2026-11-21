@@ -58,7 +58,7 @@ function JobCardView({ job, saved, onToggleSave, onOpen }: Props) {
         accessibilityLabel={`View ${job.role} at ${job.hospital}`}
         onPress={() => onOpen(job)}
       >
-        <AppText variant="bodyLg" weight="semibold" style={styles.role}>
+        <AppText variant="body" weight="semibold" style={styles.role}>
           {job.role}
         </AppText>
         <AppText variant="caption" color="mutedForeground">
@@ -105,7 +105,7 @@ function Pill({ text }: { text: string }) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius['2xl'],
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing['5'],

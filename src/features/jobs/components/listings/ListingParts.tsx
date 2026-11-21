@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   hero: {
     gap: spacing['2'],
     backgroundColor: colors.primary,
-    borderRadius: radius['2xl'],
+    borderRadius: radius.md,
     padding: spacing['5'],
   },
   subtitle: { opacity: 0.8 },

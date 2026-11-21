@@ -51,14 +51,14 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     backgroundColor: colors.muted,
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     padding: spacing['1'],
     gap: spacing['1'],
   },
   tab: {
     flex: 1,
     minHeight: MIN_TOUCH - spacing['2'],
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     flexDirection: 'row',
     // At 320 pt and font scale 2 the label and the "New" badge wrap inside the tab instead of overflowing it.
     flexWrap: 'wrap',

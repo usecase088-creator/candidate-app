@@ -127,7 +127,7 @@ function ApplySkeleton({ testID }: { testID: string }) {
   return (
     <View testID={testID} style={styles.stack}>
       <View style={styles.card}>
-        <Skeleton width={48} height={48} radius={radius.lg} />
+        <Skeleton width={48} height={48} radius={radius.md} />
         <View style={styles.lines}>
           <Skeleton width="40%" height={12} />
           <Skeleton width="70%" height={18} />
@@ -135,8 +135,8 @@ function ApplySkeleton({ testID }: { testID: string }) {
         </View>
       </View>
       <Skeleton width="60%" height={22} />
-      <Skeleton width="100%" height={120} radius={radius.xl} />
-      <Skeleton width="100%" height={120} radius={radius.xl} />
+      <Skeleton width="100%" height={120} radius={radius.md} />
+      <Skeleton width="100%" height={120} radius={radius.md} />
     </View>
   );
 }
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     gap: spacing['4'],
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,

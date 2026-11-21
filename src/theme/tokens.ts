@@ -42,16 +42,21 @@ export const colors = {
   border: '#D4DAE1',
   input: '#D4DAE1',
   ring: '#326AD9',
-  /** Signup consent checkbox accent (auth.tsx). */
-  checkbox: '#3778D7',
   /** Scrim behind toasts and sheets. */
   overlay: 'rgba(10,18,31,0.5)',
+  /** D32: hairline between rows and under headers (replaces 1 px `border` on cards). */
+  separator: '#E5E9EF',
+  /** D32: input placeholders (3:1 on white; real values use `foreground`). */
+  placeholder: '#8A94A6',
+  /** D32: "done" status (the website already uses emerald for application statuses; its blue --success stays on the web). */
+  successSoft: '#E6F8F1',
+  successText: '#047857',
 } as const;
 
 export type ColorToken = keyof typeof colors;
 
-/** --radius 0.75rem = 12 px. */
-export const radius = { sm: 8, md: 10, lg: 12, xl: 16, '2xl': 20, '3xl': 24, full: 9999 } as const;
+/** D32: one radius family. sm = small controls, md = buttons / inputs / cards / panels, lg = sheets, full = pills and avatars. */
+export const radius = { sm: 8, md: 12, lg: 20, full: 9999 } as const;
 
 /** 4-point scale (Tailwind units: 1 = 4 px). */
 export const spacing = {
@@ -78,19 +83,40 @@ export const fonts = {
 
 export type FontWeight = keyof typeof fonts;
 
-/** Tailwind sizes used on the auth screens (THEME.md "Typography"). Line heights keep text readable at font scale 2. */
+/** D32 type ramp (docs/design/UI-REDESIGN.md section 2). Few sizes; weight and colour carry the hierarchy. */
 export const fontSizes = {
   xs: { fontSize: 12, lineHeight: 16 },
-  sm: { fontSize: 14, lineHeight: 20 },
-  base: { fontSize: 16, lineHeight: 24 },
-  lg: { fontSize: 18, lineHeight: 28 },
-  xl: { fontSize: 20, lineHeight: 28 },
-  '2xl': { fontSize: 24, lineHeight: 32 },
-  '3xl': { fontSize: 30, lineHeight: 36 },
+  sm: { fontSize: 13, lineHeight: 18 },
+  md: { fontSize: 14, lineHeight: 20 },
+  base: { fontSize: 15, lineHeight: 20 },
+  lg: { fontSize: 16, lineHeight: 22 },
+  xl: { fontSize: 17, lineHeight: 22 },
+  '2xl': { fontSize: 22, lineHeight: 28 },
+  '3xl': { fontSize: 28, lineHeight: 34 },
 } as const;
 
-/** Headings use letter-spacing -0.02em on the website. */
+/** Large titles use tight tracking (website: -0.02em on h1-h4; Inter needs it from 20 pt up). */
 export const headingLetterSpacing = (fontSize: number) => -0.02 * fontSize;
+
+/** D32: initials tiles for hospitals without a logo (deterministic by name). Website hue family, AA text. */
+export const logoTints = [
+  { bg: '#E1F0FF', fg: '#1E4FB3' },
+  { bg: '#EBEBFD', fg: '#4338CA' },
+  { bg: '#E6F8F1', fg: '#047857' },
+  { bg: '#FEF4E0', fg: '#78350F' },
+  { bg: '#E8F4FD', fg: '#075985' },
+  { bg: '#F3E8FF', fg: '#6B21A8' },
+] as const;
+
+/** D32 motion: short, ease-out, transform + opacity only. One spring for press feedback (no bounce). */
+export const motion = {
+  duration: { press: 120, enter: 220, exit: 180, step: 250 },
+  pressScale: 0.97,
+  pressOpacity: 0.9,
+  spring: { damping: 15, stiffness: 300, mass: 1 },
+  /** Android ripple over light surfaces. */
+  ripple: 'rgba(10,18,31,0.08)',
+} as const;
 
 /** boxShadow strings (new architecture supports them on Android and iOS). */
 export const shadows = {

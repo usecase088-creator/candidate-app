@@ -186,7 +186,7 @@ export function FilePickerField({
 const styles = StyleSheet.create({
   box: {
     gap: spacing['2'],
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing['3'],
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     backgroundColor: colors.surface2,
     paddingHorizontal: spacing['3'],
     paddingVertical: spacing['2'],

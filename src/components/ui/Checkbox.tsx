@@ -72,6 +72,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checked: { backgroundColor: colors.checkbox, borderColor: colors.checkbox },
+  checked: { backgroundColor: colors.brand, borderColor: colors.brand },
   label: { flex: 1 },
 });

@@ -30,5 +30,5 @@ export function cardTextColor(tone: CardTone): ColorToken {
 }
 
 const styles = StyleSheet.create({
-  card: { gap: spacing['3'], borderRadius: radius.xl, padding: spacing['4'] },
+  card: { gap: spacing['3'], borderRadius: radius.md, padding: spacing['4'] },
 });
