@@ -5,6 +5,7 @@ import * as Network from 'expo-network';
 import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
 import * as WebBrowser from 'expo-web-browser';
 import { delay, http, HttpResponse } from 'msw';
+import { StyleSheet } from 'react-native';
 
 import { appRoutes } from '@/test/appRoutes';
 import { govJob, intlJob } from '@/test/fixtures/jobs';
@@ -188,6 +189,25 @@ describe('Government jobs', () => {
     expect(note).toHaveTextContent(/official/i);
   });
 
+  it('D32 R2 (issue 18): the disclaimer is a compact info note: 2 lines with More, full text after More', async () => {
+    installJobsBackend({ gov: [aiims] });
+    await gov();
+    await screen.findByTestId('gov.card.g1');
+    const text = screen.getByTestId('gov.disclaimer.text');
+    // The whole sentence stays in the tree (store rule); only the drawn lines are capped.
+    expect(text).toHaveTextContent(/always apply through the official website of the authority/);
+    expect(text).toHaveProp('numberOfLines', 2);
+    expect(StyleSheet.flatten(text.props.style)).toMatchObject({ fontSize: 13 });
+    expect(screen.getByTestId('gov.disclaimer.icon')).toBeOnTheScreen();
+    expect(screen.getByTestId('gov.disclaimer.toggle')).toHaveTextContent('More');
+    await fireEvent.press(screen.getByTestId('gov.disclaimer.toggle'));
+    expect(screen.getByTestId('gov.disclaimer.text').props.numberOfLines).toBeUndefined();
+    expect(screen.getByTestId('gov.disclaimer.toggle')).toHaveTextContent('Less');
+    expect(StyleSheet.flatten(screen.getByTestId('gov.disclaimer').props.style)).toMatchObject({
+      backgroundColor: colors.skySoft,
+    });
+  });
+
   it('search placeholder is the website text', async () => {
     installJobsBackend({ gov: [aiims] });
     await gov();
@@ -199,6 +219,8 @@ describe('Government jobs', () => {
     await gov();
     expect(await screen.findByText('No government jobs yet')).toBeOnTheScreen();
     expect(screen.getByText('Check back soon for new listings.')).toBeOnTheScreen();
+    // D32 R2 (issue 18): its own icon instead of the generic tray (jest-expo renders the iOS name).
+    expect(screen.getByTestId('gov.empty.icon')).toHaveProp('name', 'building.columns');
     expect(screen.queryByTestId('gov.stats')).not.toBeOnTheScreen();
   });
 
@@ -391,6 +413,8 @@ describe('International jobs', () => {
     expect(
       screen.getByText('International listings are posted by our team. Check back soon.'),
     ).toBeOnTheScreen();
+    // D32 R2 (issue 18): its own icon instead of the generic tray.
+    expect(screen.getByTestId('intl.empty.icon')).toHaveProp('name', 'globe');
   });
 
   it('loading, error and offline', async () => {

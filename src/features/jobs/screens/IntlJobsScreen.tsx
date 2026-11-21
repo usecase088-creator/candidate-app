@@ -27,6 +27,7 @@ import { deadlineInfo } from '../logic/deadline';
 import { ALL_COUNTRIES, countriesOf, intlFilter, visaTone } from '../logic/intl';
 
 const SEARCH_ICON = { ios: 'magnifyingglass', android: 'search', web: 'search' } as const;
+const GLOBE_ICON = { ios: 'globe', android: 'public', web: 'public' } as const;
 
 /**
  * Website foreign-jobs.tsx: the 11-column table becomes one 5-line row per listing (D32). The native stack header
@@ -110,6 +111,7 @@ export function IntlJobsScreen() {
         testID="intl.empty"
         title="No international jobs yet"
         message="International listings are posted by our team. Check back soon."
+        icon={GLOBE_ICON}
       />
     );
   } else if (visible.length === 0) {

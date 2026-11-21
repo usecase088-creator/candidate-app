@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { FieldLabel } from '@/components/ui/FieldLabel';
 import { Icon } from '@/components/ui/Icon';
 import { ListRow } from '@/components/ui/ListRow';
 import { PressableScale } from '@/components/ui/PressableScale';
@@ -12,6 +13,8 @@ type Props = {
   /** `builder.field.<key>`: the row; options are `{testID}.option.<n>`. */
   testID: string;
   label: string;
+  /** Red asterisk after the label (FieldLabel, `{testID}.required`). */
+  required?: boolean;
   hint?: string;
   value: string;
   options: readonly string[];
@@ -26,11 +29,11 @@ const CHECK = { ios: 'checkmark', android: 'check', web: 'check' } as const;
  * D32 single choice with many or long options (Role, State): a 48-pt picker row that opens a check list in place,
  * instead of 36 chips. Choosing closes the list; choosing the current value clears it (as the chips did).
  */
-export function OptionPicker({ testID, label, hint, value, options, onChange }: Props) {
+export function OptionPicker({ testID, label, required, hint, value, options, onChange }: Props) {
   const [open, setOpen] = useState(false);
   return (
     <View style={styles.group}>
-      <AppText variant="label">{label}</AppText>
+      <FieldLabel testID={testID} label={label} required={required} />
       <PressableScale
         testID={testID}
         pressScale={1}

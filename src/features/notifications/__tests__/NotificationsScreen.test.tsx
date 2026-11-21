@@ -79,6 +79,8 @@ describe('Notifications', () => {
     setup([]);
     await open();
     expect(await screen.findByText('No notifications yet')).toBeOnTheScreen();
+    // D32 R2 (issue 18): its own icon (bell with a slash), not the generic tray.
+    expect(screen.getByTestId('notifications.empty.icon')).toHaveProp('name', 'bell.slash');
   });
 
   it('shows Try Again when the list cannot be loaded', async () => {

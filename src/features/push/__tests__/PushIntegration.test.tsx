@@ -2,7 +2,7 @@
 import * as Device from 'expo-device';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
-import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
 import { http, HttpResponse } from 'msw';
 
 import { TOKEN_KEY } from '@/features/auth/sessionStore';
@@ -122,7 +122,10 @@ describe('Settings: notifications', () => {
       .mockResolvedValue({ status: 'denied', granted: false, canAskAgain: false } as never);
     await startSignedIn('/settings', 'settings.screen');
     expect(await screen.findByTestId('settings.push.status')).toHaveTextContent(/turned off/);
-    expect(screen.getByTestId('settings.push.open')).toBeOnTheScreen();
+    // D32 R2 (issue 19): "Open phone settings" is a row of the Notifications group, not a loose link under it.
+    const group = within(screen.getByTestId('settings.group.notifications'));
+    expect(group.getByTestId('settings.push.open')).toHaveTextContent('Open phone settings');
+    expect(group.getByTestId('settings.push.open.chevron')).toBeOnTheScreen();
   });
 
   it('says nothing about push on a phone that cannot do it (emulator)', async () => {

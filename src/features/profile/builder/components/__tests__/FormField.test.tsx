@@ -35,6 +35,23 @@ describe('FormField required marker', () => {
     },
   );
 
+  it('a required long select (picker row) uses the same red asterisk', async () => {
+    const states = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    await renderWithProviders(
+      <FormField
+        testID="builder.field.k"
+        spec={field({ kind: 'select', label: 'State', required: true, options: states })}
+        value=""
+        onChange={() => {}}
+      />,
+    );
+    const asterisk = screen.getByTestId('builder.field.k.required');
+    expect(flat(asterisk.props.style).color).toBe(colors.errorText);
+    expect(screen.getByText('State *')).toBeOnTheScreen();
+    // Screen readers hear the plain label, not the asterisk.
+    expect(screen.getByTestId('builder.field.k')).toHaveProp('accessibilityLabel', 'State, Select');
+  });
+
   it('an optional group has no asterisk', async () => {
     await renderWithProviders(
       <FormField

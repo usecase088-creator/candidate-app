@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { AppText } from '@/components/ui/Text';
 import { queryView } from '@/features/jobs/hooks/queryView';
 import { useSession } from '@/features/auth/sessionStore';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, shadows, spacing } from '@/theme/tokens';
 
 import { nextBestFixes, type ProfileJson } from '../builder/model';
 import { AvatarSection } from '../components/AvatarSection';
@@ -174,7 +174,7 @@ export function ProfileScreen() {
 const styles = StyleSheet.create({
   hero: {
     alignItems: 'center',
-    gap: spacing['3'],
+    gap: spacing['2'],
     paddingTop: spacing['6'],
     paddingHorizontal: spacing['5'],
   },
@@ -184,10 +184,10 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing['4'],
     padding: spacing['4'],
     gap: spacing['4'],
+    // D32 R2 (issue 13): the one card style (as the application cards): white, radius 12, soft shadow, no border.
     backgroundColor: colors.surface,
     borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.separator,
+    boxShadow: shadows.soft,
   },
   strengthRow: { flexDirection: 'row', alignItems: 'center', gap: spacing['4'] },
   strengthText: { flex: 1, gap: spacing['0.5'] },

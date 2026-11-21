@@ -108,7 +108,8 @@ const KEPT_ITEMS = [
 const WARNING = { ios: 'exclamationmark.triangle.fill', android: 'warning', web: 'warning' } as const;
 const REMOVED = { ios: 'trash', android: 'delete', web: 'delete' } as const;
 const KEPT = { ios: 'building.2', android: 'apartment', web: 'apartment' } as const;
-const BULLET_ICON = 18;
+/** D32 R2 (issue 20): light list icons, 16 pt in `mutedForeground` (outline symbols). */
+const BULLET_ICON = 16;
 
 function BulletGroup({
   testID,
@@ -123,7 +124,8 @@ function BulletGroup({
 }) {
   return (
     <View testID={testID} style={styles.group}>
-      <AppText variant="label" weight="semibold">
+      {/* 14/600: long headers may wrap; the website wording stays. */}
+      <AppText testID={`${testID}.title`} variant="label" weight="semibold">
         {title}
       </AppText>
       {items.map((item, i) => (
@@ -150,7 +152,7 @@ const styles = StyleSheet.create({
   section: { gap: spacing['4'] },
   group: { gap: spacing['2'] },
   bullet: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing['3'] },
-  // Centres the 18-pt icon on the 20-pt first line.
-  bulletIcon: { marginTop: 1 },
+  // Centres the 16-pt icon on the 20-pt first line.
+  bulletIcon: { marginTop: 2 },
   flex: { flex: 1 },
 });

@@ -9,7 +9,7 @@ import { AppText } from '@/components/ui/Text';
 import { keepPickedFile, type PendingFile } from '@/features/profile/builder/draftStore';
 import { validateVaultFiles } from '@/features/uploads/logic/files';
 import { pickVaultFiles } from '@/features/uploads/pickers';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, shadows, spacing } from '@/theme/tokens';
 
 type Props = {
   /** Files already on the server (and any uploaded by an unfinished save). */
@@ -63,7 +63,7 @@ export function VaultSection({ saved, waiting, userId, onPicked }: Props) {
         </AppText>
       </View>
       {names.length > 0 ? (
-        <View style={styles.list}>
+        <View testID="builder.vault.list" style={styles.list}>
           {names.map((name, i) => (
             <Fragment key={`${i}.${name}`}>
               {i > 0 ? <Separator inset={ROW_INSET} /> : null}
@@ -104,12 +104,11 @@ export function VaultSection({ saved, waiting, userId, onPicked }: Props) {
 const styles = StyleSheet.create({
   stack: { gap: spacing['3'] },
   heading: { gap: spacing['1'] },
+  // D32 R2 (issue 13): the one card style: white, radius 12, soft shadow, no hairline border.
   list: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.separator,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
-    overflow: 'hidden',
+    boxShadow: shadows.soft,
   },
   row: {
     minHeight: 52,

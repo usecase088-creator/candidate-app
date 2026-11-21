@@ -2,11 +2,13 @@ import { useFonts } from 'expo-font';
 import { router } from 'expo-router';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { http, HttpResponse } from 'msw';
+import { StyleSheet } from 'react-native';
 
 import { API } from '@/test/msw/handlers';
 import { installJobsBackend, makeJob } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
+import { colors } from '@/theme/tokens';
 
 jest.mock('expo-font', () => ({ ...jest.requireActual('expo-font'), useFonts: jest.fn() }));
 jest.mock('expo-splash-screen', () => ({
@@ -182,6 +184,42 @@ describe('Search: filter sheet', () => {
     expect(screen.getByText('₹2+ LPA minimum')).toBeOnTheScreen();
     await fireEvent.press(screen.getByTestId('filters.done'));
     expect(ids()).toEqual(['d1']);
+  });
+
+  it('D32 R2 (issue 17): the website captions sit under the section headers as 13-pt muted lines', async () => {
+    installJobsBackend({ jobs: [nurse, doctor, tech] });
+    await search();
+    await screen.findByTestId('job.card.n1');
+    await openFilters();
+    const captions = {
+      sort: 'Control ranking',
+      location: '3 cities available',
+      exp: '0+ years minimum',
+      type: 'Role structure',
+    } as const;
+    for (const [key, text] of Object.entries(captions)) {
+      const header = screen.getByTestId(`filters.group.${key}.header`);
+      // Stacked (title, then caption), not a right-aligned value on the title row.
+      expect(StyleSheet.flatten(header.props.style)?.flexDirection ?? 'column').toBe('column');
+      const caption = within(header).getByTestId(`filters.group.${key}.meta`);
+      expect(caption).toHaveTextContent(text);
+      expect(StyleSheet.flatten(caption.props.style)).toMatchObject({
+        fontSize: 13,
+        color: colors.mutedForeground,
+      });
+    }
+  });
+
+  it('D32 R2 (issue 17): the salary caption is hidden while the stepper says "Any", shown once a minimum is set', async () => {
+    installJobsBackend({ jobs: [nurse, doctor, tech] });
+    await search();
+    await screen.findByTestId('job.card.n1');
+    await openFilters();
+    expect(screen.getByTestId('filters.salary.value')).toHaveTextContent('Any');
+    expect(screen.queryByTestId('filters.group.salary.meta')).toBeNull();
+    expect(screen.queryByText('₹0+ LPA minimum')).toBeNull();
+    await fireEvent.press(screen.getByTestId('filters.salary.plus'));
+    expect(screen.getByTestId('filters.group.salary.meta')).toHaveTextContent('₹2+ LPA minimum');
   });
 
   it('the steppers stop at the website ranges: 0-15 years and 0-50 LPA', async () => {

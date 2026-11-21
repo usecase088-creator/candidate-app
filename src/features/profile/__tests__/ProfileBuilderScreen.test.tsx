@@ -2,6 +2,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useFonts } from 'expo-font';
 import { fireEvent, screen, waitFor } from 'expo-router/testing-library';
 import { http, HttpResponse } from 'msw';
+import { StyleSheet } from 'react-native';
 
 import type { CandidateMe } from '@/api/schemas/candidate';
 import { useSession } from '@/features/auth/sessionStore';
@@ -14,6 +15,7 @@ import { installJobsBackend } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
 import { installXhrOverFetch } from '@/test/xhrOverFetch';
+import { colors, radius, shadows } from '@/theme/tokens';
 
 import { type BuilderDraft, loadDraft, saveDraft } from '../builder/draftStore';
 import { draftFromMe } from '../builder/model';
@@ -419,6 +421,14 @@ describe('Profile builder: document vault', () => {
     await atStep(VAULT);
     await open();
     expect(await screen.findByTestId('builder.vault.0')).toHaveTextContent('licence.pdf');
+    // D32 R2 (issue 13): the file list is the one card style (white, radius 12, soft shadow, no hairline border).
+    const style = StyleSheet.flatten(screen.getByTestId('builder.vault.list').props.style);
+    expect(style).toMatchObject({
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      boxShadow: shadows.soft,
+    });
+    expect(style.borderWidth ?? 0).toBe(0);
   });
 
   it('a picked file waits on the phone: no upload and no save until the last step', async () => {

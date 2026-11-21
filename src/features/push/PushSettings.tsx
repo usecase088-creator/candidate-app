@@ -1,13 +1,12 @@
-// The Notifications group in Settings (D32): one "Push notifications" row with a switch, a footer that says where
-// things stand, and the way to turn push on. Nothing shows on a phone that cannot do push (emulator), so the screen
-// never offers something that cannot work.
+// The Notifications group in Settings (D32): one "Push notifications" row with a switch, an "Open phone settings" row
+// after a refusal, and a footer (the group's footer style) that says where things stand. Nothing shows on a phone
+// that cannot do push (emulator), so the screen never offers something that cannot work.
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Switch, View } from 'react-native';
 
 import { ListGroup } from '@/components/ui/ListGroup';
 import { ListRow } from '@/components/ui/ListRow';
 import { AppText } from '@/components/ui/Text';
-import { TextButton } from '@/components/ui/TextButton';
 import { openAppSettings } from '@/features/uploads/pickers';
 import { colors, spacing } from '@/theme/tokens';
 
@@ -77,6 +76,14 @@ export function PushSettings() {
             trailing={<PushSwitch on={false} busy={false} />}
           />
         )}
+        {/* D32 R2 (issue 19): the way back after a refusal is a row of the group, not a loose link under it. */}
+        {permission === 'denied' ? (
+          <ListRow
+            testID="settings.push.open"
+            title="Open phone settings"
+            onPress={() => void openAppSettings()}
+          />
+        ) : null}
       </ListGroup>
       <View style={styles.footer}>
         {permission === 'granted' ? (
@@ -90,16 +97,9 @@ export function PushSettings() {
           </AppText>
         ) : null}
         {permission === 'denied' ? (
-          <>
-            <AppText testID="settings.push.status" variant="secondary" color="mutedForeground">
-              Notifications are turned off for ApronHanger on this phone.
-            </AppText>
-            <TextButton
-              testID="settings.push.open"
-              label="Open phone settings"
-              onPress={() => void openAppSettings()}
-            />
-          </>
+          <AppText testID="settings.push.status" variant="secondary" color="mutedForeground">
+            Notifications are turned off for ApronHanger on this phone.
+          </AppText>
         ) : null}
         {failed ? (
           <AppText

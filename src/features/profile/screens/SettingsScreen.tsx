@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { Icon } from '@/components/ui/Icon';
 import { ListGroup } from '@/components/ui/ListGroup';
@@ -18,6 +18,7 @@ const ICONS = {
   terms: { ios: 'doc.text', android: 'description', web: 'description' },
   external: { ios: 'arrow.up.right', android: 'open_in_new', web: 'open_in_new' },
   signOut: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout', web: 'logout' },
+  delete: { ios: 'trash', android: 'delete', web: 'delete' },
 } as const;
 const ICON_SIZE = 24;
 const ROW_INSET = spacing['4'] + ICON_SIZE + spacing['3'];
@@ -26,9 +27,14 @@ const external = (testID: string) => (
   <Icon testID={`${testID}.external`} name={ICONS.external} size={18} tintColor={colors.mutedForeground} />
 );
 
+/** D32 R2 (issue 19): every leading icon in brand blue; only the destructive row is red. */
+const lead = (testID: string, name: (typeof ICONS)[keyof typeof ICONS], tint: string = colors.brand) => (
+  <Icon testID={`${testID}.icon`} name={name} size={ICON_SIZE} tintColor={tint} />
+);
+
 /**
  * Settings (D32): grouped lists. Notifications (push), About (Privacy Policy, Terms and Conditions open in the
- * in-app browser), Account (Sign out) and, last and on its own, Delete account as a red-text row.
+ * in-app browser) and Account (Sign out, then Delete account as the last, red-text row with its note as the footer).
  */
 export function SettingsScreen() {
   const router = useRouter();
@@ -40,41 +46,40 @@ export function SettingsScreen() {
         <ListRow
           testID="settings.privacy"
           title="Privacy Policy"
-          leading={<Icon name={ICONS.privacy} size={ICON_SIZE} tintColor={colors.brand} />}
+          leading={lead('settings.privacy', ICONS.privacy)}
           trailing={external('settings.privacy')}
           onPress={() => void WebBrowser.openBrowserAsync(PRIVACY_URL)}
         />
         <ListRow
           testID="settings.terms"
           title="Terms and Conditions"
-          leading={<Icon name={ICONS.terms} size={ICON_SIZE} tintColor={colors.brand} />}
+          leading={lead('settings.terms', ICONS.terms)}
           trailing={external('settings.terms')}
           onPress={() => void WebBrowser.openBrowserAsync(TERMS_URL)}
         />
       </ListGroup>
-      <ListGroup testID="settings.group.account" header="Account" separatorInset={ROW_INSET}>
+      <ListGroup
+        testID="settings.group.account"
+        header="Account"
+        separatorInset={ROW_INSET}
+        footer="Deletes your profile, CV, photo, documents and saved jobs. Your applications stay with the hospitals."
+      >
         <ListRow
           testID="settings.signout"
           title="Sign out"
-          leading={<Icon name={ICONS.signOut} size={ICON_SIZE} tintColor={colors.mutedForeground} />}
+          leading={lead('settings.signout', ICONS.signOut)}
           trailing="none"
           onPress={() => void signOut('user')}
         />
+        <ListRow
+          testID="settings.delete"
+          title="Delete account"
+          destructive
+          leading={lead('settings.delete', ICONS.delete, colors.errorText)}
+          trailing="none"
+          onPress={() => router.push('/delete-account')}
+        />
       </ListGroup>
-      <View style={styles.danger}>
-        <ListGroup
-          testID="settings.group.danger"
-          footer="Deletes your profile, CV, photo, documents and saved jobs. Your applications stay with the hospitals."
-        >
-          <ListRow
-            testID="settings.delete"
-            title="Delete account"
-            destructive
-            trailing="none"
-            onPress={() => router.push('/delete-account')}
-          />
-        </ListGroup>
-      </View>
       <AppText
         testID="settings.version"
         variant="caption"
@@ -89,6 +94,5 @@ export function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  danger: { marginTop: spacing['6'] },
   version: { marginTop: spacing['8'], marginBottom: spacing['6'] },
 });

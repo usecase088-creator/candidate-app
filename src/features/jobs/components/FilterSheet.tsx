@@ -76,7 +76,7 @@ export function FilterSheet() {
           {active === 0 ? 'No filters applied' : `${active} applied`}
         </AppText>
 
-        <Group title="Sort by" meta="Control ranking">
+        <Group id="sort" title="Sort by" meta="Control ranking">
           <View style={styles.wrap}>
             {SORTS.map((s) => (
               <Chip
@@ -90,7 +90,7 @@ export function FilterSheet() {
           </View>
         </Group>
 
-        <Group title="Location" meta={`${cities.length} cities available`}>
+        <Group id="location" title="Location" meta={`${cities.length} cities available`}>
           <View style={styles.wrap}>
             {cities.map((c) => (
               <Chip
@@ -104,7 +104,7 @@ export function FilterSheet() {
           </View>
         </Group>
 
-        <Group title="Experience" meta={`${f.minExp}+ years minimum`}>
+        <Group id="exp" title="Experience" meta={`${f.minExp}+ years minimum`}>
           <Stepper
             testID="filters.exp"
             label="minimum experience"
@@ -115,7 +115,12 @@ export function FilterSheet() {
           />
         </Group>
 
-        <Group title="Salary" meta={`₹${f.minSalary}+ LPA minimum`}>
+        <Group
+          id="salary"
+          title="Salary"
+          // The stepper already says "Any" at 0; a "₹0+ LPA minimum" caption next to it would contradict it.
+          meta={f.minSalary === 0 ? undefined : `₹${f.minSalary}+ LPA minimum`}
+        >
           <Stepper
             testID="filters.salary"
             label="minimum salary"
@@ -126,7 +131,7 @@ export function FilterSheet() {
           />
         </Group>
 
-        <Group title="Job type" meta="Role structure">
+        <Group id="type" title="Job type" meta="Role structure">
           <View style={styles.wrap}>
             {JOB_TYPES.map((t) => (
               <Chip
@@ -164,17 +169,30 @@ export function FilterSheet() {
   );
 }
 
-/** D32: sentence-case 17/600 header with the live value on the right, 24 above, 12 to the controls. */
-function Group({ title, meta, children }: { title: string; meta: string; children: React.ReactNode }) {
+/**
+ * D32: sentence-case 17/600 header, 24 above, 12 to the controls. R2 (issue 17): the website caption sits under the
+ * header as a 13-pt muted line instead of competing with it on the right.
+ */
+function Group({
+  id,
+  title,
+  meta,
+  children,
+}: {
+  id: string;
+  title: string;
+  meta?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <View style={styles.group}>
-      <View style={styles.groupHeader}>
-        <AppText variant="heading" style={styles.flex}>
-          {title}
-        </AppText>
-        <AppText variant="secondary" color="mutedForeground" numberOfLines={1}>
-          {meta}
-        </AppText>
+    <View testID={`filters.group.${id}`} style={styles.group}>
+      <View testID={`filters.group.${id}.header`} style={styles.groupHeader}>
+        <AppText variant="heading">{title}</AppText>
+        {meta ? (
+          <AppText testID={`filters.group.${id}.meta`} variant="secondary" color="mutedForeground">
+            {meta}
+          </AppText>
+        ) : null}
       </View>
       {children}
     </View>
@@ -197,7 +215,7 @@ const styles = StyleSheet.create({
   close: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: spacing['4'], paddingTop: spacing['3'], paddingBottom: spacing['6'] },
   group: { gap: spacing['3'], paddingTop: spacing['6'] },
-  groupHeader: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing['3'] },
+  groupHeader: { gap: spacing['0.5'] },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['2'] },
   footer: {
     flexDirection: 'row',

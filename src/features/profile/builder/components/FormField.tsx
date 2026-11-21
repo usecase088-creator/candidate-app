@@ -29,8 +29,6 @@ const LOCK = { ios: 'lock', android: 'lock', web: 'lock' } as const;
 const asString = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v));
 const asList = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
-/** OptionPicker takes a plain string label (its own file); the chip groups use FieldLabel's red asterisk. */
-const label = (spec: FieldSpec) => (spec.required ? `${spec.label} *` : spec.label);
 
 /** One form field of the profile builder. The kind decides the control; the website's labels are kept. */
 export function FormField({ testID, spec, value, onChange }: Props) {
@@ -119,7 +117,8 @@ export function FormField({ testID, spec, value, onChange }: Props) {
         return (
           <OptionPicker
             testID={testID}
-            label={label(spec)}
+            label={spec.label}
+            required={spec.required}
             hint={spec.hint}
             value={asString(value)}
             options={options}

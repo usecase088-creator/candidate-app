@@ -4,9 +4,11 @@ import { StyleSheet, View } from 'react-native';
 
 import type { GovJob } from '@/api/schemas/jobs';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Icon } from '@/components/ui/Icon';
 import { Screen } from '@/components/ui/Screen';
 import { SearchField } from '@/components/ui/SearchField';
 import { AppText } from '@/components/ui/Text';
+import { TextButton } from '@/components/ui/TextButton';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import { QueryStatus } from '../components/QueryStatus';
@@ -25,6 +27,40 @@ import { deadlineInfo } from '../logic/deadline';
 import { govFilter } from '../logic/gov';
 
 const SEARCH_ICON = { ios: 'magnifyingglass', android: 'search', web: 'search' } as const;
+const GOV_ICON = { ios: 'building.columns', android: 'account_balance', web: 'account_balance' } as const;
+const INFO_ICON = { ios: 'info.circle', android: 'info', web: 'info' } as const;
+
+/**
+ * Store rule (Google Play Deceptive Behavior, docs/store/STORE-RULES.md): no implied government affiliation.
+ * D32 R2 (issue 18): a compact info note, two lines with "More". The whole sentence is always in the tree (screen
+ * readers read all of it); only the drawn lines are capped while collapsed.
+ */
+function Disclaimer() {
+  const [open, setOpen] = useState(false);
+  return (
+    <View testID="gov.disclaimer" style={styles.disclaimer}>
+      <Icon testID="gov.disclaimer.icon" name={INFO_ICON} size={18} tintColor={colors.skyText} />
+      <View style={styles.disclaimerText}>
+        <AppText
+          testID="gov.disclaimer.text"
+          variant="secondary"
+          color="foreground"
+          numberOfLines={open ? undefined : 2}
+        >
+          ApronHanger is not a government app and is not affiliated with any government body. Listings are
+          collected from public notifications; always apply through the official website of the authority (the
+          &quot;View / Apply&quot; link).
+        </AppText>
+        <TextButton
+          testID="gov.disclaimer.toggle"
+          label={open ? 'Less' : 'More'}
+          accessibilityLabel={open ? 'Show less of the notice' : 'Show the full notice'}
+          onPress={() => setOpen((o) => !o)}
+        />
+      </View>
+    </View>
+  );
+}
 
 /**
  * Website gov-jobs.tsx: the table becomes one row per listing (D32). The native stack header carries the title
@@ -53,14 +89,7 @@ export function GovJobsScreen() {
         Latest notifications — AIIMS, UPSC, State PSC, and more.
       </AppText>
       {stats ? <StatsStrip testID="gov" stats={stats} /> : null}
-      {/* Store rule (Google Play Deceptive Behavior, docs/store/STORE-RULES.md): no implied government affiliation. */}
-      <View testID="gov.disclaimer" accessibilityRole="text" style={styles.disclaimer}>
-        <AppText variant="secondary" color="mutedForeground">
-          ApronHanger is not a government app and is not affiliated with any government body. Listings are
-          collected from public notifications; always apply through the official website of the authority (the
-          &quot;View / Apply&quot; link).
-        </AppText>
-      </View>
+      <Disclaimer />
       <SearchField
         testID="gov.search"
         placeholder="Search by authority or exam name…"
@@ -89,6 +118,7 @@ export function GovJobsScreen() {
         testID="gov.empty"
         title="No government jobs yet"
         message="Check back soon for new listings."
+        icon={GOV_ICON}
       />
     );
   } else if (visible.length === 0) {
@@ -157,8 +187,12 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['3'],
   },
   disclaimer: {
-    backgroundColor: colors.muted,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing['2'],
+    backgroundColor: colors.skySoft,
     borderRadius: radius.md,
     padding: spacing['3'],
   },
+  disclaimerText: { flex: 1, alignItems: 'flex-start', gap: spacing['1'] },
 });

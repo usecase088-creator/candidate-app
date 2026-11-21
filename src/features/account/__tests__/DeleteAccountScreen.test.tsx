@@ -11,7 +11,7 @@ import { installJobsBackend } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
 import { REFRESH_KEY, TOKEN_KEY } from '@/features/auth/sessionStore';
-import { colors } from '@/theme/tokens';
+import { colors, fonts } from '@/theme/tokens';
 
 jest.mock('expo-font', () => ({ ...jest.requireActual('expo-font'), useFonts: jest.fn() }));
 jest.mock('expo-splash-screen', () => ({
@@ -77,6 +77,25 @@ describe('Delete account', () => {
       backgroundColor: colors.destructive,
       alignSelf: 'stretch',
     });
+  });
+
+  it('D32 R2 (issue 20): light 16-pt muted icons, 14/600 section headers, rows 8 apart', async () => {
+    await open();
+    for (const id of ['delete.removed.0.icon', 'delete.kept.3.icon']) {
+      const icon = screen.getByTestId(id);
+      expect(icon).toHaveProp('tintColor', colors.mutedForeground);
+      expect(StyleSheet.flatten(icon.props.style)).toMatchObject({ width: 16, height: 16 });
+    }
+    for (const id of ['delete.removed.title', 'delete.kept.title']) {
+      expect(StyleSheet.flatten(screen.getByTestId(id).props.style)).toMatchObject({
+        fontSize: 14,
+        fontFamily: fonts.semibold,
+      });
+    }
+    expect(screen.getByTestId('delete.kept.title')).toHaveTextContent(
+      'What the hospitals you applied to keep as their records',
+    );
+    expect(StyleSheet.flatten(screen.getByTestId('delete.kept').props.style)).toMatchObject({ gap: 8 });
   });
 
   it('cannot be sent without a password', async () => {

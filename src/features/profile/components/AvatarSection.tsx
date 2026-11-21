@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -11,19 +11,21 @@ import { openAppSettings, type PickResult, pickGalleryPhotos, takePhoto } from '
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import { useAvatar } from '../hooks/useAvatar';
+import { type PhotoAction, PhotoSheet } from './PhotoSheet';
 
 const BADGE = 28;
 /** Pads the 28-pt badge's touch area to 44 without changing its drawn size. */
 const BADGE_SLOP = (44 - BADGE) / 2;
 const CAMERA = { ios: 'camera', android: 'photo_camera', web: 'photo_camera' } as const;
-const GALLERY = { ios: 'photo.on.rectangle', android: 'photo_library', web: 'photo_library' } as const;
 
 /**
- * Profile picture (D32 hero): 88-pt avatar with a brand ring and a camera badge that opens the gallery, two small
- * actions under it (take / choose) and Remove when there is a picture. Same type and size rules as the website (5 MB).
+ * Profile picture (D32 hero): 88-pt avatar with a brand ring and a camera badge. D32 R2 (issue 12): one control;
+ * the avatar and the badge both open the photo sheet (Take photo / Choose from gallery / Remove photo / Cancel).
+ * Same type and size rules as the website (5 MB).
  */
 export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; name: string }) {
   const { set, remove } = useAvatar();
+  const [sheet, setSheet] = useState(false);
   const [message, setMessage] = useState<string>();
   const [denied, setDenied] = useState(false);
   const busy = set.isPending || remove.isPending;
@@ -40,7 +42,6 @@ export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; 
       set.mutate(res.files[0], { onError: (e) => setMessage(e.message) });
     }
   }
-  const fromGallery = () => void choose(() => pickGalleryPhotos(false));
 
   async function onRemove() {
     const ok = await confirmAction({
@@ -51,56 +52,48 @@ export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; 
     if (ok) remove.mutate(undefined, { onError: (e) => setMessage(e.message) });
   }
 
+  function onPick(action: PhotoAction) {
+    if (action === 'camera') void choose(takePhoto);
+    else if (action === 'gallery') void choose(() => pickGalleryPhotos(false));
+    else void onRemove();
+  }
+
+  const open = () => setSheet(true);
   return (
     <View style={styles.wrap}>
       <View style={styles.avatarWrap}>
-        <Avatar testID="profile.photo" name={name} uri={avatarUrl} size={88} ring />
+        <PressableScale
+          testID="profile.photo.open"
+          accessibilityLabel="Profile photo"
+          accessibilityHint="Opens the photo options"
+          disabled={busy}
+          onPress={open}
+          style={styles.avatarPress}
+        >
+          <Avatar testID="profile.photo" name={name} uri={avatarUrl} size={88} ring />
+          {busy ? (
+            <View testID="profile.photo.busy" style={styles.busy}>
+              <ActivityIndicator color={colors.brandForeground} />
+            </View>
+          ) : null}
+        </PressableScale>
         <PressableScale
           testID="profile.photo.change"
           accessibilityLabel="Change photo"
           hitSlop={BADGE_SLOP}
           disabled={busy}
-          onPress={fromGallery}
+          onPress={open}
           style={styles.badge}
         >
           <Icon name={CAMERA} size={16} tintColor={colors.brandForeground} />
         </PressableScale>
       </View>
-      <View style={styles.actions}>
-        <Button
-          testID="profile.photo.camera"
-          label="Take photo"
-          variant="secondary"
-          size="sm"
-          fullWidth={false}
-          icon={CAMERA}
-          disabled={busy}
-          onPress={() => void choose(takePhoto)}
-        />
-        <Button
-          testID="profile.photo.gallery"
-          label="Choose from gallery"
-          variant="secondary"
-          size="sm"
-          fullWidth={false}
-          icon={GALLERY}
-          loading={set.isPending}
-          disabled={busy}
-          onPress={fromGallery}
-        />
-      </View>
-      {avatarUrl ? (
-        <Button
-          testID="profile.photo.remove"
-          label="Remove photo"
-          variant="destructiveText"
-          size="sm"
-          fullWidth={false}
-          loading={remove.isPending}
-          disabled={busy}
-          onPress={() => void onRemove()}
-        />
-      ) : null}
+      <PhotoSheet
+        visible={sheet}
+        canRemove={Boolean(avatarUrl)}
+        onClose={() => setSheet(false)}
+        onPick={onPick}
+      />
       {message ? (
         <AppText
           testID="profile.photo.error"
@@ -127,8 +120,16 @@ export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; 
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: spacing['3'], alignItems: 'center' },
+  wrap: { gap: spacing['2'], alignItems: 'center' },
   avatarWrap: { width: 88, height: 88 },
+  avatarPress: { width: 88, height: 88, borderRadius: radius.full },
+  busy: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: radius.full,
+    backgroundColor: colors.overlay,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   badge: {
     position: 'absolute',
     right: -2,
@@ -141,11 +142,5 @@ const styles = StyleSheet.create({
     borderColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  actions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: spacing['2'],
   },
 });
