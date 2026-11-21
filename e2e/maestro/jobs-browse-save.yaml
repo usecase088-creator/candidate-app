@@ -40,13 +40,19 @@ appId: work.apronhanger.candidate.dev
 - scrollUntilVisible:
     element: Match insights
     timeout: 10000
-- scrollUntilVisible:
-    element:
-      id: job.back
-    direction: UP
-    timeout: 10000
-- tapOn:
-    id: job.back
+# D32: native header; leave with the system back (Android) or the edge swipe (iPhone).
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 1%, 50%
+          end: 70%, 50%
 - extendedWaitUntil:
     visible:
       id: home.screen
