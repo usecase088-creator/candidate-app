@@ -5,7 +5,7 @@ import { StyleSheet } from 'react-native';
 import type { Job } from '@/api/schemas/jobs';
 import { spacing } from '@/theme/tokens';
 
-import { JobCard } from './JobCard';
+import { JobRow } from './JobRow';
 
 type Props = {
   testID: string;
@@ -20,7 +20,7 @@ type Props = {
   onRefresh: () => void;
 };
 
-/** FlashList of job cards (Home, Search, Saved). The server sends at most 50 jobs, so there is no paging. */
+/** FlashList of job rows (Home, Search, Saved; D32). The server sends at most 50 jobs, so there is no paging. */
 export function JobList({
   testID,
   jobs,
@@ -38,7 +38,7 @@ export function JobList({
       data={jobs}
       keyExtractor={(j) => j.id}
       renderItem={({ item }) => (
-        <JobCard job={item} saved={savedIds.has(item.id)} onToggleSave={onToggleSave} onOpen={onOpen} />
+        <JobRow job={item} saved={savedIds.has(item.id)} onToggleSave={onToggleSave} onOpen={onOpen} />
       )}
       extraData={savedIds}
       ListHeaderComponent={header}

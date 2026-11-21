@@ -65,20 +65,21 @@ describe('Home: loaded', () => {
     expect(screen.getByTestId('home.count')).toHaveTextContent('Showing 3 of 3 verified roles');
   });
 
-  it('a card has the website fields: hospital, location, role, specialty, pills, posted, match, View Details', async () => {
+  // D32 JobRow: the same facts as the website card, in one compact row (role first, one meta line, salary, match pill);
+  // the whole row is the button, so there is no "View Details" slab any more.
+  it('a row has the website fields: role, hospital, verified, specialty, type, experience, salary, posted, match', async () => {
     installJobsBackend({ jobs: [nurse] });
     await home();
     const card = await screen.findByTestId('job.card.n1');
     const c = within(card);
     expect(c.getByText('Seed City Hospital')).toBeOnTheScreen();
-    expect(c.getByText('Verified')).toBeOnTheScreen();
+    expect(c.getByTestId('job.verified.n1')).toBeOnTheScreen();
     expect(c.getByText('Staff Nurse')).toBeOnTheScreen();
-    expect(c.getByText('Full-time')).toBeOnTheScreen();
-    expect(c.getByText('1–5 yrs')).toBeOnTheScreen();
+    expect(c.getByText(/Full-time · 1–5 yrs$/)).toBeOnTheScreen();
     expect(c.getByText('₹3–4.5 LPA')).toBeOnTheScreen();
-    expect(c.getByText('Today')).toBeOnTheScreen();
-    expect(c.getByLabelText('82% match')).toBeOnTheScreen();
-    expect(c.getByRole('button', { name: 'View Details, Staff Nurse' })).toBeOnTheScreen();
+    expect(c.getByText(/· Today$/)).toBeOnTheScreen();
+    expect(c.getByText('82% match')).toBeOnTheScreen();
+    expect(c.getByRole('button', { name: /^Staff Nurse at Seed City Hospital/ })).toBeOnTheScreen();
   });
 
   it('latest jobs first (postedDays ascending), like the website', async () => {
@@ -159,7 +160,7 @@ describe('Home: loaded', () => {
 });
 
 describe('Home: navigation', () => {
-  it('View Details opens the job', async () => {
+  it('the row opens the job', async () => {
     installJobsBackend({ jobs: [nurse] });
     const app = await home();
     await fireEvent.press(await screen.findByTestId('job.open.n1'));

@@ -13,7 +13,7 @@ import { AppText } from '@/components/ui/Text';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import { HospitalLogo } from '../components/HospitalLogo';
-import { JobCard } from '../components/JobCard';
+import { JobRow } from '../components/JobRow';
 import { SaveButton } from '../components/SaveButton';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { queryView } from '../hooks/queryView';
@@ -213,7 +213,7 @@ function Details({ job }: { job: Job }) {
         <View testID="job.similar" style={styles.stack}>
           <AppText variant="heading">Similar opportunities</AppText>
           {similar.data.map((j) => (
-            <JobCard key={j.id} job={j} saved={savedIds.has(j.id)} onToggleSave={toggle} onOpen={openJob} />
+            <JobRow key={j.id} job={j} saved={savedIds.has(j.id)} onToggleSave={toggle} onOpen={openJob} />
           ))}
         </View>
       )}

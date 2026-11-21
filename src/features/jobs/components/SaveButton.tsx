@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { Icon } from '@/components/ui/Icon';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
 import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
 
@@ -18,43 +19,50 @@ const bookmark = (saved: boolean) =>
 
 /** Website SaveJobButton. Labels: "Save job" / "Remove from saved jobs" (icon), "Save job" / "Saved" (button). */
 export function SaveButton({ testID, saved, onPress, variant = 'icon' }: Props) {
-  const tint = saved ? colors.primary : colors.mutedForeground;
+  // D32: the one accent for interactive state; a light haptic when the bookmark lands.
+  const tint = saved ? colors.brand : colors.mutedForeground;
 
   if (variant === 'button') {
     return (
-      <Pressable
+      <PressableScale
         testID={testID}
-        accessibilityRole="button"
         accessibilityLabel={saved ? 'Saved' : 'Save job'}
         accessibilityState={{ selected: saved }}
+        haptic="light"
         onPress={onPress}
         style={[styles.button, saved && styles.buttonSaved]}
       >
         <Icon name={bookmark(saved)} tintColor={tint} size={16} />
-        <AppText variant="label" weight="medium" color={saved ? 'primary' : 'foreground'}>
+        <AppText variant="label" color={saved ? 'brand' : 'foreground'}>
           {saved ? 'Saved' : 'Save job'}
         </AppText>
-      </Pressable>
+      </PressableScale>
     );
   }
 
   return (
-    <Pressable
+    <PressableScale
       testID={testID}
-      accessibilityRole="button"
       accessibilityLabel={saved ? 'Remove from saved jobs' : 'Save job'}
       accessibilityState={{ selected: saved }}
+      haptic="light"
+      pressScale={0.9}
       onPress={onPress}
-      hitSlop={4}
       style={styles.icon}
     >
-      <Icon name={bookmark(saved)} tintColor={tint} size={20} />
-    </Pressable>
+      <Icon name={bookmark(saved)} tintColor={tint} size={22} />
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  icon: { width: MIN_TOUCH - 4, height: MIN_TOUCH - 4, alignItems: 'center', justifyContent: 'center' },
+  icon: {
+    width: MIN_TOUCH - 4,
+    height: MIN_TOUCH - 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.full,
+  },
   button: {
     minHeight: MIN_TOUCH,
     flexDirection: 'row',
@@ -67,5 +75,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: spacing['4'],
   },
-  buttonSaved: { borderColor: colors.primary, backgroundColor: colors.secondary },
+  buttonSaved: { borderColor: colors.brand, backgroundColor: colors.brandSoft },
 });
