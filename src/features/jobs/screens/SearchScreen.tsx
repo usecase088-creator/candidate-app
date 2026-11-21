@@ -148,10 +148,9 @@ export function SearchScreen() {
 const styles = StyleSheet.create({
   header: { gap: spacing['3'], paddingHorizontal: spacing['4'], paddingTop: spacing['4'] },
   toolbar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing['2'] },
+  // Title, then the count under it: side by side they broke at 320 pt.
   heading: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing['3'],
+    gap: spacing['0.5'],
     paddingTop: spacing['2'],
     paddingBottom: spacing['1'],
   },

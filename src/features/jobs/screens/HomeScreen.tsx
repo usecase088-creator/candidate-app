@@ -108,7 +108,14 @@ export function HomeScreen() {
               style={styles.tile}
             >
               <Icon name={{ ...link.icon, web: link.icon.android }} tintColor={colors.brand} size={22} />
-              <AppText variant="label" numberOfLines={2} align="center">
+              <AppText
+                variant="secondary"
+                weight="medium"
+                numberOfLines={2}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                align="center"
+              >
                 {link.label}
               </AppText>
             </PressableScale>
@@ -191,17 +198,16 @@ const styles = StyleSheet.create({
     // Icons on one line even when a label wraps ("International Jobs" on narrow phones).
     justifyContent: 'flex-start',
     gap: spacing['1'],
-    paddingHorizontal: spacing['2'],
+    paddingHorizontal: spacing['1'],
     paddingTop: spacing['3'],
     paddingBottom: spacing['2'],
     borderRadius: radius.md,
     backgroundColor: colors.surface2,
   },
   chips: { paddingHorizontal: spacing['4'], paddingTop: spacing['4'] },
+  // Title, then the count under it: side by side they broke at 320 pt.
   listHeading: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing['3'],
+    gap: spacing['0.5'],
     paddingHorizontal: spacing['4'],
     paddingTop: spacing['5'],
     paddingBottom: spacing['2'],

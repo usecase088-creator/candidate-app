@@ -71,7 +71,7 @@ export function OfferCard({ application: a }: { application: Application }) {
             >
               <Icon name={PDF} size={22} tintColor={colors.successText} />
               <View style={styles.letterText}>
-                <AppText variant="label" numberOfLines={1}>
+                <AppText variant="label" numberOfLines={2}>
                   View Offer Letter
                 </AppText>
                 <AppText variant="caption" color="mutedForeground">

@@ -72,14 +72,15 @@ function JobRowView({ job, saved, onToggleSave, onOpen }: Props) {
           <AppText variant="secondary" color="mutedForeground" numberOfLines={1}>
             {meta}
           </AppText>
+          {/* Own line: next to the salary it shrank to "K..." at 320 pt. */}
+          <AppText variant="secondary" color="mutedForeground" numberOfLines={1}>
+            {where}
+          </AppText>
           <View style={styles.bottom}>
             <AppText variant="body" weight="semibold" tabular numberOfLines={1}>
               {salary}
             </AppText>
             {match ? <Pill testID={`job.match.${job.id}`} label={match} tone="brand" tabular /> : null}
-            <AppText variant="secondary" color="mutedForeground" numberOfLines={1} style={styles.where}>
-              {where}
-            </AppText>
           </View>
         </View>
       </PressableScale>
@@ -112,5 +113,4 @@ const styles = StyleSheet.create({
     marginTop: spacing['1'],
     flexWrap: 'wrap',
   },
-  where: { flex: 1, textAlign: 'right' },
 });

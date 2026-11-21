@@ -56,10 +56,8 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
 
   return (
     <View testID="recommended.rail" style={styles.section}>
+      {/* Website order: the tag, then the heading (side by side they wrapped at 320 pt). */}
       <View style={styles.heading}>
-        <AppText variant="heading" style={styles.flex}>
-          Recommended for you
-        </AppText>
         <View style={styles.tag}>
           <Icon
             name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
@@ -70,6 +68,7 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
             Matched to your profile
           </AppText>
         </View>
+        <AppText variant="heading">Recommended for you</AppText>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {jobs.map((j) => (
@@ -122,9 +121,7 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
 const styles = StyleSheet.create({
   section: { paddingTop: spacing['5'] },
   heading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing['2'],
+    gap: spacing['1'],
     paddingHorizontal: spacing['4'],
     paddingBottom: spacing['2'],
   },
