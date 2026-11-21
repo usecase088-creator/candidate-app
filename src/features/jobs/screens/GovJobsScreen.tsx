@@ -3,19 +3,20 @@ import { memo, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { GovJob } from '@/api/schemas/jobs';
-import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Screen } from '@/components/ui/Screen';
-import { Skeleton } from '@/components/ui/Skeleton';
+import { SearchField } from '@/components/ui/SearchField';
 import { AppText } from '@/components/ui/Text';
-import { TextInput } from '@/components/ui/TextInput';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import { QueryStatus } from '../components/QueryStatus';
 import {
-  DeadlineLine,
+  DeadlinePill,
+  ExternalLinkButton,
   ListingFooter,
-  ListingHero,
+  ListingSkeleton,
+  listingRowStyles,
+  StatsStrip,
 } from '../components/listings/ListingParts';
 import { useOpenLink } from '../components/listings/useOpenLink';
 import { queryView } from '../hooks/queryView';
@@ -23,7 +24,12 @@ import { useGovJobs } from '../hooks/useJobsData';
 import { deadlineInfo } from '../logic/deadline';
 import { govFilter } from '../logic/gov';
 
-/** Website gov-jobs.tsx: the table becomes one card per listing. */
+const SEARCH_ICON = { ios: 'magnifyingglass', android: 'search', web: 'search' } as const;
+
+/**
+ * Website gov-jobs.tsx: the table becomes one row per listing (D32). The native stack header carries the title
+ * "Government jobs"; the content starts with the website subtitle, the stats strip, the store disclaimer and the search.
+ */
 export function GovJobsScreen() {
   const query = useGovJobs();
   const openLink = useOpenLink();
@@ -43,29 +49,24 @@ export function GovJobsScreen() {
 
   const header = (
     <View style={styles.header}>
-      <ListingHero
-        testID="gov"
-        title="🏛️ Government Jobs & Exams"
-        subtitle="Latest notifications — AIIMS, UPSC, State PSC, and more."
-        stats={stats}
-      />
+      <AppText variant="secondary" color="mutedForeground">
+        Latest notifications — AIIMS, UPSC, State PSC, and more.
+      </AppText>
+      {stats ? <StatsStrip testID="gov" stats={stats} /> : null}
       {/* Store rule (Google Play Deceptive Behavior, docs/store/STORE-RULES.md): no implied government affiliation. */}
       <View testID="gov.disclaimer" accessibilityRole="text" style={styles.disclaimer}>
-        <AppText variant="caption" color="mutedForeground">
+        <AppText variant="secondary" color="mutedForeground">
           ApronHanger is not a government app and is not affiliated with any government body. Listings are
           collected from public notifications; always apply through the official website of the authority (the
           &quot;View / Apply&quot; link).
         </AppText>
       </View>
-      <TextInput
+      <SearchField
         testID="gov.search"
-        label="Search"
         placeholder="Search by authority or exam name…"
+        accessibilityLabel="Search government jobs"
         value={search}
         onChangeText={setSearch}
-        returnKeyType="search"
-        autoCapitalize="none"
-        autoCorrect={false}
       />
     </View>
   );
@@ -79,15 +80,7 @@ export function GovJobsScreen() {
         error={query.error}
         onRetry={() => void query.refetch()}
         retrying={query.isFetching}
-        skeleton={
-          <View testID="gov.loading" style={styles.loading}>
-            <AppText color="mutedForeground" align="center">
-              Loading government jobs…
-            </AppText>
-            <Skeleton width="100%" height={110} radius={radius.md} />
-            <Skeleton width="100%" height={110} radius={radius.md} />
-          </View>
-        }
+        skeleton={<ListingSkeleton testID="gov.loading" />}
       />
     );
   } else if (jobs.length === 0) {
@@ -99,11 +92,7 @@ export function GovJobsScreen() {
       />
     );
   } else if (visible.length === 0) {
-    footer = (
-      <View testID="gov.nomatch" style={styles.noMatch}>
-        <AppText color="warningText">No listings match your search.</AppText>
-      </View>
-    );
+    footer = <EmptyState testID="gov.nomatch" title="No listings match your search." icon={SEARCH_ICON} />;
   } else {
     footer = (
       <ListingFooter testID="gov.footer" shown={visible.length} total={jobs.length} noun="government" />
@@ -116,7 +105,7 @@ export function GovJobsScreen() {
         testID="gov.list"
         data={view === 'ready' ? visible : []}
         keyExtractor={(j) => j.id}
-        renderItem={({ item }) => <GovCard job={item} onOpen={openLink} />}
+        renderItem={({ item }) => <GovRow job={item} onOpen={openLink} />}
         ListHeaderComponent={header}
         ListFooterComponent={footer}
         refreshing={query.isRefetching}
@@ -128,53 +117,48 @@ export function GovJobsScreen() {
   );
 }
 
-const GovCard = memo(function GovCard({ job, onOpen }: { job: GovJob; onOpen: (url: string) => void }) {
+/**
+ * One listing: authority (the website's key column) as the title, exam name under it, the deadline as a pill, and
+ * the external-link button as the only action (disabled once expired). testIDs `gov.card.{id}`, `gov.apply.{id}`.
+ */
+const GovRow = memo(function GovRow({ job, onOpen }: { job: GovJob; onOpen: (url: string) => void }) {
   const info = deadlineInfo(job.lastDate);
   const expired = info.kind === 'expired';
   return (
-    <View testID={`gov.card.${job.id}`} style={styles.card}>
-      <AppText variant="label" weight="semibold">
-        {job.examAuthority}
-      </AppText>
-      <AppText color="mutedForeground">{job.name}</AppText>
-      <DeadlineLine info={info} />
-      <Button
+    <View testID={`gov.card.${job.id}`} style={listingRowStyles.row}>
+      <View style={listingRowStyles.text}>
+        <AppText variant="rowTitle" color={expired ? 'mutedForeground' : 'foreground'} numberOfLines={2}>
+          {job.examAuthority}
+        </AppText>
+        <AppText variant="body" color="mutedForeground" numberOfLines={2}>
+          {job.name}
+        </AppText>
+        <View style={listingRowStyles.pills}>
+          <DeadlinePill testID={`gov.deadline.${job.id}`} info={info} />
+        </View>
+      </View>
+      <ExternalLinkButton
         testID={`gov.apply.${job.id}`}
-        label="View / Apply"
         accessibilityLabel={`View / Apply, ${job.examAuthority}`}
-        variant={expired ? 'outline' : 'primary'}
         disabled={expired}
-        fullWidth={false}
         onPress={() => onOpen(job.link)}
       />
     </View>
   );
 });
 
+// D32: the header keeps its own 16-pt inset; rows run edge to edge and inset themselves (like JobList).
 const styles = StyleSheet.create({
+  content: { paddingBottom: spacing['6'] },
+  header: {
+    gap: spacing['3'],
+    paddingHorizontal: spacing['4'],
+    paddingTop: spacing['3'],
+    paddingBottom: spacing['3'],
+  },
   disclaimer: {
     backgroundColor: colors.muted,
     borderRadius: radius.md,
     padding: spacing['3'],
-  },
-  content: { padding: spacing['4'] },
-  header: { gap: spacing['4'], marginBottom: spacing['4'] },
-  loading: { gap: spacing['3'] },
-  noMatch: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    backgroundColor: '#FEFCE8',
-    padding: spacing['3'],
-  },
-  card: {
-    gap: spacing['2'],
-    alignItems: 'flex-start',
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing['4'],
-    marginBottom: spacing['3'],
   },
 });

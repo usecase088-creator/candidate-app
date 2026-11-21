@@ -15,7 +15,7 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: gov.screen
     timeout: 10000
-- assertVisible: 🏛️ Government Jobs & Exams
+- assertVisible: Government jobs
 - assertVisible: Total Listings
 # The cards, top to bottom (on a small iPhone they do not all fit): each scroll only moves forward.
 - scrollUntilVisible:
@@ -103,7 +103,7 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: intl.screen
     timeout: 10000
-- assertVisible: 🌍 International Healthcare Jobs
+- assertVisible: International jobs
 - assertVisible: Countries
 - scrollUntilVisible:
     element:

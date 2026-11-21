@@ -1,15 +1,23 @@
-import { Modal, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useShallow } from 'zustand/react/shallow';
 
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
+import { Icon } from '@/components/ui/Icon';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { Stepper } from '@/components/ui/Stepper';
 import { AppText } from '@/components/ui/Text';
 import { colors, spacing } from '@/theme/tokens';
 
-import { useFilterStore } from '../filterStore';
+import { selectFilterState, useFilterStore } from '../filterStore';
+import { useJobs } from '../hooks/useJobsData';
 import {
   activeFilterCount,
+  applyFilters,
+  citiesOf,
   EXP_RANGE,
   JOB_TYPES,
   SALARY_RANGE,
@@ -17,185 +25,188 @@ import {
   type SortKey,
 } from '../logic/filter';
 
-type Props = {
-  visible: boolean;
-  onClose: () => void;
-  /** Cities that exist in the loaded jobs. */
-  cities: string[];
-  /** How many roles match right now (for the Done button). */
-  resultCount: number;
-};
-
 const SORTS: SortKey[] = ['latest', 'salary', 'relevance'];
 
 /**
- * Website FilterSidebar as a full-screen sheet: sort, location, experience, salary, job type, reset.
- * Changes apply at once (the website has no apply button). testIDs: `filters.*`.
+ * Website FilterSidebar as a bottom sheet (D32): the `/filters` route is presented as a form sheet over the Search tab.
+ * Sort, location, experience, salary, job type, reset. Changes apply at once (the website has no apply button); the
+ * primary button only closes the sheet and says how many roles match. testIDs: `filters.*`.
  */
-export function FilterSheet({ visible, onClose, cities, resultCount }: Props) {
+export function FilterSheet() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const f = useFilterStore();
+  const filterState = useFilterStore(useShallow(selectFilterState));
+  const jobs = useJobs().data;
+  const cities = useMemo(() => citiesOf(jobs ?? []), [jobs]);
+  const resultCount = useMemo(() => applyFilters(jobs ?? [], filterState).length, [jobs, filterState]);
   const active = activeFilterCount(f);
+  const close = () => (router.canGoBack() ? router.back() : router.replace('/search'));
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView testID="filters.sheet" style={styles.root}>
-        <View style={styles.header}>
-          <View style={styles.flex}>
-            <AppText variant="caption" color="mutedForeground">
-              Refine search
-            </AppText>
-            <AppText variant="heading">Premium filters</AppText>
-          </View>
-          <Button testID="filters.close" label="Close" variant="ghost" fullWidth={false} onPress={onClose} />
+    <View testID="filters.sheet" style={styles.root}>
+      <View style={styles.header}>
+        <View style={styles.flex}>
+          <AppText variant="secondary" color="mutedForeground">
+            Refine search
+          </AppText>
+          <AppText variant="title">Premium filters</AppText>
         </View>
-
-        <ScrollView testID="filters.scroll" contentContainerStyle={styles.body}>
-          <View style={styles.summary}>
-            <AppText variant="caption" weight="semibold" color="mutedForeground">
-              Active filters
-            </AppText>
-            <AppText testID="filters.summary" variant="label" weight="semibold">
-              {active === 0 ? 'No filters applied' : `${active} applied`}
-            </AppText>
-          </View>
-
-          <Group title="Sort by" subtitle="Control ranking">
-            <View style={styles.wrap}>
-              {SORTS.map((s) => (
-                <Chip
-                  key={s}
-                  testID={`filters.sort.${s}`}
-                  label={SORT_LABELS[s]}
-                  selected={f.sort === s}
-                  onPress={() => f.setSort(s)}
-                />
-              ))}
-            </View>
-          </Group>
-
-          <Group title="Location" subtitle={`${cities.length} cities available`}>
-            <View style={styles.wrap}>
-              {cities.map((c) => (
-                <Chip
-                  key={c}
-                  testID={`filters.city.${c}`}
-                  label={c}
-                  selected={f.cities.includes(c)}
-                  onPress={() => f.toggleCity(c)}
-                />
-              ))}
-            </View>
-          </Group>
-
-          <Group title="Experience" subtitle={`${f.minExp}+ years minimum`}>
-            <Stepper
-              testID="filters.exp"
-              label="minimum experience"
-              value={f.minExp}
-              {...EXP_RANGE}
-              display={f.minExp >= EXP_RANGE.max ? '15+ yrs' : `${f.minExp} yrs`}
-              onChange={f.setMinExp}
-            />
-          </Group>
-
-          <Group title="Salary" subtitle={`₹${f.minSalary}+ LPA minimum`}>
-            <Stepper
-              testID="filters.salary"
-              label="minimum salary"
-              value={f.minSalary}
-              {...SALARY_RANGE}
-              display={f.minSalary === 0 ? 'Any' : `₹${f.minSalary}+ LPA`}
-              onChange={f.setMinSalary}
-            />
-          </Group>
-
-          <Group title="Job type" subtitle="Role structure">
-            <View style={styles.wrap}>
-              {JOB_TYPES.map((t) => (
-                <Chip
-                  key={t}
-                  testID={`filters.type.${t}`}
-                  label={t}
-                  selected={f.types.includes(t)}
-                  onPress={() => f.toggleType(t)}
-                />
-              ))}
-            </View>
-          </Group>
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <Button
-            testID="filters.reset"
-            label="Reset filters"
-            variant="outline"
-            fullWidth={false}
-            onPress={f.resetFilters}
+        <PressableScale
+          testID="filters.close"
+          accessibilityLabel="Close"
+          onPress={close}
+          pressScale={0.9}
+          style={styles.close}
+        >
+          <Icon
+            name={{ ios: 'xmark', android: 'close', web: 'close' }}
+            tintColor={colors.foreground}
+            size={20}
           />
+        </PressableScale>
+      </View>
+
+      <ScrollView
+        testID="filters.scroll"
+        contentContainerStyle={styles.body}
+        keyboardShouldPersistTaps="handled"
+      >
+        <AppText testID="filters.summary" variant="secondary" color="mutedForeground">
+          {active === 0 ? 'No filters applied' : `${active} applied`}
+        </AppText>
+
+        <Group title="Sort by" meta="Control ranking">
+          <View style={styles.wrap}>
+            {SORTS.map((s) => (
+              <Chip
+                key={s}
+                testID={`filters.sort.${s}`}
+                label={SORT_LABELS[s]}
+                selected={f.sort === s}
+                onPress={() => f.setSort(s)}
+              />
+            ))}
+          </View>
+        </Group>
+
+        <Group title="Location" meta={`${cities.length} cities available`}>
+          <View style={styles.wrap}>
+            {cities.map((c) => (
+              <Chip
+                key={c}
+                testID={`filters.city.${c}`}
+                label={c}
+                selected={f.cities.includes(c)}
+                onPress={() => f.toggleCity(c)}
+              />
+            ))}
+          </View>
+        </Group>
+
+        <Group title="Experience" meta={`${f.minExp}+ years minimum`}>
+          <Stepper
+            testID="filters.exp"
+            label="minimum experience"
+            value={f.minExp}
+            {...EXP_RANGE}
+            display={f.minExp >= EXP_RANGE.max ? '15+ yrs' : `${f.minExp} yrs`}
+            onChange={f.setMinExp}
+          />
+        </Group>
+
+        <Group title="Salary" meta={`₹${f.minSalary}+ LPA minimum`}>
+          <Stepper
+            testID="filters.salary"
+            label="minimum salary"
+            value={f.minSalary}
+            {...SALARY_RANGE}
+            display={f.minSalary === 0 ? 'Any' : `₹${f.minSalary}+ LPA`}
+            onChange={f.setMinSalary}
+          />
+        </Group>
+
+        <Group title="Job type" meta="Role structure">
+          <View style={styles.wrap}>
+            {JOB_TYPES.map((t) => (
+              <Chip
+                key={t}
+                testID={`filters.type.${t}`}
+                label={t}
+                selected={f.types.includes(t)}
+                onPress={() => f.toggleType(t)}
+              />
+            ))}
+          </View>
+        </Group>
+      </ScrollView>
+
+      <View style={[styles.footer, { paddingBottom: Math.max(spacing['3'], insets.bottom) }]}>
+        <Button
+          testID="filters.reset"
+          label="Reset filters"
+          variant="ghost"
+          size="md"
+          fullWidth={false}
+          onPress={f.resetFilters}
+        />
+        <View style={styles.flex}>
           <Button
             testID="filters.done"
             label={`Show ${resultCount} ${resultCount === 1 ? 'role' : 'roles'}`}
-            fullWidth={false}
-            onPress={onClose}
+            size="md"
+            haptic="light"
+            onPress={close}
           />
         </View>
-      </SafeAreaView>
-    </Modal>
+      </View>
+    </View>
   );
 }
 
-function Group({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-}) {
+/** D32: sentence-case 17/600 header with the live value on the right, 24 above, 12 to the controls. */
+function Group({ title, meta, children }: { title: string; meta: string; children: React.ReactNode }) {
   return (
     <View style={styles.group}>
-      <AppText variant="label" weight="semibold" accessibilityRole="header" style={styles.upper}>
-        {title}
-      </AppText>
-      <AppText variant="caption" color="mutedForeground">
-        {subtitle}
-      </AppText>
-      <View style={styles.groupBody}>{children}</View>
+      <View style={styles.groupHeader}>
+        <AppText variant="heading" style={styles.flex}>
+          {title}
+        </AppText>
+        <AppText variant="secondary" color="mutedForeground" numberOfLines={1}>
+          {meta}
+        </AppText>
+      </View>
+      {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: colors.surface },
   flex: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing['4'],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    gap: spacing['3'],
+    paddingHorizontal: spacing['4'],
+    paddingTop: spacing['4'],
+    paddingBottom: spacing['3'],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.separator,
   },
-  body: { padding: spacing['4'], gap: spacing['5'] },
-  summary: {
-    backgroundColor: colors.surface2,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing['3'],
-    gap: spacing['1'],
-  },
-  group: { gap: spacing['1'] },
-  groupBody: { marginTop: spacing['2'] },
-  upper: { textTransform: 'uppercase', letterSpacing: 0.6 },
+  close: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  body: { paddingHorizontal: spacing['4'], paddingTop: spacing['3'], paddingBottom: spacing['6'] },
+  group: { gap: spacing['3'], paddingTop: spacing['6'] },
+  groupHeader: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing['3'] },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['2'] },
   footer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: spacing['3'],
-    padding: spacing['4'],
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    paddingHorizontal: spacing['4'],
+    paddingTop: spacing['3'],
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.separator,
+    backgroundColor: colors.surface,
   },
 });

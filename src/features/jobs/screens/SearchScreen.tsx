@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { StyleSheet, View } from 'react-native';
 
@@ -13,7 +14,6 @@ import { spacing } from '@/theme/tokens';
 import { useIsSignedIn } from '@/features/auth/sessionStore';
 import { goToSignIn } from '@/features/auth/signInGate';
 
-import { FilterSheet } from '../components/FilterSheet';
 import { JobListSkeleton } from '../components/JobCardSkeleton';
 import { JobList } from '../components/JobList';
 import { QueryStatus } from '../components/QueryStatus';
@@ -21,7 +21,7 @@ import { selectFilterState, useFilterStore } from '../filterStore';
 import { queryView } from '../hooks/queryView';
 import { useJobs } from '../hooks/useJobsData';
 import { useSavedIdSet, useToggleSave } from '../hooks/useSavedJobs';
-import { activeFilterCount, applyFilters, citiesOf } from '../logic/filter';
+import { activeFilterCount, applyFilters } from '../logic/filter';
 import { useOpenJob } from '../useOpenJob';
 
 /**
@@ -35,7 +35,7 @@ export function SearchScreen() {
   const jobsQuery = useJobs();
   const savedIds = useSavedIdSet();
   const { toggle } = useToggleSave();
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const router = useRouter();
 
   const filterState = useFilterStore(useShallow(selectFilterState));
   const setQuery = useFilterStore((s) => s.setQuery);
@@ -45,7 +45,6 @@ export function SearchScreen() {
   const jobs = jobsQuery.data;
   const view = queryView(jobsQuery);
   const visible = useMemo(() => applyFilters(jobs ?? [], filterState), [jobs, filterState]);
-  const cities = useMemo(() => citiesOf(jobs ?? []), [jobs]);
   const active = activeFilterCount(filterState);
   const total = jobs?.length ?? 0;
 
@@ -80,7 +79,7 @@ export function SearchScreen() {
           fullWidth={false}
           icon={{ ios: 'line.3.horizontal.decrease', android: 'tune' }}
           // Website: filters need an account (a guest is sent to sign-in and comes back here).
-          onPress={() => (signedIn ? setSheetOpen(true) : goToSignIn('/search'))}
+          onPress={() => (signedIn ? router.push('/filters') : goToSignIn('/search'))}
         />
         {filterState.category ? (
           <Chip
@@ -141,12 +140,6 @@ export function SearchScreen() {
         footer={footer}
         refreshing={jobsQuery.isRefetching}
         onRefresh={() => void jobsQuery.refetch()}
-      />
-      <FilterSheet
-        visible={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        cities={cities}
-        resultCount={visible.length}
       />
     </Screen>
   );

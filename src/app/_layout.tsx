@@ -71,12 +71,28 @@ export default function RootLayout() {
                   headerTintColor: colors.brand,
                   headerShadowVisible: false,
                   headerStyle: { backgroundColor: colors.surface },
-                  headerTitleStyle: { fontFamily: fonts.semibold, fontSize: fontSizes.xl.fontSize, color: colors.foreground },
+                  headerTitleStyle: {
+                    fontFamily: fonts.semibold,
+                    fontSize: fontSizes.xl.fontSize,
+                    color: colors.foreground,
+                  },
                   contentStyle: { backgroundColor: colors.background },
                 }}
               >
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                {/* Search filters: a bottom sheet (iOS form sheet with detents; Android falls back to a modal). */}
+                <Stack.Screen
+                  name="filters"
+                  options={{
+                    headerShown: false,
+                    presentation: 'formSheet',
+                    sheetAllowedDetents: [0.7, 1],
+                    sheetGrabberVisible: true,
+                    sheetCornerRadius: 20,
+                    sheetInitialDetentIndex: 0,
+                  }}
+                />
                 {Object.entries(PUSHED_SCREEN_TITLES).map(([name, title]) => (
                   <Stack.Screen key={name} name={name} options={{ title }} />
                 ))}

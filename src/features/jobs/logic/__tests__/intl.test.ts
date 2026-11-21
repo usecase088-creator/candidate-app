@@ -1,5 +1,5 @@
 import { govFilter } from '../gov';
-import { countriesOf, intlFilter, visaColors } from '../intl';
+import { countriesOf, intlFilter, visaTone } from '../intl';
 
 const gov = [
   { id: '1', examAuthority: 'AIIMS', name: 'Nursing Officer', link: 'x' },
@@ -50,9 +50,17 @@ describe('intl', () => {
     expect(intlFilter(intl, 'b.pharm', 'All').map((j) => j.id)).toEqual(['2']);
     expect(intlFilter(intl, 'london', 'UAE')).toEqual([]);
   });
-  it('visa badge colours are the website table, unknown values get the TBD grey', () => {
-    expect(visaColors('Sponsorship')).toEqual({ bg: '#dcfce7', text: '#15803d' });
-    expect(visaColors('Not Required')).toEqual({ bg: '#f1f5f9', text: '#475569' });
-    expect(visaColors('Something new')).toEqual({ bg: '#f1f5f9', text: '#94a3b8' });
+  // D32: the website's raw Tailwind visa colours become the app's semantic pill tones (the semantics stay the website's).
+  it('visaTone: sponsored green, employer info, depends amber, self / not required / not sponsored grey, unknown amber', () => {
+    expect(visaTone('Sponsorship')).toBe('success');
+    expect(visaTone('Employer')).toBe('info');
+    expect(visaTone('Depends')).toBe('warning');
+    expect(visaTone('Self')).toBe('neutral');
+    expect(visaTone('Not Required')).toBe('neutral');
+    expect(visaTone('Not Sponsored')).toBe('neutral');
+    expect(visaTone('No Sponsorship')).toBe('neutral');
+    expect(visaTone('TBD')).toBe('warning');
+    expect(visaTone('Something new')).toBe('warning');
+    expect(visaTone('')).toBe('warning');
   });
 });

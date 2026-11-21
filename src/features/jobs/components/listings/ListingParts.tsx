@@ -1,74 +1,141 @@
 import { StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/Icon';
+import { Pill, type PillTone } from '@/components/ui/Pill';
+import { PressableScale } from '@/components/ui/PressableScale';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { AppText } from '@/components/ui/Text';
-import { type ColorToken, colors, radius, spacing } from '@/theme/tokens';
+import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
 
 import { type DeadlineInfo } from '../../logic/deadline';
 
-const DEADLINE_COLOR: Record<DeadlineInfo['kind'], ColorToken> = {
-  none: 'mutedForeground',
-  open: 'secondaryForeground',
-  soon: 'warningText',
-  expired: 'errorText',
+const DEADLINE_TONE: Record<DeadlineInfo['kind'], PillTone> = {
+  none: 'neutral',
+  open: 'neutral',
+  soon: 'warning',
+  expired: 'error',
 };
 
-/** Dark hero block of the gov and international screens: title, subtitle and the stat counters. */
-export function ListingHero({
-  testID,
-  title,
-  subtitle,
-  stats,
-}: {
-  testID: string;
-  title: string;
-  subtitle: string;
-  stats: { id: string; label: string; value: number }[] | null;
-}) {
+const CALENDAR = { ios: 'calendar', android: 'calendar_today', web: 'calendar_today' } as const;
+const EXTERNAL = { ios: 'arrow.up.right.square', android: 'open_in_new', web: 'open_in_new' } as const;
+const EXTERNAL_ICON = 22;
+
+export type ListingStat = { id: string; label: string; value: number };
+
+/**
+ * D32 stats strip (replaces the navy hero of the gov and international screens): three cells, 22/600 tabular number
+ * over a 12-pt muted label, tonal fill, 64 pt. testIDs: `{testID}.stats`, `{testID}.stat.{id}`.
+ */
+export function StatsStrip({ testID, stats }: { testID: string; stats: readonly ListingStat[] }) {
   return (
-    <View style={styles.hero}>
-      <AppText variant="title" color="primaryForeground" accessibilityRole="header">
-        {title}
-      </AppText>
-      <AppText variant="body" color="primaryForeground" style={styles.subtitle}>
-        {subtitle}
-      </AppText>
-      {stats && (
-        <View testID={`${testID}.stats`} style={styles.stats}>
-          {stats.map((s) => (
-            <View key={s.id} style={styles.stat}>
-              <AppText testID={`${testID}.stat.${s.id}`} variant="heading" color="primaryForeground">
-                {String(s.value)}
-              </AppText>
-              <AppText variant="caption" color="primaryForeground" style={styles.statLabel}>
-                {s.label}
-              </AppText>
-            </View>
-          ))}
+    <View testID={`${testID}.stats`} style={styles.strip}>
+      {stats.map((s) => (
+        <View
+          key={s.id}
+          accessible
+          accessibilityLabel={`${s.value} ${s.label}`}
+          accessibilityRole="text"
+          style={styles.cell}
+        >
+          <AppText
+            testID={`${testID}.stat.${s.id}`}
+            variant="title"
+            accessibilityRole="text"
+            tabular
+            numberOfLines={1}
+          >
+            {String(s.value)}
+          </AppText>
+          <AppText variant="caption" color="mutedForeground" numberOfLines={2} align="center">
+            {s.label}
+          </AppText>
         </View>
-      )}
+      ))}
     </View>
   );
 }
 
-/** "30 Nov 2026" with the website's colours: amber when 7 days or fewer are left, red when expired. */
-export function DeadlineLine({ info }: { info: DeadlineInfo }) {
+/**
+ * Deadline as a pill (D32): "No deadline" and an open date are neutral, 7 days or fewer is amber with the
+ * "{n}d left" badge text in the pill and the date beside it, expired is red ("Expired · date").
+ */
+export function DeadlinePill({ testID, info }: { testID: string; info: DeadlineInfo }) {
+  const tone = DEADLINE_TONE[info.kind];
   return (
     <View style={styles.deadline}>
-      <AppText
-        variant="caption"
-        weight={info.kind === 'soon' || info.kind === 'expired' ? 'semibold' : 'regular'}
-        color={DEADLINE_COLOR[info.kind]}
-        style={info.kind === 'none' ? styles.italic : undefined}
-      >
-        {info.text}
-      </AppText>
+      <Pill testID={testID} tone={tone} icon={CALENDAR} label={info.badge ?? info.text} tabular />
       {info.badge ? (
-        <View style={styles.badge}>
-          <AppText variant="caption" weight="semibold" color="warningText">
-            {info.badge}
-          </AppText>
-        </View>
+        <AppText variant="secondary" color="amberText" tabular numberOfLines={1}>
+          {info.text}
+        </AppText>
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * The row's only action: a 44-pt external-link icon button (the website shows "View / Apply" / "Apply" with an
+ * external-link glyph). Muted and disabled once the deadline has passed; the spoken label keeps the website wording.
+ */
+export function ExternalLinkButton({
+  testID,
+  accessibilityLabel,
+  disabled,
+  onPress,
+}: {
+  testID: string;
+  accessibilityLabel: string;
+  disabled?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <PressableScale
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
+      disabled={disabled}
+      pressScale={0.9}
+      onPress={onPress}
+      style={styles.link}
+    >
+      <Icon
+        testID={`${testID}.icon`}
+        name={EXTERNAL}
+        size={EXTERNAL_ICON}
+        tintColor={disabled ? colors.placeholder : colors.brand}
+      />
+    </PressableScale>
+  );
+}
+
+/**
+ * Skeleton rows with the shape of a listing row (eyebrow, title, deadline pill) so nothing jumps when the data
+ * lands. One "Loading" announcement for the group; testIDs `{testID}`, `{testID}.{i}`.
+ */
+export function ListingSkeleton({
+  testID,
+  count = 3,
+  tall,
+}: {
+  testID: string;
+  count?: number;
+  tall?: boolean;
+}) {
+  return (
+    <View testID={testID} accessible accessibilityLabel="Loading" accessibilityRole="progressbar">
+      {Array.from({ length: count }, (_, i) => (
+        <View key={i} testID={`${testID}.${i}`} style={styles.skeletonRow}>
+          <View style={styles.skeletonLines}>
+            <Skeleton width="65%" height={16} />
+            <Skeleton width="45%" height={15} />
+            {tall ? <Skeleton width="35%" height={15} /> : null}
+            <View style={styles.skeletonPills}>
+              <Skeleton width={96} height={22} radius={radius.full} />
+              {tall ? <Skeleton width={72} height={22} radius={radius.full} /> : null}
+            </View>
+          </View>
+          <Skeleton width={EXTERNAL_ICON} height={EXTERNAL_ICON} radius={radius.sm} />
+        </View>
+      ))}
     </View>
   );
 }
@@ -86,38 +153,58 @@ export function ListingFooter({
   noun: string;
 }) {
   return (
-    <AppText testID={testID} variant="caption" color="mutedForeground" align="center" style={styles.footer}>
+    <AppText testID={testID} variant="secondary" color="mutedForeground" align="center" style={styles.footer}>
       {`Showing ${shown} of ${total} ${noun} listings · Managed by ApronHanger`}
     </AppText>
   );
 }
 
-const styles = StyleSheet.create({
-  hero: {
-    gap: spacing['2'],
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    padding: spacing['5'],
-  },
-  subtitle: { opacity: 0.8 },
-  stats: {
+/** Shared row frame for the gov and international rows: 16-pt inset, hairline separator, trailing link button. */
+export const listingRowStyles = StyleSheet.create({
+  row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing['6'],
-    marginTop: spacing['3'],
-    paddingTop: spacing['3'],
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'flex-start',
+    gap: spacing['2'],
+    minHeight: 64,
+    paddingLeft: spacing['4'],
+    paddingRight: spacing['1'],
+    paddingVertical: spacing['3'],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.separator,
+    backgroundColor: colors.background,
   },
-  stat: { gap: 2 },
-  statLabel: { opacity: 0.75 },
-  deadline: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing['2'] },
-  italic: { fontStyle: 'italic' },
-  badge: {
-    borderRadius: radius.full,
-    backgroundColor: '#FEF3C7',
+  text: { flex: 1, gap: spacing['1'] },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing['2'], marginTop: 2 },
+});
+
+const styles = StyleSheet.create({
+  strip: {
+    flexDirection: 'row',
+    minHeight: 64,
+    backgroundColor: colors.surface2,
+    borderRadius: radius.md,
+    paddingVertical: spacing['2'],
     paddingHorizontal: spacing['2'],
-    paddingVertical: 2,
   },
-  footer: { marginTop: spacing['2'] },
+  cell: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingHorizontal: spacing['1'] },
+  deadline: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing['2'] },
+  link: {
+    width: MIN_TOUCH - 4,
+    height: MIN_TOUCH - 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.full,
+  },
+  skeletonRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing['3'],
+    paddingVertical: spacing['3'],
+    paddingHorizontal: spacing['4'],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.separator,
+  },
+  skeletonLines: { flex: 1, gap: spacing['2'] },
+  skeletonPills: { flexDirection: 'row', gap: spacing['2'] },
+  footer: { paddingHorizontal: spacing['4'], paddingTop: spacing['4'], paddingBottom: spacing['2'] },
 });

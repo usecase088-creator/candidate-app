@@ -1,4 +1,6 @@
-// International jobs: country chips, search and visa colours (website foreign-jobs.tsx).
+// International jobs: country chips, search and visa pill tones (website foreign-jobs.tsx).
+import type { PillTone } from '@/components/ui/Pill';
+
 type IntlLike = {
   jobPosition: string;
   specialty: string;
@@ -26,17 +28,23 @@ export function intlFilter<T extends IntlLike>(jobs: readonly T[], search: strin
   );
 }
 
-const VISA_BADGE: Record<string, { bg: string; text: string }> = {
-  Sponsorship: { bg: '#dcfce7', text: '#15803d' },
-  Employer: { bg: '#dbeafe', text: '#1d4ed8' },
-  Depends: { bg: '#fef9c3', text: '#854d0e' },
-  Self: { bg: '#f3e8ff', text: '#6b21a8' },
-  'Not Required': { bg: '#f1f5f9', text: '#475569' },
-  TBD: { bg: '#f1f5f9', text: '#94a3b8' },
+/**
+ * D32: the website paints the visa cell with six raw Tailwind pairs (green, blue, yellow, purple, two slates; the
+ * unknown one is 2.3:1). The app keeps the website's six states but maps them to its own semantic pill tones:
+ * sponsored = success, employer-arranged = info, depends = warning, self / not required / not sponsored = neutral,
+ * TBD and anything unknown = warning (the candidate has to find out).
+ */
+const VISA_TONE: Record<string, PillTone> = {
+  Sponsorship: 'success',
+  Employer: 'info',
+  Depends: 'warning',
+  Self: 'neutral',
+  'Not Required': 'neutral',
+  'Not Sponsored': 'neutral',
+  'No Sponsorship': 'neutral',
+  TBD: 'warning',
 };
 
-const UNKNOWN_VISA = { bg: '#f1f5f9', text: '#94a3b8' };
-
-export function visaColors(visa: string): { bg: string; text: string } {
-  return VISA_BADGE[visa] ?? UNKNOWN_VISA;
+export function visaTone(visa: string): PillTone {
+  return VISA_TONE[visa] ?? 'warning';
 }

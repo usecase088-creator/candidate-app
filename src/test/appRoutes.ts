@@ -16,6 +16,7 @@ import GovJobs from '@/app/gov-jobs';
 import IntlJobs from '@/app/intl-jobs';
 import JobDetails from '@/app/job/[id]';
 import DeleteAccount from '@/app/delete-account';
+import Filters from '@/app/filters';
 import CvPreview from '@/app/cv-preview';
 import Notifications from '@/app/notifications';
 import ProfileBuilder from '@/app/profile-builder';
@@ -41,6 +42,7 @@ export const appRoutes = {
   'job/[id]': JobDetails,
   'cv-preview': CvPreview,
   'delete-account': DeleteAccount,
+  filters: Filters,
   notifications: Notifications,
   'profile-builder': ProfileBuilder,
   'saved-jobs': SavedJobs,

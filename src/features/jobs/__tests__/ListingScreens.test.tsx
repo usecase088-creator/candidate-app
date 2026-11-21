@@ -12,6 +12,7 @@ import { API } from '@/test/msw/handlers';
 import { installJobsBackend } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
+import { colors } from '@/theme/tokens';
 
 import { formatDate } from '../logic/deadline';
 
@@ -91,11 +92,14 @@ afterEach(() => {
 describe('Government jobs', () => {
   const gov = () => startSignedIn('/gov-jobs', 'gov.screen');
 
-  it('hero, stats and a card per listing', async () => {
+  it('subtitle, stats strip and a row per listing', async () => {
     installJobsBackend({ gov: [aiims, upsc, old, open] });
     await gov();
-    expect(await screen.findByRole('header', { name: '🏛️ Government Jobs & Exams' })).toBeOnTheScreen();
-    expect(screen.getByText('Latest notifications — AIIMS, UPSC, State PSC, and more.')).toBeOnTheScreen();
+    expect(
+      await screen.findByText('Latest notifications — AIIMS, UPSC, State PSC, and more.'),
+    ).toBeOnTheScreen();
+    // D32: the native stack header carries "Government jobs"; the dark in-content hero and its title are gone.
+    expect(screen.queryByRole('header', { name: '🏛️ Government Jobs & Exams' })).toBeNull();
     await screen.findByTestId('gov.card.g1');
     const stats = within(screen.getByTestId('gov.stats'));
     expect(stats.getByText('Total Listings')).toBeOnTheScreen();
@@ -109,14 +113,17 @@ describe('Government jobs', () => {
     );
   });
 
-  it('a card shows authority, name, deadline and "View / Apply"', async () => {
+  it('a row shows authority, name, deadline and the "View / Apply" link button', async () => {
     installJobsBackend({ gov: [aiims] });
     await gov();
     const card = within(await screen.findByTestId('gov.card.g1'));
     expect(card.getByText('AIIMS')).toBeOnTheScreen();
     expect(card.getByText('Nursing Officer Recruitment')).toBeOnTheScreen();
     expect(card.getByText(formatDate(aiims.lastDate))).toBeOnTheScreen();
-    expect(card.getByRole('button', { name: 'View / Apply, AIIMS' })).toBeOnTheScreen();
+    // D32: the 48-pt button became a 44-pt external-link icon button; the spoken label is unchanged.
+    const link = card.getByRole('button', { name: 'View / Apply, AIIMS' });
+    expect(link).toBeOnTheScreen();
+    expect(link).toBeEnabled();
   });
 
   it('deadline: 7 days or fewer shows "{n}d left", past shows "Expired · date", none shows "No deadline"', async () => {
@@ -165,7 +172,10 @@ describe('Government jobs', () => {
     await fireEvent.changeText(screen.getByTestId('gov.search'), 'medical');
     expect(screen.getByTestId('gov.card.g2')).toBeOnTheScreen();
     await fireEvent.changeText(screen.getByTestId('gov.search'), 'zzz');
+    // D32: the yellow box became an EmptyState (no results is a neutral outcome, not a warning).
     expect(await screen.findByText('No listings match your search.')).toBeOnTheScreen();
+    expect(screen.getByTestId('gov.nomatch')).toBeOnTheScreen();
+    expect(screen.getByTestId('gov.nomatch.icon')).toBeOnTheScreen();
   });
 
   it('says it is not a government app and points at the official sources (store rule, playbook 3.7)', async () => {
@@ -192,7 +202,7 @@ describe('Government jobs', () => {
     expect(screen.queryByTestId('gov.stats')).not.toBeOnTheScreen();
   });
 
-  it('loading: "Loading government jobs…" with skeletons', async () => {
+  it('loading: skeleton rows, no "Loading…" text (D32)', async () => {
     installJobsBackend({ gov: [aiims] });
     server.use(
       http.get(`${API}/api/gov-jobs`, async () => {
@@ -202,7 +212,9 @@ describe('Government jobs', () => {
     );
     await gov();
     expect(screen.getByTestId('gov.loading')).toBeOnTheScreen();
-    expect(screen.getByText('Loading government jobs…')).toBeOnTheScreen();
+    // D32: the website's spinner text is redundant with a skeleton that has the row's shape; three rows shimmer instead.
+    expect(screen.queryByText('Loading government jobs…')).toBeNull();
+    expect(screen.getByTestId('gov.loading.2')).toBeOnTheScreen();
     expect(await screen.findByTestId('gov.card.g1')).toBeOnTheScreen();
   });
 
@@ -251,13 +263,14 @@ describe('Government jobs', () => {
 describe('International jobs', () => {
   const intl = () => startSignedIn('/intl-jobs', 'intl.screen');
 
-  it('hero, stats, country chips and a card per listing', async () => {
+  it('subtitle, stats strip, country chips and a row per listing', async () => {
     installJobsBackend({ intl: [uk, uae, expiredIntl] });
     await intl();
-    expect(await screen.findByRole('header', { name: '🌍 International Healthcare Jobs' })).toBeOnTheScreen();
     expect(
-      screen.getByText('Verified international listings — salary disclosed, visa status included.'),
+      await screen.findByText('Verified international listings — salary disclosed, visa status included.'),
     ).toBeOnTheScreen();
+    // D32: the native stack header carries "International jobs"; the dark in-content hero and its title are gone.
+    expect(screen.queryByRole('header', { name: '🌍 International Healthcare Jobs' })).toBeNull();
     await screen.findByTestId('intl.card.i1');
     const stats = within(screen.getByTestId('intl.stats'));
     expect(stats.getByTestId('intl.stat.total')).toHaveTextContent('3');
@@ -275,10 +288,12 @@ describe('International jobs', () => {
     expect(within(screen.getByTestId('intl.country.UAE')).getByText('🇦🇪 UAE')).toBeOnTheScreen();
   });
 
-  it('a card shows every website column', async () => {
+  it('a row shows every website column value', async () => {
     installJobsBackend({ intl: [uae] });
     await intl();
     const card = within(await screen.findByTestId('intl.card.i2'));
+    // D32: the 9 labelled key/value rows ("Specialty", "City", "Pay Scale"...) became a 5-line row, so the column
+    // labels are gone and some values share one line ("Retail · Dubai · 🇦🇪 UAE"): assert the values, not the labels.
     for (const text of [
       'Pharmacist',
       'Retail',
@@ -291,22 +306,23 @@ describe('International jobs', () => {
       'Employer',
       '2d left',
     ]) {
-      expect(card.getByText(text)).toBeOnTheScreen();
+      expect(card.getByText(text, { exact: false })).toBeOnTheScreen();
     }
-    for (const label of [
-      'Specialty',
-      'City',
-      'Country',
-      'Pay Scale',
-      'Experience',
-      'Qualification',
-      'License',
-      'Visa',
-      'Last Date',
-    ]) {
-      expect(card.getByText(label)).toBeOnTheScreen();
-    }
+    expect(card.getByText('Pharmacist')).toBeOnTheScreen();
+    expect(card.getByTestId('intl.payscale.i2')).toHaveTextContent('AED 8k');
+    expect(card.getByTestId('intl.visa.i2')).toHaveTextContent('Employer');
+    expect(card.getByText('2d left')).toBeOnTheScreen();
+    expect(card.queryByText('Pay Scale')).toBeNull();
+    // D32: the Apply button became a 44-pt external-link icon button; the spoken label is unchanged.
     expect(card.getByRole('button', { name: 'Apply, Pharmacist' })).toBeOnTheScreen();
+  });
+
+  it('a row drops empty experience, qualification and license parts instead of showing dashes', async () => {
+    installJobsBackend({ intl: [{ ...uk, experience: '', qualification: null, license: 'NMC' }] });
+    await intl();
+    const card = within(await screen.findByTestId('intl.card.i1'));
+    expect(card.getByText('NMC')).toBeOnTheScreen();
+    expect(card.queryByText(/—/)).toBeNull();
   });
 
   it('a missing pay scale shows a dash', async () => {
@@ -317,11 +333,15 @@ describe('International jobs', () => {
     ).toHaveTextContent('—');
   });
 
-  it('the visa badge uses the website colours', async () => {
-    installJobsBackend({ intl: [uk] });
+  it('the visa pill uses the semantic tones: sponsorship green, not sponsored grey, unknown amber', async () => {
+    installJobsBackend({
+      intl: [uk, { ...uae, visaSponsorship: 'Not Sponsored' }, { ...expiredIntl, visaSponsorship: 'TBD' }],
+    });
     await intl();
-    const badge = await screen.findByTestId('intl.visa.i1');
-    expect(badge).toHaveStyle({ backgroundColor: '#dcfce7' });
+    // D32: the website's raw Tailwind visa colours (#dcfce7 etc.) were replaced by the app's own tint pairs.
+    expect(await screen.findByTestId('intl.visa.i1')).toHaveStyle({ backgroundColor: colors.successSoft });
+    expect(screen.getByTestId('intl.visa.i2')).toHaveStyle({ backgroundColor: colors.muted });
+    expect(screen.getByTestId('intl.visa.i3')).toHaveStyle({ backgroundColor: colors.amberSoft });
   });
 
   it('country chip filters; "All" shows everything again', async () => {
@@ -347,9 +367,10 @@ describe('International jobs', () => {
     expect(screen.queryByTestId('intl.card.i1')).not.toBeOnTheScreen();
     expect(screen.getByTestId('intl.card.i2')).toBeOnTheScreen();
     await fireEvent.changeText(screen.getByTestId('intl.search'), 'zzz');
-    expect(
-      await screen.findByText('No listings match your search. Try a different keyword or country.'),
-    ).toBeOnTheScreen();
+    // D32: the yellow box became an EmptyState with the same two sentences as title and message.
+    expect(await screen.findByText('No listings match your search.')).toBeOnTheScreen();
+    expect(screen.getByText('Try a different keyword or country.')).toBeOnTheScreen();
+    expect(screen.getByTestId('intl.nomatch')).toBeOnTheScreen();
   });
 
   it('"Apply" opens the link in the in-app browser; expired ones are disabled', async () => {
@@ -382,7 +403,9 @@ describe('International jobs', () => {
     );
     await intl();
     expect(screen.getByTestId('intl.loading')).toBeOnTheScreen();
-    expect(screen.getByText('Loading international jobs…')).toBeOnTheScreen();
+    // D32: no "Loading…" text; three row-shaped skeletons shimmer instead.
+    expect(screen.queryByText('Loading international jobs…')).toBeNull();
+    expect(screen.getByTestId('intl.loading.2')).toBeOnTheScreen();
     expect(await screen.findByTestId('intl.card.i1')).toBeOnTheScreen();
   });
 

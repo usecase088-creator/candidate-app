@@ -3,28 +3,35 @@ import { memo, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { IntlJob } from '@/api/schemas/jobs';
-import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Pill } from '@/components/ui/Pill';
 import { Screen } from '@/components/ui/Screen';
-import { Skeleton } from '@/components/ui/Skeleton';
+import { SearchField } from '@/components/ui/SearchField';
 import { AppText } from '@/components/ui/Text';
-import { TextInput } from '@/components/ui/TextInput';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 
 import { QueryStatus } from '../components/QueryStatus';
 import {
-  DeadlineLine,
+  DeadlinePill,
+  ExternalLinkButton,
   ListingFooter,
-  ListingHero,
+  ListingSkeleton,
+  listingRowStyles,
+  StatsStrip,
 } from '../components/listings/ListingParts';
 import { useOpenLink } from '../components/listings/useOpenLink';
 import { queryView } from '../hooks/queryView';
 import { useIntlJobs } from '../hooks/useJobsData';
 import { deadlineInfo } from '../logic/deadline';
-import { ALL_COUNTRIES, countriesOf, intlFilter, visaColors } from '../logic/intl';
+import { ALL_COUNTRIES, countriesOf, intlFilter, visaTone } from '../logic/intl';
 
-/** Website foreign-jobs.tsx: the 11-column table becomes one card per listing, with the same columns. */
+const SEARCH_ICON = { ios: 'magnifyingglass', android: 'search', web: 'search' } as const;
+
+/**
+ * Website foreign-jobs.tsx: the 11-column table becomes one 5-line row per listing (D32). The native stack header
+ * carries the title "International jobs"; the content starts with the subtitle, the stats strip, search and country chips.
+ */
 export function IntlJobsScreen() {
   const query = useIntlJobs();
   const openLink = useOpenLink();
@@ -52,24 +59,25 @@ export function IntlJobsScreen() {
 
   const header = (
     <View style={styles.header}>
-      <ListingHero
-        testID="intl"
-        title="🌍 International Healthcare Jobs"
-        subtitle="Verified international listings — salary disclosed, visa status included."
-        stats={stats}
-      />
-      <TextInput
+      <AppText variant="secondary" color="mutedForeground">
+        Verified international listings — salary disclosed, visa status included.
+      </AppText>
+      {stats ? <StatsStrip testID="intl" stats={stats} /> : null}
+      <SearchField
         testID="intl.search"
-        label="Search"
         placeholder="Search by role, specialty, city…"
+        accessibilityLabel="Search international jobs"
         value={search}
         onChangeText={setSearch}
-        returnKeyType="search"
-        autoCapitalize="none"
-        autoCorrect={false}
       />
       {view === 'ready' && jobs.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        // The chip row bleeds to the screen edges so the last chip scrolls out instead of clipping at the margin.
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipsRow}
+          contentContainerStyle={styles.chips}
+        >
           {countries.map((c) => (
             <Chip
               key={c}
@@ -93,15 +101,7 @@ export function IntlJobsScreen() {
         error={query.error}
         onRetry={() => void query.refetch()}
         retrying={query.isFetching}
-        skeleton={
-          <View testID="intl.loading" style={styles.loading}>
-            <AppText color="mutedForeground" align="center">
-              Loading international jobs…
-            </AppText>
-            <Skeleton width="100%" height={160} radius={radius.md} />
-            <Skeleton width="100%" height={160} radius={radius.md} />
-          </View>
-        }
+        skeleton={<ListingSkeleton testID="intl.loading" tall />}
       />
     );
   } else if (jobs.length === 0) {
@@ -114,11 +114,12 @@ export function IntlJobsScreen() {
     );
   } else if (visible.length === 0) {
     footer = (
-      <View testID="intl.nomatch" style={styles.noMatch}>
-        <AppText color="warningText">
-          No listings match your search. Try a different keyword or country.
-        </AppText>
-      </View>
+      <EmptyState
+        testID="intl.nomatch"
+        title="No listings match your search."
+        message="Try a different keyword or country."
+        icon={SEARCH_ICON}
+      />
     );
   } else {
     footer = (
@@ -132,7 +133,7 @@ export function IntlJobsScreen() {
         testID="intl.list"
         data={view === 'ready' ? visible : []}
         keyExtractor={(j) => j.id}
-        renderItem={({ item }) => <IntlCard job={item} onOpen={openLink} />}
+        renderItem={({ item }) => <IntlRow job={item} onOpen={openLink} />}
         ListHeaderComponent={header}
         ListFooterComponent={footer}
         refreshing={query.isRefetching}
@@ -144,109 +145,73 @@ export function IntlJobsScreen() {
   );
 }
 
-const IntlCard = memo(function IntlCard({ job, onOpen }: { job: IntlJob; onOpen: (url: string) => void }) {
+const joinParts = (parts: readonly (string | null | undefined)[]) =>
+  parts
+    .map((p) => p?.trim() ?? '')
+    .filter(Boolean)
+    .join(' · ');
+
+/**
+ * One listing as five lines: position; specialty · city · flag country; pay scale; visa + deadline pills;
+ * experience · qualification · license (empty parts dropped). The external-link button is the only action
+ * (disabled once expired). testIDs `intl.card.{id}`, `intl.payscale.{id}`, `intl.visa.{id}`, `intl.apply.{id}`.
+ */
+const IntlRow = memo(function IntlRow({ job, onOpen }: { job: IntlJob; onOpen: (url: string) => void }) {
   const info = deadlineInfo(job.lastDate);
   const expired = info.kind === 'expired';
-  const visa = visaColors(job.visaSponsorship);
+  const where = joinParts([job.specialty, job.city, `${job.countryFlag} ${job.country}`.trim()]);
+  const requirements = joinParts([job.experience, job.qualification, job.license]);
   return (
-    <View testID={`intl.card.${job.id}`} style={styles.card}>
-      <AppText variant="body" weight="semibold">
-        {job.jobPosition}
-      </AppText>
-      <Row label="Specialty" value={job.specialty} />
-      <Row label="City" value={job.city} />
-      <Row label="Country" value={`${job.countryFlag} ${job.country}`} />
-      <Row label="Pay Scale" value={job.payscale || '—'} valueTestID={`intl.payscale.${job.id}`} strong />
-      <Row label="Experience" value={job.experience || '—'} />
-      <Row label="Qualification" value={job.qualification || '—'} />
-      <Row label="License" value={job.license || '—'} />
-      <View style={styles.row}>
-        <AppText variant="caption" color="mutedForeground" style={styles.label}>
-          Visa
+    <View testID={`intl.card.${job.id}`} style={listingRowStyles.row}>
+      <View style={listingRowStyles.text}>
+        <AppText variant="rowTitle" color={expired ? 'mutedForeground' : 'foreground'} numberOfLines={2}>
+          {job.jobPosition}
         </AppText>
-        <View testID={`intl.visa.${job.id}`} style={[styles.visa, { backgroundColor: visa.bg }]}>
-          <AppText variant="caption" weight="semibold" style={{ color: visa.text }}>
-            {job.visaSponsorship}
-          </AppText>
+        <AppText variant="secondary" color="mutedForeground" numberOfLines={2}>
+          {where}
+        </AppText>
+        <AppText
+          testID={`intl.payscale.${job.id}`}
+          variant="body"
+          weight="semibold"
+          tabular
+          numberOfLines={1}
+        >
+          {job.payscale || '—'}
+        </AppText>
+        <View style={listingRowStyles.pills}>
+          <Pill
+            testID={`intl.visa.${job.id}`}
+            tone={visaTone(job.visaSponsorship)}
+            label={job.visaSponsorship}
+          />
+          <DeadlinePill testID={`intl.deadline.${job.id}`} info={info} />
         </View>
+        {requirements ? (
+          <AppText variant="secondary" color="mutedForeground" numberOfLines={2}>
+            {requirements}
+          </AppText>
+        ) : null}
       </View>
-      <View style={styles.row}>
-        <AppText variant="caption" color="mutedForeground" style={styles.label}>
-          Last Date
-        </AppText>
-        <DeadlineLine info={info} />
-      </View>
-      <Button
+      <ExternalLinkButton
         testID={`intl.apply.${job.id}`}
-        label="Apply"
         accessibilityLabel={`Apply, ${job.jobPosition}`}
-        variant={expired ? 'outline' : 'primary'}
         disabled={expired}
-        fullWidth={false}
         onPress={() => onOpen(job.applyLink)}
       />
     </View>
   );
 });
 
-function Row({
-  label,
-  value,
-  strong,
-  valueTestID,
-}: {
-  label: string;
-  value: string;
-  strong?: boolean;
-  valueTestID?: string;
-}) {
-  return (
-    <View style={styles.row}>
-      <AppText variant="caption" color="mutedForeground" style={styles.label}>
-        {label}
-      </AppText>
-      <AppText
-        testID={valueTestID}
-        variant="caption"
-        weight={strong ? 'semibold' : 'regular'}
-        style={styles.value}
-      >
-        {value}
-      </AppText>
-    </View>
-  );
-}
-
+// D32: the header keeps its own 16-pt inset; rows run edge to edge and inset themselves (like JobList).
 const styles = StyleSheet.create({
-  content: { padding: spacing['4'] },
-  header: { gap: spacing['4'], marginBottom: spacing['4'] },
-  chips: { gap: spacing['2'], paddingVertical: spacing['1'] },
-  loading: { gap: spacing['3'] },
-  noMatch: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    backgroundColor: '#FEFCE8',
-    padding: spacing['3'],
+  content: { paddingBottom: spacing['6'] },
+  header: {
+    gap: spacing['3'],
+    paddingHorizontal: spacing['4'],
+    paddingTop: spacing['3'],
+    paddingBottom: spacing['3'],
   },
-  card: {
-    gap: spacing['2'],
-    alignItems: 'flex-start',
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing['4'],
-    marginBottom: spacing['3'],
-  },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: spacing['2'],
-    alignSelf: 'stretch',
-  },
-  label: { width: 96 },
-  value: { flex: 1, flexShrink: 1 },
-  visa: { borderRadius: radius.full, paddingHorizontal: spacing['3'], paddingVertical: 2 },
+  chipsRow: { marginHorizontal: -spacing['4'] },
+  chips: { gap: spacing['2'], paddingHorizontal: spacing['4'], paddingVertical: spacing['1'] },
 });
