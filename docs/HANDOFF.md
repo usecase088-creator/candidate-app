@@ -1,8 +1,26 @@
-# Handoff (updated 2026-11-01: guest browsing, push fix, permissions and large-text fixes built; EAS preview build 4 `d91e342f` waiting for phone tests)
+# Handoff (updated 2026-11-21: D32 premium UI redesign in progress; foundation + Home/Search/Gov/Intl done, 1,746 tests green)
 
 Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
+
+- **2026-11-21 (D32 UI redesign, Raj in the session):** the client tried the Android preview build and said the flows work but
+  the app is not premium (spacing, oversized text). Six frame-by-frame audits + a code inventory (local scratchpad) led to
+  `docs/design/UI-REDESIGN.md` (the system, the screen plan, the order of work) and D32 (Raj approved native headers,
+  expo-haptics, react-native-svg, sentence case, status colour by need). **Done so far (all test-first, `npm run check` green,
+  120 suites / 1,746 tests):** type ramp with per-variant font-scale caps, one radius family, new tokens; `PressableScale`
+  (Reanimated press + ripple + haptics), Button sizes/variants/loading/disabled (+ the `fullWidth={false}` bug that stretched
+  11 ghost "Back" buttons); native stack headers on every pushed route (tabs anchored for deep links) and a 44-pt TopBar
+  with the tab title; new primitives (ListRow/ListGroup/SectionHeader/Separator, Pill, LogoTile/Avatar, SearchField,
+  StickyActionBar, Panel, Chip/Checkbox/Stepper/TextInput/OtpInput/TextButton upgrades, animated Toast, shimmer Skeleton +
+  presets, EmptyState/ErrorState with icon); JobRow replaces JobCard; Home (compact hero, tiles, edge-to-edge rail),
+  Search (compact fields, Filters button, chip) with `/filters` as a form-sheet route; Gov/Intl as rows with stats strip and
+  pills; Expo template colours replaced. Maestro `jobs-gov-intl.yaml` updated (system back, header titles). **In progress:**
+  job details + apply, applications, profile/settings/notifications, auth (agents, same rules). **Not yet done:** on-device
+  check (Android phone at 320 dp / font scale 2, iPhone SE via `ios-e2e` needs a NEW e2e-test build: ask Raj, EAS minutes),
+  `e2e/demo` regeneration (`python scripts/demo/build-demo-flows.py`), a new preview build (ask Raj), the client's install
+  problem ("The app wasn't installed": uninstall the old preview app first; 112 MB APK link valid to 2026-12-01).
+  Typed routes: `.expo/types/router.d.ts` was patched by hand for `/filters`; `npx expo start` regenerates it.
 
 - **2026-11-01 (Raj in the session, phone connected):** on the overnight preview build (`ae4de91f`) all 16 Maestro flows passed (2 flow scripts
   fixed, `05253cf`) and the real push test found a launch-blocker, fixed and confirmed on build `1c1ad1f7`:
