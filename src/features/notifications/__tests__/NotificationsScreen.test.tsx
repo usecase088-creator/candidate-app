@@ -118,6 +118,29 @@ describe('Notifications', () => {
     await waitFor(() => expect(calls).toEqual(['read-all']));
   });
 
+  it('D32: rows show a relative time, a type icon and an unread dot; the list pulls to refresh', async () => {
+    const now = jest.spyOn(Date, 'now').mockReturnValue(new Date('2026-10-20T13:00:00.000Z').getTime());
+    setup([
+      n({ id: 'a' }),
+      n({ id: 'b', title: 'Old news', read: true, createdAt: '2026-10-06T10:00:00.000Z' }),
+    ]);
+    await open();
+    expect(await screen.findByTestId('notifications.item.a.time')).toHaveTextContent('3h ago');
+    expect(screen.getByTestId('notifications.item.b.time')).toHaveTextContent('6 Oct');
+    expect(screen.getByTestId('notifications.item.a.dot')).toBeOnTheScreen();
+    expect(screen.queryByTestId('notifications.item.b.dot')).toBeNull();
+    expect(screen.getByTestId('notifications.item.a.icon')).toBeOnTheScreen();
+    expect(screen.getByTestId('notifications.list').props.refreshControl).toBeTruthy();
+    now.mockRestore();
+  });
+
+  it('D32: loads with row skeletons, then the list replaces them', async () => {
+    setup([n({ id: 'a' })]);
+    await open();
+    expect(await screen.findByText('Interview scheduled')).toBeOnTheScreen();
+    expect(screen.queryByTestId('notifications.loading')).toBeNull();
+  });
+
   it('is reached from the bell in the top bar', async () => {
     setup([n({ id: 'a' })]);
     await startSignedIn('/profile', 'profile.screen');

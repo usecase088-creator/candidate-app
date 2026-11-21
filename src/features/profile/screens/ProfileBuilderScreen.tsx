@@ -5,16 +5,19 @@
 // The sign-in phone and email are shown, never edited (B8).
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { type ComponentRef, Fragment, useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { CandidateMe, SupportingDocument } from '@/api/schemas/candidate';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { FormErrorBox } from '@/components/ui/FormErrorBox';
 import { Screen } from '@/components/ui/Screen';
+import { Separator } from '@/components/ui/Separator';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { AppText } from '@/components/ui/Text';
+import { useKeyboardScroll } from '@/components/ui/useKeyboardScroll';
 import { failureText } from '@/features/applications/messages';
 import { useSession } from '@/features/auth/sessionStore';
 import { queryView } from '@/features/jobs/hooks/queryView';
@@ -33,6 +36,9 @@ import { CANDIDATE_ME_KEY, useCandidateMe } from '../hooks/useCandidateMe';
 import { profileApi } from '../profileApi';
 
 type Row = Record<string, unknown>;
+
+const TRASH = { ios: 'trash', android: 'delete', web: 'delete' } as const;
+const PLUS = { ios: 'plus', android: 'add', web: 'add' } as const;
 
 /** The draft this user left on the phone: undefined while reading, null when there is none. */
 function useStoredDraft(userId: string | undefined): BuilderDraft | null | undefined {
@@ -69,7 +75,13 @@ export function ProfileBuilderScreen() {
               retrying={query.isFetching}
             />
           ) : (
-            <Skeleton testID="builder.loading" width="100%" height={120} />
+            <View testID="builder.loading" accessible accessibilityLabel="Loading" style={styles.loading}>
+              <Skeleton width={96} height={13} />
+              <Skeleton width="100%" height={4} radius={radius.full} />
+              <Skeleton width="70%" height={22} />
+              <Skeleton width="100%" height={48} radius={radius.md} />
+              <Skeleton width="100%" height={48} radius={radius.md} />
+            </View>
           )}
         </Screen>
       )}
@@ -107,6 +119,18 @@ function Builder({
       : {}),
   };
 
+  // The form scrolls on its own (the action bar sits under it, not in it): a new step starts at the top, a
+  // field focused just before the keyboard opens is scrolled above it (Screen does the same in scroll mode).
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const offset = useRef(0);
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [step]);
+  useKeyboardScroll(
+    (y) => scrollRef.current?.scrollTo({ y, animated: true }),
+    () => offset.current,
+  );
+
   /** Writes the draft to the phone. A failed write must not stop the form: the draft is still on screen. */
   const keep = (patch: Partial<BuilderDraft>) =>
     userId
@@ -118,10 +142,15 @@ function Builder({
     void keep({ step: n });
   };
   const set = (key: string, value: unknown) => setDraft((d) => ({ ...d, [key]: value }));
+  /** The message sits at the end of the form, above the bar: bring it into view. */
+  const showError = (message: string) => {
+    setError(message);
+    scrollRef.current?.scrollToEnd({ animated: true });
+  };
 
   function onNext() {
     const problem = validateStep(step, draft);
-    if (problem) return setError(problem);
+    if (problem) return showError(problem);
     setError(undefined);
     goTo(step + 1);
   }
@@ -135,7 +164,12 @@ function Builder({
       const result = await uploadSupportingDocuments(group);
       done = [
         ...done,
-        ...result.map((u) => ({ name: u.name ?? 'Document', url: u.url, publicId: u.publicId, mime: u.mime ?? null })),
+        ...result.map((u) => ({
+          name: u.name ?? 'Document',
+          url: u.url,
+          publicId: u.publicId,
+          mime: u.mime ?? null,
+        })),
       ];
       waiting = waiting.slice(group.length);
       setUploaded(done);
@@ -161,7 +195,9 @@ function Builder({
       try {
         done = await uploadWaiting();
       } catch (e) {
-        setError(e instanceof Error && !('kind' in e) ? e.message : failureText(e, 'Could not upload documents'));
+        showError(
+          e instanceof Error && !('kind' in e) ? e.message : failureText(e, 'Could not upload documents'),
+        );
         return;
       }
       // The server replaces the stored list as a whole, so the files already there go with the new ones.
@@ -170,26 +206,46 @@ function Builder({
       if (userId) await clearDraft(userId);
       router.replace('/profile');
     } catch (e) {
-      setError(failureText(e, 'Failed to save profile'));
+      showError(failureText(e, 'Failed to save profile'));
     } finally {
       setSaving(false);
     }
   }
 
   const meta = STEPS[step]!;
+  const progress = Math.round(((step + 1) / STEPS.length) * 100);
   return (
-    <Screen testID="builder.screen" scroll scrollToTopKey={step}>
-      <View style={styles.stack}>
-        <AppText testID="builder.progress" variant="caption" color="mutedForeground">
-          {`Step ${step + 1} of ${STEPS.length}`}
-        </AppText>
-        <View style={styles.bar} accessible={false}>
-          <View style={[styles.barFill, { width: `${Math.round(((step + 1) / STEPS.length) * 100)}%` }]} />
+    <Screen testID="builder.screen" padded={false}>
+      <ScrollView
+        ref={scrollRef}
+        testID="builder.screen.scroll"
+        onScroll={(e) => {
+          offset.current = e.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+      >
+        <View style={styles.header}>
+          <AppText testID="builder.progress" variant="secondary" color="mutedForeground" tabular>
+            {`Step ${step + 1} of ${STEPS.length}`}
+          </AppText>
+          <View
+            style={styles.bar}
+            accessible
+            accessibilityRole="progressbar"
+            accessibilityLabel={`Step ${step + 1} of ${STEPS.length}`}
+            accessibilityValue={{ min: 0, max: 100, now: progress }}
+          >
+            <View style={[styles.barFill, { width: `${progress}%` }]} />
+          </View>
+          <AppText variant="title" accessibilityRole="header">
+            {meta.label}
+          </AppText>
+          <AppText variant="secondary" color="mutedForeground">
+            {meta.description}
+          </AppText>
         </View>
-        <AppText variant="title" accessibilityRole="header">
-          {meta.label}
-        </AppText>
-        <AppText color="mutedForeground">{meta.description}</AppText>
 
         {step === LAST_STEP ? (
           <Review draft={draft} />
@@ -213,32 +269,33 @@ function Builder({
         ) : null}
 
         {error ? <FormErrorBox testID="builder.error" message={error} /> : null}
+      </ScrollView>
 
-        <View style={styles.nav}>
-          {step > 0 ? (
-            <Button
-              testID="builder.back"
-              label="Back"
-              variant="outline"
-              disabled={saving}
-              onPress={() => {
-                setError(undefined);
-                goTo(step - 1);
-              }}
-            />
-          ) : null}
-          {step < LAST_STEP ? (
-            <Button testID="builder.next" label="Next" onPress={onNext} />
-          ) : (
-            <Button
-              testID="builder.submit"
-              label="Save profile"
-              loading={saving}
-              onPress={() => void onSubmit()}
-            />
-          )}
-        </View>
-      </View>
+      <StickyActionBar testID="builder.bar">
+        {step > 0 ? (
+          <Button
+            testID="builder.back"
+            label="Back"
+            variant="secondary"
+            disabled={saving}
+            onPress={() => {
+              setError(undefined);
+              goTo(step - 1);
+            }}
+          />
+        ) : null}
+        {step < LAST_STEP ? (
+          <Button testID="builder.next" label="Continue" onPress={onNext} />
+        ) : (
+          <Button
+            testID="builder.submit"
+            label="Save profile"
+            haptic="medium"
+            loading={saving}
+            onPress={() => void onSubmit()}
+          />
+        )}
+      </StickyActionBar>
     </Screen>
   );
 }
@@ -255,7 +312,7 @@ function BlockView({
   const values = draft as unknown as Row;
   if (block.type === 'fields') {
     return (
-      <View style={styles.stack}>
+      <View style={styles.fields}>
         {block.fields.map((f) => (
           <FormField
             key={f.key}
@@ -275,10 +332,27 @@ function BlockView({
       items.map((item, n) => (n === i ? { ...item, [key]: value } : item)),
     );
   return (
-    <View style={styles.stack}>
+    <View style={styles.fields}>
       {items.map((item, i) => (
         <View key={i} style={styles.card}>
-          <AppText variant="label">{`${block.itemLabel} ${i + 1}`}</AppText>
+          <View style={styles.cardHeader}>
+            <AppText variant="rowTitle" style={styles.flex}>{`${block.itemLabel} ${i + 1}`}</AppText>
+            <Button
+              testID={`builder.${block.key}.${i}.remove`}
+              label="Remove"
+              accessibilityLabel={`Remove ${block.itemLabel} ${i + 1}`}
+              variant="destructiveText"
+              size="sm"
+              fullWidth={false}
+              icon={TRASH}
+              onPress={() =>
+                set(
+                  block.key,
+                  items.filter((_, n) => n !== i),
+                )
+              }
+            />
+          </View>
           {block.fields(item).map((f: FieldSpec) => (
             <FormField
               key={f.key}
@@ -288,24 +362,14 @@ function BlockView({
               onChange={(v) => update(i, f.key, v)}
             />
           ))}
-          <Button
-            testID={`builder.${block.key}.${i}.remove`}
-            label="Remove"
-            accessibilityLabel={`Remove ${block.itemLabel} ${i + 1}`}
-            variant="ghost"
-            onPress={() =>
-              set(
-                block.key,
-                items.filter((_, n) => n !== i),
-              )
-            }
-          />
         </View>
       ))}
       <Button
         testID={`builder.${block.key}.add`}
         label={block.addLabel}
-        variant="outline"
+        variant="secondary"
+        size="md"
+        icon={PLUS}
         onPress={() => set(block.key, [...items, block.empty()])}
       />
     </View>
@@ -330,30 +394,45 @@ function Review({ draft }: { draft: Draft }) {
     ['documents', 'Documents', draft.documentChecklist.join(', ')],
   ];
   return (
-    <View style={styles.stack}>
-      {rows.map(([key, label, value]) => (
-        <View key={key} style={styles.reviewRow}>
-          <AppText variant="caption" color="mutedForeground">
-            {label}
-          </AppText>
-          <AppText testID={`builder.review.${key}`}>{value || '—'}</AppText>
-        </View>
+    <View style={styles.review}>
+      {rows.map(([key, label, value], i) => (
+        <Fragment key={key}>
+          {i > 0 ? <Separator /> : null}
+          <View style={styles.reviewRow}>
+            <AppText variant="caption" color="mutedForeground">
+              {label}
+            </AppText>
+            <AppText testID={`builder.review.${key}`}>{value || '—'}</AppText>
+          </View>
+        </Fragment>
       ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: spacing['4'] },
+  flex: { flex: 1 },
+  loading: { gap: spacing['4'] },
+  content: { padding: spacing['4'], paddingBottom: spacing['6'], gap: spacing['6'] },
+  header: { gap: spacing['2'] },
+  fields: { gap: spacing['4'] },
+  bar: { height: 4, borderRadius: radius.full, backgroundColor: colors.brandSoft, overflow: 'hidden' },
+  barFill: { height: 4, backgroundColor: colors.brand },
   card: {
-    gap: spacing['3'],
-    padding: spacing['3'],
-    borderWidth: 1,
-    borderColor: colors.border,
+    gap: spacing['4'],
+    padding: spacing['4'],
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.separator,
     borderRadius: radius.md,
+    backgroundColor: colors.surface,
   },
-  nav: { gap: spacing['2'] },
-  bar: { height: 6, borderRadius: radius.full, backgroundColor: colors.muted, overflow: 'hidden' },
-  barFill: { height: 6, backgroundColor: colors.primary },
-  reviewRow: { gap: 2 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing['2'] },
+  review: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.separator,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  reviewRow: { gap: spacing['0.5'], paddingHorizontal: spacing['4'], paddingVertical: spacing['3'] },
 });

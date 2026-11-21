@@ -112,6 +112,17 @@ describe('CV preview', () => {
     expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith('https://res.example/my-cv.pdf');
   });
 
+  it('D32: Download PDF, Attached Document and Edit CV are rows in one group', async () => {
+    installJobsBackend({ me: { ...full, cvUrl: 'https://res.example/my-cv.pdf' } });
+    await open();
+    expect(await screen.findByTestId('cv.actions')).toBeOnTheScreen();
+    expect(screen.getByTestId('cv.pdf')).toHaveTextContent('Download PDF');
+    expect(screen.getByTestId('cv.document')).toHaveTextContent('Attached Document');
+    expect(screen.getByTestId('cv.edit')).toHaveTextContent('Edit CV');
+    await fireEvent.press(screen.getByTestId('cv.document'));
+    expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith('https://res.example/my-cv.pdf');
+  });
+
   it('is reached from the Profile tab', async () => {
     installJobsBackend({ me: full });
     await startSignedIn('/profile', 'profile.screen');

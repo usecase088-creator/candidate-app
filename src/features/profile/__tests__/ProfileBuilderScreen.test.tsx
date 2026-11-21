@@ -237,6 +237,47 @@ describe('Profile builder: moving around', () => {
   });
 });
 
+describe('Profile builder: D32 chrome', () => {
+  it('Back and Continue sit in a sticky bar; the first step has only Continue', async () => {
+    setup();
+    await open();
+    expect(await screen.findByTestId('builder.bar')).toBeOnTheScreen();
+    expect(screen.getByTestId('builder.next')).toHaveTextContent('Continue'); // website wording (was "Next")
+    expect(screen.queryByTestId('builder.back')).toBeNull();
+    await next();
+    expect(await screen.findByTestId('builder.back')).toHaveTextContent('Back');
+  });
+
+  it('a select with many options is a picker row that opens a check list, not 36 chips', async () => {
+    setup();
+    await open();
+    const state = await screen.findByTestId('builder.field.state');
+    expect(state).toHaveTextContent('West Bengal');
+    expect(screen.queryByTestId('builder.field.state.option.0')).toBeNull();
+    await fireEvent.press(state);
+    await fireEvent.press(screen.getByText('Maharashtra'));
+    expect(screen.getByTestId('builder.field.state')).toHaveTextContent('Maharashtra');
+    expect(screen.queryByTestId('builder.field.state.option.0')).toBeNull();
+    await next();
+    await waitFor(async () => expect((await onPhone())?.draft.state).toBe('Maharashtra'));
+  });
+
+  it('a select with a few options stays a row of chips', async () => {
+    setup();
+    await atStep(2);
+    await open();
+    expect(await screen.findByTestId('builder.field.licenseStatus.option.0')).toBeOnTheScreen();
+  });
+
+  it('a list item is removed with its chip clear button', async () => {
+    setup();
+    await atStep(5);
+    await open();
+    await fireEvent.press(await screen.findByTestId('builder.field.clinicalSkills.item.0.remove'));
+    expect(screen.queryByTestId('builder.field.clinicalSkills.item.0')).toBeNull();
+  });
+});
+
 describe('Profile builder: dates with the phone date picker', () => {
   beforeEach(() => {
     fakePicker.date = new Date(2019, 3, 9);

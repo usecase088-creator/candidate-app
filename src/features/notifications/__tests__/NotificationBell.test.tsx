@@ -7,6 +7,7 @@ import { API } from '@/test/msw/handlers';
 import { installJobsBackend } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
+import { colors } from '@/theme/tokens';
 
 jest.mock('expo-font', () => ({ ...jest.requireActual('expo-font'), useFonts: jest.fn() }));
 jest.mock('expo-splash-screen', () => ({
@@ -58,6 +59,14 @@ describe('Notification bell in the top bar', () => {
     );
   });
 
+  it('D32: the badge is brand, not red', async () => {
+    setup(3);
+    await startSignedIn('/', 'home.screen');
+    expect(await screen.findByTestId('topbar.notifications.badge')).toHaveStyle({
+      backgroundColor: colors.brand,
+    });
+  });
+
   it('caps a big count at 99+', async () => {
     setup(120);
     await startSignedIn('/', 'home.screen');
@@ -67,13 +76,18 @@ describe('Notification bell in the top bar', () => {
   it('has no count when everything is read', async () => {
     setup(0);
     await startSignedIn('/', 'home.screen');
-    expect(await screen.findByTestId('topbar.notifications')).toHaveProp('accessibilityLabel', 'Notifications');
+    expect(await screen.findByTestId('topbar.notifications')).toHaveProp(
+      'accessibilityLabel',
+      'Notifications',
+    );
     expect(screen.queryByTestId('topbar.notifications.count')).toBeNull();
   });
 
   it('still works as a plain bell when the count cannot be loaded', async () => {
     installJobsBackend({ me: applicantMe });
-    server.use(http.get(`${API}/api/notifications`, () => HttpResponse.json({ error: 'x' }, { status: 500 })));
+    server.use(
+      http.get(`${API}/api/notifications`, () => HttpResponse.json({ error: 'x' }, { status: 500 })),
+    );
     await startSignedIn('/', 'home.screen');
     await fireEvent.press(await screen.findByTestId('topbar.notifications'));
     expect(await screen.findByTestId('notifications.screen')).toBeOnTheScreen();

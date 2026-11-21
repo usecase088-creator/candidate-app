@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Chip } from '@/components/ui/Chip';
 import { DateField } from '@/components/ui/DateField';
+import { Icon } from '@/components/ui/Icon';
+import { TextButton } from '@/components/ui/TextButton';
 import { TextInput } from '@/components/ui/TextInput';
 import { AppText } from '@/components/ui/Text';
-import { spacing } from '@/theme/tokens';
+import { colors, spacing } from '@/theme/tokens';
 
 import type { FieldSpec } from '../formSpec';
+import { OptionPicker } from './OptionPicker';
 
 type Props = {
   /** `builder.field.<key>` or `builder.<list>.<n>.<key>`: every part below adds its own suffix. */
@@ -18,6 +20,10 @@ type Props = {
   value: unknown;
   onChange: (value: unknown) => void;
 };
+
+/** D32: up to this many short options stay chips; longer lists become a picker row (Role 18, State 36). */
+const MAX_CHIP_OPTIONS = 6;
+const LOCK = { ios: 'lock', android: 'lock', web: 'lock' } as const;
 
 const asString = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v));
 const asList = (v: unknown): string[] =>
@@ -32,7 +38,8 @@ export function FormField({ testID, spec, value, onChange }: Props) {
       return (
         <TextInput
           testID={testID}
-          label={label(spec)}
+          label={spec.label}
+          required={spec.required}
           helper={spec.hint}
           placeholder={spec.placeholder}
           value={asString(value)}
@@ -40,6 +47,8 @@ export function FormField({ testID, spec, value, onChange }: Props) {
           multiline={spec.kind === 'multiline'}
           numberOfLines={spec.kind === 'multiline' ? 5 : 1}
           keyboardType={spec.keyboard ?? 'default'}
+          returnKeyType={spec.kind === 'multiline' ? 'default' : 'next'}
+          blurOnSubmit={spec.kind !== 'multiline'}
           autoCapitalize={spec.keyboard === 'url' || spec.keyboard === 'email-address' ? 'none' : 'sentences'}
           autoCorrect={false}
         />
@@ -61,7 +70,8 @@ export function FormField({ testID, spec, value, onChange }: Props) {
       return (
         <TextInput
           testID={testID}
-          label={label(spec)}
+          label={spec.label}
+          required={spec.required}
           helper={spec.hint}
           value={typeof value === 'number' && value !== 0 ? String(value) : ''}
           placeholder="0"
@@ -70,15 +80,19 @@ export function FormField({ testID, spec, value, onChange }: Props) {
             onChange(Number.isFinite(n) ? n : 0);
           }}
           keyboardType="numeric"
+          returnKeyType="next"
         />
       );
     case 'readonly':
       return (
         <View style={styles.group}>
           <AppText variant="label">{spec.label}</AppText>
-          <AppText testID={testID} color="mutedForeground">
-            {asString(value)}
-          </AppText>
+          <View style={styles.readonlyRow}>
+            <AppText testID={testID} style={styles.flex}>
+              {asString(value)}
+            </AppText>
+            <Icon name={LOCK} size={16} tintColor={colors.mutedForeground} />
+          </View>
           {spec.hint ? (
             <AppText variant="caption" color="mutedForeground">
               {spec.hint}
@@ -97,12 +111,25 @@ export function FormField({ testID, spec, value, onChange }: Props) {
           <AppText>{spec.label}</AppText>
         </Checkbox>
       );
-    case 'select':
+    case 'select': {
+      const options = spec.options ?? [];
+      if (options.length > MAX_CHIP_OPTIONS) {
+        return (
+          <OptionPicker
+            testID={testID}
+            label={label(spec)}
+            hint={spec.hint}
+            value={asString(value)}
+            options={options}
+            onChange={onChange}
+          />
+        );
+      }
       return (
         <View style={styles.group}>
           <AppText variant="label">{label(spec)}</AppText>
           <View style={styles.wrap}>
-            {(spec.options ?? []).map((option, i) => (
+            {options.map((option, i) => (
               <Chip
                 key={option}
                 testID={`${testID}.option.${i}`}
@@ -114,6 +141,7 @@ export function FormField({ testID, spec, value, onChange }: Props) {
           </View>
         </View>
       );
+    }
     case 'multi': {
       const selected = asList(value);
       return (
@@ -142,7 +170,10 @@ export function FormField({ testID, spec, value, onChange }: Props) {
   }
 }
 
-/** Type a word, tap Add, remove with the chip. `single` keeps one value as a string (primary specialty). */
+/**
+ * Type a word, tap Add (inside the field), remove with the chip's clear button. `single` keeps one value as a string
+ * (primary specialty).
+ */
 function ChipsField({ testID, spec, value, onChange }: Props) {
   const [text, setText] = useState('');
   const items = spec.single ? (asString(value) ? [asString(value)] : []) : asList(value);
@@ -153,26 +184,30 @@ function ChipsField({ testID, spec, value, onChange }: Props) {
     write([...items, w]);
     setText('');
   };
+  const remove = (item: string) => write(items.filter((x) => x !== item));
   return (
     <View style={styles.group}>
       <TextInput
         testID={`${testID}.input`}
-        label={label(spec)}
+        label={spec.label}
+        required={spec.required}
         helper={spec.hint}
         placeholder={spec.placeholder}
         value={text}
         onChangeText={setText}
         onSubmitEditing={() => add(text)}
+        blurOnSubmit={false}
         returnKeyType="done"
         autoCorrect={false}
-      />
-      <Button
-        testID={`${testID}.add`}
-        label="Add"
-        accessibilityLabel={`Add ${spec.label}`}
-        variant="outline"
-        disabled={!text.trim()}
-        onPress={() => add(text)}
+        accessory={
+          <TextButton
+            testID={`${testID}.add`}
+            label="Add"
+            accessibilityLabel={`Add ${spec.label}`}
+            disabled={!text.trim()}
+            onPress={() => add(text)}
+          />
+        }
       />
       {items.length > 0 ? (
         <View style={styles.wrap}>
@@ -180,10 +215,11 @@ function ChipsField({ testID, spec, value, onChange }: Props) {
             <Chip
               key={item}
               testID={`${testID}.item.${i}`}
-              label={`${item}  ×`}
+              label={item}
               accessibilityLabel={`Remove ${item}`}
               selected
-              onPress={() => write(items.filter((x) => x !== item))}
+              onPress={() => remove(item)}
+              onRemove={() => remove(item)}
             />
           ))}
         </View>
@@ -209,5 +245,7 @@ function ChipsField({ testID, spec, value, onChange }: Props) {
 
 const styles = StyleSheet.create({
   group: { gap: spacing['2'] },
+  flex: { flex: 1 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['2'] },
+  readonlyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing['2'] },
 });

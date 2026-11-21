@@ -1,6 +1,6 @@
 import { applicantMe } from '@/test/fixtures/applications';
 
-import { computeCompleteness, draftFromMe, emptyDraft, profileFromDraft } from '../model';
+import { computeCompleteness, draftFromMe, emptyDraft, nextBestFixes, profileFromDraft } from '../model';
 
 const me = applicantMe as never;
 const DOCTOR =
@@ -131,5 +131,51 @@ describe('computeCompleteness', () => {
       languages: ['l'],
     };
     expect(computeCompleteness(full)).toBe(100);
+  });
+});
+
+// D32 Profile tab: the completeness ring lists up to three things still missing, in the order the website scores them.
+describe('nextBestFixes', () => {
+  const full = {
+    name: 'a',
+    email: 'a',
+    phone: 'a',
+    state: 's',
+    registrationNumber: 'r',
+    specialty: 's',
+    grade: 'g',
+    licenseStatus: 'Active',
+    summary: 's',
+    qualifications: [1],
+    experience: [1],
+    clinicalSkills: ['x'],
+    procedures: [1],
+    certifications: [1],
+    publicationDetails: [1],
+    documentChecklist: ['d'],
+    languages: ['l'],
+  };
+
+  it('lists nothing for a complete profile', () => {
+    expect(nextBestFixes(full)).toEqual([]);
+  });
+
+  it('names the first three missing items for an empty profile', () => {
+    expect(nextBestFixes({})).toEqual(['Add your name', 'Add your email', 'Add your phone number']);
+  });
+
+  it('skips what is already filled', () => {
+    expect(nextBestFixes({ ...full, summary: '', procedures: [], languages: [] })).toEqual([
+      'Add a professional summary',
+      'Add a procedure',
+      'Add a language',
+    ]);
+  });
+
+  it('counts a list of publication strings as research', () => {
+    expect(nextBestFixes({ ...full, publicationDetails: [], publications: ['x'] })).toEqual([]);
+    expect(nextBestFixes({ ...full, publicationDetails: [], publications: [] })).toEqual([
+      'Add a publication',
+    ]);
   });
 });

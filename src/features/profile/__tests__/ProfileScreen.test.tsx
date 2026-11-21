@@ -11,6 +11,7 @@ import { installJobsBackend } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
 import { installXhrOverFetch } from '@/test/xhrOverFetch';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
+import { colors } from '@/theme/tokens';
 
 jest.mock('expo-font', () => ({ ...jest.requireActual('expo-font'), useFonts: jest.fn() }));
 jest.mock('expo-splash-screen', () => ({
@@ -44,6 +45,43 @@ describe('Profile tab', () => {
     expect(await screen.findByTestId('profile.name')).toHaveTextContent('Demo Applicant');
     expect(screen.getByTestId('profile.email')).toHaveTextContent('applicant@apronhanger.test');
     expect(screen.getByTestId('profile.completeness')).toHaveTextContent(/94%/);
+    // D32: the number sits inside a ring; screen readers still hear the full website sentence.
+    expect(screen.getByTestId('profile.completeness')).toHaveProp(
+      'accessibilityLabel',
+      'Profile completeness: 94%',
+    );
+  });
+
+  it('D32: lists up to three next best fixes under the ring, each opening the builder', async () => {
+    installJobsBackend({ me: applicantMe });
+    await startSignedIn('/profile', 'profile.screen');
+    expect(await screen.findByTestId('profile.fixes')).toBeOnTheScreen();
+    expect(screen.getByTestId('profile.fixes.0')).toHaveTextContent('Add your registration number');
+    expect(screen.getByTestId('profile.fixes.2')).toBeOnTheScreen();
+    expect(screen.queryByTestId('profile.fixes.3')).toBeNull();
+    await fireEvent.press(screen.getByTestId('profile.fixes.0'));
+    expect(await screen.findByTestId('builder.screen')).toBeOnTheScreen();
+  });
+
+  it('D32: Edit profile, My CV, Settings and Sign out are grouped rows once the profile exists', async () => {
+    installJobsBackend({ me: applicantMe });
+    await startSignedIn('/profile', 'profile.screen');
+    expect(await screen.findByTestId('profile.group.profile')).toBeOnTheScreen();
+    expect(screen.getByTestId('profile.edit')).toHaveTextContent('Edit profile');
+    expect(screen.getByTestId('profile.cv')).toHaveTextContent('My CV');
+    expect(screen.getByTestId('profile.group.account')).toBeOnTheScreen();
+    expect(screen.getByTestId('profile.settings')).toHaveTextContent('Settings');
+    expect(screen.getByTestId('profile.signout')).toHaveTextContent('Sign out');
+  });
+
+  it('D32: with no profile yet the hero holds one filled "Build my profile" button and no fixes list', async () => {
+    installJobsBackend({ me: { ...applicantMe, profile: null } });
+    await startSignedIn('/profile', 'profile.screen');
+    expect(await screen.findByTestId('profile.edit')).toHaveTextContent('Build my profile');
+    expect(screen.getByTestId('profile.completeness')).toHaveTextContent(/0%/);
+    expect(screen.queryByTestId('profile.fixes')).toBeNull();
+    await fireEvent.press(screen.getByTestId('profile.edit'));
+    expect(await screen.findByTestId('builder.screen')).toBeOnTheScreen();
   });
 
   it('shows Try Again when the profile cannot be loaded and still lets the user sign out', async () => {
@@ -73,6 +111,19 @@ describe('Settings', () => {
     await startSignedIn('/settings', 'settings.screen');
     await fireEvent.press(screen.getByTestId('settings.signout'));
     expect(await screen.findByTestId('login.screen')).toBeOnTheScreen();
+  });
+
+  it('D32: About and Account are grouped lists; Delete account is the last, red-text row', async () => {
+    installJobsBackend({ me: applicantMe });
+    await startSignedIn('/settings', 'settings.screen');
+    expect(screen.getByTestId('settings.group.about')).toBeOnTheScreen();
+    expect(screen.getByTestId('settings.terms')).toHaveTextContent('Terms and Conditions');
+    await fireEvent.press(screen.getByTestId('settings.terms'));
+    expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(expect.stringMatching(/terms/i));
+    expect(screen.getByTestId('settings.group.danger')).toBeOnTheScreen();
+    expect(screen.getByTestId('settings.delete.title')).toHaveStyle({ color: colors.errorText });
+    await fireEvent.press(screen.getByTestId('settings.delete'));
+    expect(await screen.findByTestId('delete.screen')).toBeOnTheScreen();
   });
 });
 
@@ -140,6 +191,14 @@ describe('Profile photo', () => {
     await fireEvent.press(await screen.findByTestId('profile.photo.remove'));
     await waitFor(() => expect(calls).toEqual(['DELETE avatar']));
     alert.mockRestore();
+  });
+
+  it('D32: the camera badge on the avatar opens the gallery', async () => {
+    const calls = setup();
+    jest.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValueOnce(photo());
+    await startSignedIn('/profile', 'profile.screen');
+    await fireEvent.press(await screen.findByTestId('profile.photo.change'));
+    await waitFor(() => expect(calls).toEqual(['POST avatar']));
   });
 
   it('has no Remove button without a picture', async () => {

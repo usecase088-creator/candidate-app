@@ -1,8 +1,10 @@
-import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
 import { confirmAction } from '@/lib/confirm';
 import { openAppSettings, type PickResult, pickGalleryPhotos, takePhoto } from '@/features/uploads/pickers';
@@ -10,10 +12,17 @@ import { colors, radius, spacing } from '@/theme/tokens';
 
 import { useAvatar } from '../hooks/useAvatar';
 
-const SIZE = 88;
+const BADGE = 28;
+/** Pads the 28-pt badge's touch area to 44 without changing its drawn size. */
+const BADGE_SLOP = (44 - BADGE) / 2;
+const CAMERA = { ios: 'camera', android: 'photo_camera', web: 'photo_camera' } as const;
+const GALLERY = { ios: 'photo.on.rectangle', android: 'photo_library', web: 'photo_library' } as const;
 
-/** Profile picture: take one, choose one, or remove it. Same type and size rules as the website (5 MB). */
-export function AvatarSection({ avatarUrl, initials }: { avatarUrl?: string | null; initials: string }) {
+/**
+ * Profile picture (D32 hero): 88-pt avatar with a brand ring and a camera badge that opens the gallery, two small
+ * actions under it (take / choose) and Remove when there is a picture. Same type and size rules as the website (5 MB).
+ */
+export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; name: string }) {
   const { set, remove } = useAvatar();
   const [message, setMessage] = useState<string>();
   const [denied, setDenied] = useState(false);
@@ -31,6 +40,7 @@ export function AvatarSection({ avatarUrl, initials }: { avatarUrl?: string | nu
       set.mutate(res.files[0], { onError: (e) => setMessage(e.message) });
     }
   }
+  const fromGallery = () => void choose(() => pickGalleryPhotos(false));
 
   async function onRemove() {
     const ok = await confirmAction({
@@ -43,48 +53,62 @@ export function AvatarSection({ avatarUrl, initials }: { avatarUrl?: string | nu
 
   return (
     <View style={styles.wrap}>
-      {avatarUrl ? (
-        <Image
-          testID="profile.photo"
-          source={{ uri: avatarUrl }}
-          contentFit="cover"
-          accessibilityLabel="Your profile picture"
-          style={styles.avatar}
-        />
-      ) : (
-        <View testID="profile.photo.initials" style={[styles.avatar, styles.fallback]}>
-          <AppText variant="heading">{initials}</AppText>
-        </View>
-      )}
-      <View style={styles.buttons}>
+      <View style={styles.avatarWrap}>
+        <Avatar testID="profile.photo" name={name} uri={avatarUrl} size={88} ring />
+        <PressableScale
+          testID="profile.photo.change"
+          accessibilityLabel="Change photo"
+          hitSlop={BADGE_SLOP}
+          disabled={busy}
+          onPress={fromGallery}
+          style={styles.badge}
+        >
+          <Icon name={CAMERA} size={16} tintColor={colors.brandForeground} />
+        </PressableScale>
+      </View>
+      <View style={styles.actions}>
         <Button
           testID="profile.photo.camera"
           label="Take photo"
-          variant="outline"
+          variant="secondary"
+          size="sm"
+          fullWidth={false}
+          icon={CAMERA}
           disabled={busy}
           onPress={() => void choose(takePhoto)}
         />
         <Button
           testID="profile.photo.gallery"
           label="Choose from gallery"
-          variant="outline"
+          variant="secondary"
+          size="sm"
+          fullWidth={false}
+          icon={GALLERY}
           loading={set.isPending}
           disabled={busy}
-          onPress={() => void choose(() => pickGalleryPhotos(false))}
+          onPress={fromGallery}
         />
-        {avatarUrl ? (
-          <Button
-            testID="profile.photo.remove"
-            label="Remove photo"
-            variant="ghost"
-            loading={remove.isPending}
-            disabled={busy}
-            onPress={() => void onRemove()}
-          />
-        ) : null}
       </View>
+      {avatarUrl ? (
+        <Button
+          testID="profile.photo.remove"
+          label="Remove photo"
+          variant="destructiveText"
+          size="sm"
+          fullWidth={false}
+          loading={remove.isPending}
+          disabled={busy}
+          onPress={() => void onRemove()}
+        />
+      ) : null}
       {message ? (
-        <AppText testID="profile.photo.error" color="errorText" accessibilityLiveRegion="polite">
+        <AppText
+          testID="profile.photo.error"
+          variant="secondary"
+          color="errorText"
+          align="center"
+          accessibilityLiveRegion="polite"
+        >
           {message}
         </AppText>
       ) : null}
@@ -92,7 +116,9 @@ export function AvatarSection({ avatarUrl, initials }: { avatarUrl?: string | nu
         <Button
           testID="profile.photo.settings"
           label="Open settings"
-          variant="outline"
+          variant="secondary"
+          size="sm"
+          fullWidth={false}
           onPress={() => void openAppSettings()}
         />
       ) : null}
@@ -102,7 +128,24 @@ export function AvatarSection({ avatarUrl, initials }: { avatarUrl?: string | nu
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing['3'], alignItems: 'center' },
-  avatar: { width: SIZE, height: SIZE, borderRadius: radius.full },
-  fallback: { backgroundColor: colors.muted, alignItems: 'center', justifyContent: 'center' },
-  buttons: { gap: spacing['2'], alignSelf: 'stretch' },
+  avatarWrap: { width: 88, height: 88 },
+  badge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: BADGE,
+    height: BADGE,
+    borderRadius: radius.full,
+    backgroundColor: colors.brand,
+    borderWidth: 2,
+    borderColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: spacing['2'],
+  },
 });

@@ -249,6 +249,36 @@ export function computeCompleteness(p: ProfileJson): number {
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
 
+/**
+ * D32 Profile tab "Next best fixes": the first three checks of computeCompleteness that fail, as short actions
+ * (website ProfileFormWizard `readiness.missing`). Empty when the profile is complete.
+ */
+export function nextBestFixes(p: ProfileJson, limit = 3): string[] {
+  const checks: [boolean, string][] = [
+    [!!p.name, 'Add your name'],
+    [!!p.email, 'Add your email'],
+    [!!p.phone, 'Add your phone number'],
+    [!!(p.state || p.city), 'Add your location'],
+    [!!p.registrationNumber, 'Add your registration number'],
+    [!!p.specialty, 'Add your specialty'],
+    [!!p.grade, 'Add your current grade'],
+    [!!p.licenseStatus, 'Add your licence status'],
+    [!!p.summary, 'Add a professional summary'],
+    [list(p.qualifications).length > 0, 'Add a qualification'],
+    [list(p.experience).length > 0, 'Add a clinical position'],
+    [list(p.clinicalSkills).length > 0, 'Add a clinical skill'],
+    [list(p.procedures).length > 0, 'Add a procedure'],
+    [list(p.certifications).length > 0, 'Add a certification'],
+    [list(p.publicationDetails).length > 0 || list(p.publications).length > 0, 'Add a publication'],
+    [list(p.documentChecklist).length > 0, 'Tick the documents you have ready'],
+    [list(p.languages).length > 0, 'Add a language'],
+  ];
+  return checks
+    .filter(([ok]) => !ok)
+    .slice(0, limit)
+    .map(([, fix]) => fix);
+}
+
 export function initialsFor(name: string): string {
   const parts = name
     .replace(/^Dr\.?\s+/i, '')
