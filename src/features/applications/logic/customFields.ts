@@ -1,26 +1,36 @@
 // Answers to a job's own questions (website: lib/jobCustomFields.ts, components/apply/JobCustomFieldsForm.tsx).
 import type { CustomField, CustomFieldResponses } from '@/api/schemas/applications';
 
+export type AnswerProblem = { fieldId: string; message: string };
+
 /**
- * Same checks, order and messages as the website. Returns the first problem, or null. A type the app does not know is
- * handled like plain text, so a new question type on the backend never blocks applying.
+ * Same checks, order and messages as the website, with the question the first problem belongs to (D32: the message
+ * is shown under that field). A type the app does not know is handled like plain text, so a new question type on
+ * the backend never blocks applying.
  */
-export function validateAnswers(fields: CustomField[], answers: CustomFieldResponses): string | null {
+export function firstProblem(fields: CustomField[], answers: CustomFieldResponses): AnswerProblem | null {
   for (const f of fields) {
     const raw = answers[f.id];
     if (f.type === 'checkbox') {
       // "No" is stored as false: only a completely missing answer counts as unanswered.
-      if (f.required && raw === undefined) return `"${f.label}" is required`;
+      if (f.required && raw === undefined) return { fieldId: f.id, message: `"${f.label}" is required` };
       continue;
     }
     const empty = raw === undefined || raw === null || String(raw).trim() === '';
-    if (f.required && empty) return `"${f.label}" is required`;
-    if (f.type === 'number' && !empty && Number.isNaN(Number(raw))) return `"${f.label}" must be a number`;
+    if (f.required && empty) return { fieldId: f.id, message: `"${f.label}" is required` };
+    if (f.type === 'number' && !empty && Number.isNaN(Number(raw))) {
+      return { fieldId: f.id, message: `"${f.label}" must be a number` };
+    }
     if (f.type === 'select' && !empty && f.options && !f.options.includes(String(raw))) {
-      return `"${f.label}": choose a valid option`;
+      return { fieldId: f.id, message: `"${f.label}": choose a valid option` };
     }
   }
   return null;
+}
+
+/** The first problem's message, or null (website validateCustomResponses). */
+export function validateAnswers(fields: CustomField[], answers: CustomFieldResponses): string | null {
+  return firstProblem(fields, answers)?.message ?? null;
 }
 
 /** What the website stores for a number box: empty stays empty, anything else becomes a number. */

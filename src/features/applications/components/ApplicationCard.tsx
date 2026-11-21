@@ -1,22 +1,29 @@
 // One application in the list (website: the row in routes/applications.tsx). The whole card opens the application,
 // where the hospital's questions are answered: long forms inside a recycled list lose what was typed (D27).
-import { Pressable, StyleSheet, View } from 'react-native';
+// D32: ~130 pt white card, status pill coloured by need, five-segment bar, and an amber action row when the
+// candidate has to answer.
+import { StyleSheet, View } from 'react-native';
 
 import type { Application } from '@/api/schemas/applications';
+import { Icon } from '@/components/ui/Icon';
+import { LogoTile } from '@/components/ui/LogoTile';
+import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
-import { HospitalLogo } from '@/features/jobs/components/HospitalLogo';
-import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
+import { colors, radius, shadows, spacing } from '@/theme/tokens';
 
 import { type ActionKind, candidateAction, formatIndianDate } from '../logic/interview';
 import { lastUpdateText, statusLabel } from '../logic/status';
+import { ProgressSegments } from './ProgressSegments';
 import { StatusPill } from './StatusPill';
-import { Timeline } from './Timeline';
 
 const ACTION_HINTS: Partial<Record<ActionKind, string>> = {
   interview: 'Respond to your interview invitation',
   documents: 'Documents requested: upload them',
   offer: 'Offer letter received: accept or reject',
 };
+
+const CHEVRON = { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' } as const;
+const CARD_PRESS_SCALE = 0.99;
 
 export function ApplicationCard({
   application: a,
@@ -29,66 +36,81 @@ export function ApplicationCard({
   const hint = action ? ACTION_HINTS[action] : undefined;
   const place = a.job.city || a.job.location || '';
   const applied = formatIndianDate(a.appliedOn);
+  const testID = `application.row.${a.id}`;
 
   return (
-    <Pressable
-      testID={`application.row.${a.id}`}
-      accessibilityRole="button"
+    <PressableScale
+      testID={testID}
+      pressScale={CARD_PRESS_SCALE}
       accessibilityLabel={`${a.job.role} at ${a.job.hospital}, ${statusLabel(a.status)}.${hint ? ' Action needed.' : ''}`}
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={styles.card}
     >
       <View style={styles.top}>
-        <HospitalLogo uri={a.job.hospitalLogoUrl} size={44} />
+        <LogoTile testID={`${testID}.logo`} name={a.job.hospital} uri={a.job.hospitalLogoUrl} size={40} />
         <View style={styles.text}>
-          <AppText variant="label" weight="semibold">
+          <AppText variant="rowTitle" numberOfLines={2}>
             {a.job.role}
           </AppText>
-          <AppText variant="caption" color="mutedForeground">
+          <AppText variant="secondary" color="mutedForeground" numberOfLines={1}>
             {place ? `${a.job.hospital} · ${place}` : a.job.hospital}
           </AppText>
           {applied ? (
-            <AppText variant="caption" color="mutedForeground">
+            <AppText variant="secondary" color="mutedForeground" tabular numberOfLines={1}>
               {`Applied ${applied}`}
             </AppText>
           ) : null}
         </View>
       </View>
 
-      <StatusPill status={a.status} />
-      <Timeline testID={`application.timeline.${a.id}`} status={a.status} />
-      <AppText variant="caption" color="mutedForeground">
-        {lastUpdateText(a.status)}
-      </AppText>
-      {a.joiningDate && ['JoiningConfirmed', 'Joined', 'Onboarded'].includes(a.status) ? (
-        <AppText variant="caption" weight="medium" color="emeraldText">
-          {`Joining on ${formatIndianDate(a.joiningDate)}`}
+      <StatusPill testID={`${testID}.status`} status={a.status} />
+
+      <View style={styles.progress}>
+        <ProgressSegments testID={`application.timeline.${a.id}`} status={a.status} />
+        <AppText variant="secondary" color="mutedForeground">
+          {lastUpdateText(a.status)}
         </AppText>
-      ) : null}
+        {a.joiningDate && ['JoiningConfirmed', 'Joined', 'Onboarded'].includes(a.status) ? (
+          <AppText variant="secondary" weight="medium" color="successText" tabular>
+            {`Joining on ${formatIndianDate(a.joiningDate)}`}
+          </AppText>
+        ) : null}
+      </View>
+
       {hint ? (
-        <View style={styles.hint}>
-          <AppText variant="caption" weight="semibold" color="brand">
+        <View testID={`${testID}.action`} style={styles.action}>
+          <AppText variant="label" color="amberText" numberOfLines={2} style={styles.actionText}>
             {hint}
           </AppText>
+          <Icon testID={`${testID}.action.chevron`} name={CHEVRON} size={18} tintColor={colors.amberText} />
         </View>
       ) : null}
-    </Pressable>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     gap: spacing['3'],
-    minHeight: MIN_TOUCH,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.surface,
+    boxShadow: shadows.soft,
     padding: spacing['4'],
+    marginHorizontal: spacing['4'],
     marginBottom: spacing['3'],
   },
-  pressed: { opacity: 0.85 },
   top: { flexDirection: 'row', gap: spacing['3'], alignItems: 'flex-start' },
   text: { flexShrink: 1, flexGrow: 1, gap: spacing['0.5'] },
-  hint: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing['2'] },
+  progress: { gap: spacing['1'] },
+  action: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing['2'],
+    minHeight: 36,
+    paddingHorizontal: spacing['3'],
+    paddingVertical: spacing['1'],
+    borderRadius: radius.sm,
+    backgroundColor: colors.amberSoft,
+  },
+  actionText: { flex: 1 },
 });

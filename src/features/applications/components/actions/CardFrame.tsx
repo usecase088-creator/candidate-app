@@ -1,34 +1,22 @@
-// The tinted box every action card sits in (website: CandidateActionCard.tsx colours: indigo, amber, emerald).
+// The tinted panel every action card sits in (website: CandidateActionCard.tsx). D32: a `Panel` with a semantic
+// tone (warning = needs you, info = waiting, success = done) and an icon; the body text stays near-black.
+import type { SymbolViewProps } from 'expo-symbols';
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/ui/Text';
-import { type ColorToken, colors, radius, spacing } from '@/theme/tokens';
+import { Panel, type PanelTone } from '@/components/ui/Panel';
 
-export type CardTone = 'interview' | 'document' | 'positive';
-
-const TONES: Record<CardTone, { bg: ColorToken; fg: ColorToken }> = {
-  interview: { bg: 'indigoSoft', fg: 'indigoText' },
-  document: { bg: 'amberSoft', fg: 'amberText' },
-  positive: { bg: 'emeraldSoft', fg: 'emeraldText' },
+export type CardFrameProps = {
+  tone: PanelTone;
+  icon: SymbolViewProps['name'];
+  title: string;
+  children: ReactNode;
+  actions?: ReactNode;
 };
 
-export function CardFrame({ tone, title, children }: { tone: CardTone; title: string; children: ReactNode }) {
-  const t = TONES[tone];
+export function CardFrame({ tone, icon, title, children, actions }: CardFrameProps) {
   return (
-    <View testID="action.card" style={[styles.card, { backgroundColor: colors[t.bg] }]}>
-      <AppText variant="heading" color={t.fg} accessibilityRole="header">
-        {title}
-      </AppText>
+    <Panel testID="action.card" tone={tone} icon={icon} title={title} actions={actions}>
       {children}
-    </View>
+    </Panel>
   );
 }
-
-export function cardTextColor(tone: CardTone): ColorToken {
-  return TONES[tone].fg;
-}
-
-const styles = StyleSheet.create({
-  card: { gap: spacing['3'], borderRadius: radius.md, padding: spacing['4'] },
-});

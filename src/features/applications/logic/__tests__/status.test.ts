@@ -4,9 +4,11 @@ import {
   inTab,
   isTerminalStatus,
   lastUpdateText,
+  needsCandidate,
   sortNewestFirst,
   statusLabel,
   statusTone,
+  stepLabel,
   TABS,
   TIMELINE_STEPS,
   timelineStep,
@@ -84,40 +86,56 @@ describe('tabs', () => {
   });
 });
 
-describe('statusTone: the pill colour group', () => {
+describe('statusTone: colour by need (D32: amber = needs you, blue = waiting, green = done, red = closed)', () => {
+  // D32 replaced the website's colour-by-stage groups (indigo interview, amber documents, green offer) with
+  // colour-by-need: the old table encoded the stage look and is replaced here, labels and tabs are unchanged.
   it.each([
-    ['Rejected', 'danger'],
-    ['Dropped', 'danger'],
-    ['OfferRejected', 'danger'],
-    ['InterviewDeclined', 'danger'],
-    ['DocumentsRejected', 'danger'],
-    ['JobClosed', 'danger'],
-    ['InterviewScheduled', 'interview'],
-    ['InterviewAccepted', 'interview'],
-    ['RescheduleRequested', 'interview'],
-    ['InterviewRescheduled', 'interview'],
-    ['DocumentsRequested', 'document'],
-    ['DocumentsUploaded', 'document'],
-    ['AdditionalDocumentsRequired', 'document'],
-    ['OfferSent', 'positive'],
-    ['OfferAccepted', 'positive'],
-    ['JoiningConfirmed', 'positive'],
-    ['Joined', 'positive'],
-    ['Shortlisted', 'positive'],
-    ['Onboarded', 'positive'],
-    ['Reviewed', 'reviewed'],
-    ['Applied', 'applied'],
-    ['New', 'applied'],
-    ['NoShow', 'muted'],
-    ['OnHold', 'muted'],
-    ['NextRound', 'muted'],
+    ['InterviewScheduled', 'warning'],
+    ['DocumentsRequested', 'warning'],
+    ['AdditionalDocumentsRequired', 'warning'],
+    ['OfferSent', 'warning'],
+    ['Contacted', 'warning'],
+    ['Applied', 'info'],
+    ['New', 'info'],
+    ['Reviewed', 'info'],
+    ['Shortlisted', 'info'],
+    ['InterviewAccepted', 'info'],
+    ['RescheduleRequested', 'info'],
+    ['InterviewRescheduled', 'info'],
+    ['InterviewCompleted', 'info'],
+    ['NoShow', 'info'],
+    ['OnHold', 'info'],
+    ['NextRound', 'info'],
+    ['DocumentsUploaded', 'info'],
+    ['DocumentsApproved', 'info'],
+    ['OfferAccepted', 'info'],
+    ['JoiningConfirmed', 'success'],
+    ['Joined', 'success'],
+    ['Onboarded', 'success'],
+    ['Rejected', 'error'],
+    ['Dropped', 'error'],
+    ['OfferRejected', 'error'],
+    ['InterviewDeclined', 'error'],
+    ['DocumentsRejected', 'error'],
+    ['JobClosed', 'error'],
+    ['SomethingNew', 'neutral'],
   ])('%s is %s', (status, tone) => {
     expect(statusTone(status)).toBe(tone);
   });
 
   it('a rejected offer or a closed job is red, not green (the website colours them by their label and gets it wrong)', () => {
-    expect(statusTone('OfferRejected')).toBe('danger');
-    expect(statusTone('JobClosed')).toBe('danger');
+    expect(statusTone('OfferRejected')).toBe('error');
+    expect(statusTone('JobClosed')).toBe('error');
+  });
+
+  it('needsCandidate is true only for the states a candidate must answer', () => {
+    expect(ALL_STATUSES.filter(needsCandidate)).toEqual([
+      'InterviewScheduled',
+      'DocumentsRequested',
+      'AdditionalDocumentsRequired',
+      'OfferSent',
+    ]);
+    expect(needsCandidate('Contacted')).toBe(true);
   });
 });
 
@@ -181,6 +199,11 @@ describe('timeline', () => {
 
   it('everything else shows the steps and the current one', () => {
     expect(timelineView('OfferSent')).toEqual({ kind: 'steps', current: 4 });
+  });
+
+  it('stepLabel names the step for the bar and for screen readers', () => {
+    expect(stepLabel(0)).toBe('Step 1 of 5 · Applied');
+    expect(stepLabel(4)).toBe('Step 5 of 5 · Offer & Joining');
   });
 });
 

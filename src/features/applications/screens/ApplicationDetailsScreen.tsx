@@ -1,25 +1,28 @@
 // One application with its answer card (website: the row and CandidateActionCard in routes/applications.tsx). It lives on
 // its own screen because forms and file pickers inside a recycled list would lose what was typed (D27).
-import { useLocalSearchParams, useRouter } from 'expo-router';
+// D32: native header titled with the role, identity block, then the panel that needs the candidate, then the vertical
+// timeline, then "View job" as a row.
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { ERROR_MESSAGES, isApiError } from '@/api/errors';
 import type { Application } from '@/api/schemas/applications';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { ListRow } from '@/components/ui/ListRow';
+import { LogoTile } from '@/components/ui/LogoTile';
 import { Screen } from '@/components/ui/Screen';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { AppText } from '@/components/ui/Text';
-import { HospitalLogo } from '@/features/jobs/components/HospitalLogo';
 import { queryView } from '@/features/jobs/hooks/queryView';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, shadows, spacing } from '@/theme/tokens';
 
 import { StatusPill } from '../components/StatusPill';
-import { Timeline } from '../components/Timeline';
+import { VerticalTimeline } from '../components/VerticalTimeline';
 import { ActionCard } from '../components/actions/ActionCard';
 import { useApplications } from '../hooks/useApplications';
 import { formatIndianDate } from '../logic/interview';
-import { lastUpdateText } from '../logic/status';
+import { timelineView } from '../logic/status';
 
 export function ApplicationDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -60,6 +63,7 @@ export function ApplicationDetailsScreen() {
             <Button
               testID="application.notfound.back"
               label="My Applications"
+              size="md"
               fullWidth={false}
               onPress={() => router.replace('/applications')}
             />
@@ -76,58 +80,72 @@ function Details({ application: a }: { application: Application }) {
   const router = useRouter();
   const place = a.job.city || a.job.location || '';
   const applied = formatIndianDate(a.appliedOn);
+  // The terminal note is part of the timeline for a closed application; otherwise it is shown on its own.
+  const noteInTimeline = timelineView(a.status).kind === 'message';
 
   return (
     <>
-      <View style={styles.card}>
-        <View style={styles.top}>
-          <HospitalLogo uri={a.job.hospitalLogoUrl} size={48} />
-          <View style={styles.text}>
-            <AppText variant="heading" accessibilityRole="header">
-              {a.job.role}
+      <Stack.Screen options={{ title: a.job.role }} />
+
+      <View style={styles.identity}>
+        <LogoTile testID="application.logo" name={a.job.hospital} uri={a.job.hospitalLogoUrl} size={48} />
+        <View style={styles.text}>
+          <AppText variant="title" numberOfLines={2}>
+            {a.job.role}
+          </AppText>
+          <AppText variant="secondary" color="mutedForeground" numberOfLines={2}>
+            {place ? `${a.job.hospital} · ${place}` : a.job.hospital}
+          </AppText>
+          {applied ? (
+            <AppText variant="secondary" color="mutedForeground" tabular numberOfLines={1}>
+              {`Applied ${applied}`}
             </AppText>
-            <AppText color="mutedForeground">
-              {place ? `${a.job.hospital} · ${place}` : a.job.hospital}
-            </AppText>
-            {applied ? (
-              <AppText variant="caption" color="mutedForeground">
-                {`Applied ${applied}`}
-              </AppText>
-            ) : null}
+          ) : null}
+          <View style={styles.pill}>
+            <StatusPill testID="application.status" status={a.status} />
           </View>
         </View>
-        <StatusPill testID="application.status" status={a.status} />
-        <Timeline testID="application.timeline" status={a.status} />
-        <AppText variant="caption" color="mutedForeground">
-          {lastUpdateText(a.status)}
-        </AppText>
-        {a.finalStatusNote ? <AppText>{a.finalStatusNote}</AppText> : null}
-        <Button
-          testID="application.viewjob"
-          label="View job"
-          variant="outline"
-          fullWidth={false}
-          onPress={() => a.jobId && router.push({ pathname: '/job/[id]', params: { id: a.jobId } })}
-        />
       </View>
 
       <ActionCard application={a} />
+
+      <View style={styles.card}>
+        <AppText variant="heading">Progress</AppText>
+        <VerticalTimeline testID="application.timeline" application={a} />
+        {a.finalStatusNote && !noteInTimeline ? <AppText>{a.finalStatusNote}</AppText> : null}
+      </View>
+
+      <View style={[styles.card, styles.rowCard]}>
+        <ListRow
+          testID="application.viewjob"
+          title="View job"
+          titleVariant="rowTitle"
+          onPress={() => a.jobId && router.push({ pathname: '/job/[id]', params: { id: a.jobId } })}
+        />
+      </View>
     </>
   );
 }
 
 function DetailsSkeleton({ testID }: { testID: string }) {
   return (
-    <View testID={testID} style={styles.card}>
-      <View style={styles.top}>
+    <View
+      testID={testID}
+      accessible
+      accessibilityLabel="Loading"
+      accessibilityRole="progressbar"
+      style={styles.stack}
+    >
+      <View style={styles.identity}>
         <Skeleton width={48} height={48} radius={radius.md} />
         <View style={styles.text}>
-          <Skeleton width="70%" height={18} />
-          <Skeleton width="50%" height={12} />
+          <Skeleton width="70%" height={22} />
+          <Skeleton width="50%" height={13} />
+          <Skeleton width={96} height={22} radius={radius.full} />
         </View>
       </View>
-      <Skeleton width={110} height={24} radius={radius.full} />
-      <Skeleton width="100%" height={24} />
+      <Skeleton width="100%" height={160} radius={radius.md} />
+      <Skeleton width="100%" height={200} radius={radius.md} />
     </View>
   );
 }
@@ -135,14 +153,15 @@ function DetailsSkeleton({ testID }: { testID: string }) {
 const styles = StyleSheet.create({
   stack: { gap: spacing['4'] },
   center: { alignItems: 'center', gap: spacing['3'], paddingVertical: spacing['6'] },
+  identity: { flexDirection: 'row', gap: spacing['3'], alignItems: 'flex-start' },
+  text: { flexShrink: 1, flexGrow: 1, gap: spacing['0.5'] },
+  pill: { marginTop: spacing['1'] },
   card: {
     gap: spacing['3'],
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.surface,
+    boxShadow: shadows.soft,
     padding: spacing['4'],
   },
-  top: { flexDirection: 'row', gap: spacing['3'] },
-  text: { flexShrink: 1, flexGrow: 1, gap: spacing['1'] },
+  rowCard: { padding: 0, overflow: 'hidden' },
 });

@@ -58,6 +58,25 @@ describe('Application details: content', () => {
     expect(screen.getByText('Application received by hospital')).toBeOnTheScreen();
   });
 
+  it('D32: the action panel comes first, then the vertical timeline with its dates, then View job as a row', async () => {
+    setup([interviewVirtual]);
+    await open(interviewVirtual.id);
+    await screen.findByTestId('action.card');
+    // getAllByTestId returns the matches in render order.
+    const ids = screen
+      .getAllByTestId(/^(application\.status|action\.card|application\.timeline|application\.viewjob)$/)
+      .map((el) => el.props.testID);
+    expect(ids).toEqual(['application.status', 'action.card', 'application.timeline', 'application.viewjob']);
+    // The timeline shows the stages with the dates the data has.
+    expect(screen.getByLabelText('Progress: step 3 of 5, Interview')).toBeOnTheScreen();
+    const timeline = within(screen.getByTestId('application.timeline'));
+    expect(timeline.getByText('21 Oct 2026')).toBeOnTheScreen();
+    expect(timeline.getByText('30 Oct 2026, 7:30 pm')).toBeOnTheScreen();
+    // View job is a list row with a chevron, no longer a button.
+    expect(screen.getByTestId('application.viewjob.chevron')).toBeOnTheScreen();
+    expect(screen.getByTestId('application.viewjob.title')).toHaveTextContent('View job');
+  });
+
   it("View job opens the job page (the website's role link)", async () => {
     setup([applied]);
     installJobsBackend({ jobs: [jobOf(applied)] });

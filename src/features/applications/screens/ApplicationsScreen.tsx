@@ -1,5 +1,8 @@
-// "My Applications" (website: routes/applications.tsx): title, count, the nine tabs with counts, one card per
-// application. Loading, error, offline and empty states are the app's own (the website only has an error state here).
+// "My Applications" (website: routes/applications.tsx): count, the nine tabs with counts, one card per application.
+// The title is drawn by the TopBar (D32). Loading, error, offline and empty states are the app's own (the website
+// only has an error state here). The list stays in the server's order, newest first: a fresh application must be
+// the first row after Quick Apply (see APPLICATIONS_LIST_PROPS), so "needs you" is said by the amber pill and the
+// action row, not by the order.
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -12,7 +15,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { AppText } from '@/components/ui/Text';
 import { QueryStatus } from '@/features/jobs/components/QueryStatus';
 import { queryView } from '@/features/jobs/hooks/queryView';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, shadows, spacing } from '@/theme/tokens';
 
 import { ApplicationCard } from '../components/ApplicationCard';
 import { useApplications } from '../hooks/useApplications';
@@ -44,9 +47,16 @@ export function ApplicationsScreen() {
     <View style={styles.header}>
       {view === 'ready' && (
         <>
-          <AppText testID="applications.count" color="mutedForeground">
+          <AppText
+            testID="applications.count"
+            variant="secondary"
+            color="mutedForeground"
+            tabular
+            style={styles.count}
+          >
             {`${all.length} application${all.length !== 1 ? 's' : ''}${fetched}`}
           </AppText>
+          {/* The chip row bleeds edge to edge; the 16-pt margin lives inside the scroll content. */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
             {TABS.map((t) => (
               <Chip
@@ -66,21 +76,25 @@ export function ApplicationsScreen() {
 
   const footer =
     view !== 'ready' ? (
-      <QueryStatus
-        view={view}
-        testID="applications"
-        error={query.error}
-        onRetry={() => void query.refetch()}
-        retrying={query.isFetching}
-        skeleton={<ApplicationListSkeleton testID="applications.loading" />}
-      />
+      <View style={view === 'loading' ? undefined : styles.inset}>
+        <QueryStatus
+          view={view}
+          testID="applications"
+          error={query.error}
+          onRetry={() => void query.refetch()}
+          retrying={query.isFetching}
+          skeleton={<ApplicationListSkeleton testID="applications.loading" />}
+        />
+      </View>
     ) : list.length === 0 ? (
-      <EmptyState
-        testID="applications.empty"
-        title="No applications yet"
-        message="Start applying to opportunities and track your progress here."
-        action={{ label: 'Browse opportunities', onPress: () => router.navigate('/') }}
-      />
+      <View style={styles.inset}>
+        <EmptyState
+          testID="applications.empty"
+          title="No applications yet"
+          message="Start applying to opportunities and track your progress here."
+          action={{ label: 'Browse opportunities', onPress: () => router.navigate('/') }}
+        />
+      </View>
     ) : null;
 
   return (
@@ -107,20 +121,23 @@ export function ApplicationsScreen() {
   );
 }
 
+/** Three card-shaped placeholders (logo, two lines, pill, bar) so the list does not jump when the rows land. */
 function ApplicationListSkeleton({ testID }: { testID: string }) {
   return (
-    <View testID={testID} style={styles.skeletons}>
+    <View testID={testID} accessible accessibilityLabel="Loading" accessibilityRole="progressbar">
       {[0, 1, 2].map((i) => (
         <View key={i} style={styles.skeleton}>
           <View style={styles.skeletonTop}>
-            <Skeleton width={44} height={44} radius={radius.md} />
+            <Skeleton width={40} height={40} radius={radius.sm} />
             <View style={styles.skeletonLines}>
-              <Skeleton width="65%" height={14} />
-              <Skeleton width="45%" height={12} />
+              <Skeleton width="65%" height={16} />
+              <Skeleton width="45%" height={13} />
+              <Skeleton width="35%" height={13} />
             </View>
           </View>
-          <Skeleton width={110} height={24} radius={radius.full} />
-          <Skeleton width="100%" height={24} />
+          <Skeleton width={96} height={22} radius={radius.full} />
+          <Skeleton width="100%" height={4} radius={radius.full} />
+          <Skeleton width="55%" height={13} />
         </View>
       ))}
     </View>
@@ -128,17 +145,19 @@ function ApplicationListSkeleton({ testID }: { testID: string }) {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing['4'] },
-  header: { gap: spacing['2'], marginBottom: spacing['4'] },
-  tabs: { gap: spacing['2'], paddingVertical: spacing['1'] },
-  skeletons: { gap: spacing['3'] },
+  content: { paddingTop: spacing['3'], paddingBottom: spacing['4'] },
+  header: { gap: spacing['2'], marginBottom: spacing['3'] },
+  count: { paddingHorizontal: spacing['4'] },
+  tabs: { gap: spacing['2'], paddingHorizontal: spacing['4'], paddingVertical: spacing['1'] },
+  inset: { paddingHorizontal: spacing['4'] },
   skeleton: {
     gap: spacing['3'],
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.surface,
+    boxShadow: shadows.soft,
     padding: spacing['4'],
+    marginHorizontal: spacing['4'],
+    marginBottom: spacing['3'],
   },
   skeletonTop: { flexDirection: 'row', gap: spacing['3'] },
   skeletonLines: { flexGrow: 1, gap: spacing['2'] },

@@ -106,22 +106,33 @@ export function isTerminalStatus(status: string): boolean {
   return TERMINAL.has(status);
 }
 
-export type StatusTone = 'danger' | 'interview' | 'document' | 'positive' | 'reviewed' | 'applied' | 'muted';
+/** D32: the pill colour says what the status needs, not which stage it is (amends D27 item 4). */
+export type StatusTone = 'warning' | 'info' | 'success' | 'error' | 'neutral';
 
-/** Pill colour group: closed = red (not Onboarded), interview = indigo, documents = amber, offer and joining = green. */
+const NEEDS_CANDIDATE = new Set([
+  'Interview Scheduled',
+  'Documents Requested',
+  'Additional Docs Required',
+  'Offer Sent',
+]);
+const DONE = new Set(['Joining Confirmed', 'Joined', 'Onboarded']);
+
+/** True for the states a candidate has to answer (interview invitation, documents asked for, offer received). */
+export function needsCandidate(status: string): boolean {
+  return NEEDS_CANDIDATE.has(statusLabel(status));
+}
+
+/**
+ * amber (warning) = needs you, blue (info) = waiting on the hospital, green (success) = done,
+ * red (error) = closed; a status the app does not know is neutral.
+ */
 export function statusTone(status: string): StatusTone {
-  // The label and the stored name are both checked: "Additional Docs Required" has no "document" in its label.
-  const label = `${statusLabel(status)} ${status}`.toLowerCase();
-  if (isTerminalStatus(status) && status !== 'Onboarded') return 'danger';
-  if (label.includes('interview') || label.includes('reschedule')) return 'interview';
-  if (label.includes('document')) return 'document';
-  const own = statusLabel(status).toLowerCase();
-  if (label.includes('offer') || label.includes('join') || own === 'shortlisted' || own === 'onboarded') {
-    return 'positive';
-  }
-  if (own === 'reviewed') return 'reviewed';
-  if (own === 'applied') return 'applied';
-  return 'muted';
+  const label = statusLabel(status);
+  if (isTerminalStatus(status) && status !== 'Onboarded') return 'error';
+  if (NEEDS_CANDIDATE.has(label)) return 'warning';
+  if (DONE.has(label)) return 'success';
+  const known = status in LABELS || status === 'New' || status === 'Contacted';
+  return known ? 'info' : 'neutral';
 }
 
 export const TIMELINE_STEPS = ['Applied', 'Reviewed', 'Interview', 'Documents', 'Offer & Joining'] as const;
@@ -143,6 +154,11 @@ export function timelineStep(status: string): number {
   if (status.includes('Document')) return 3;
   if (status.includes('Offer') || status.includes('Join') || status === 'Onboarded') return 4;
   return 1;
+}
+
+/** "Step 3 of 5 · Interview": the bar caption and the spoken progress. */
+export function stepLabel(current: number): string {
+  return `Step ${current + 1} of ${TIMELINE_STEPS.length} · ${TIMELINE_STEPS[current] ?? ''}`;
 }
 
 export type TimelineView =

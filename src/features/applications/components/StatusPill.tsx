@@ -1,44 +1,24 @@
-// The coloured status label (website: statusPillClass). Colours come from the theme; the group comes from the status.
+// The status label (website: statusPillClass). D32: a `Pill` whose colour says what the status needs
+// (amber = needs you, blue = waiting, green = done, red = closed), not which stage it is.
 import { StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/ui/Text';
-import { type ColorToken, colors, radius, spacing } from '@/theme/tokens';
+import { Pill } from '@/components/ui/Pill';
 
-import { statusLabel, type StatusTone, statusTone } from '../logic/status';
+import { statusLabel, statusTone } from '../logic/status';
 
-const TONES: Record<StatusTone, { bg: ColorToken; fg: ColorToken; border: ColorToken }> = {
-  danger: { bg: 'destructiveSoft', fg: 'errorText', border: 'destructiveSoft' },
-  interview: { bg: 'indigoSoft', fg: 'indigoText', border: 'indigoSoft' },
-  document: { bg: 'amberSoft', fg: 'amberText', border: 'amberSoft' },
-  positive: { bg: 'emeraldSoft', fg: 'emeraldText', border: 'emeraldSoft' },
-  reviewed: { bg: 'skySoft', fg: 'skyText', border: 'skySoft' },
-  applied: { bg: 'muted', fg: 'foreground', border: 'border' },
-  muted: { bg: 'muted', fg: 'mutedForeground', border: 'border' },
-};
-
-export function StatusPill({ testID, status }: { testID?: string; status: string }) {
-  const tone = TONES[statusTone(status)];
+export function StatusPill({
+  testID = 'application.statusPill',
+  status,
+}: {
+  testID?: string;
+  status: string;
+}) {
   const label = statusLabel(status);
   return (
-    <View
-      testID={testID}
-      accessible
-      accessibilityLabel={`Status: ${label}`}
-      style={[styles.pill, { backgroundColor: colors[tone.bg], borderColor: colors[tone.border] }]}
-    >
-      <AppText variant="caption" weight="semibold" color={tone.fg}>
-        {label}
-      </AppText>
+    <View testID={testID} accessible accessibilityLabel={`Status: ${label}`} style={styles.wrap}>
+      <Pill testID={`${testID}.pill`} label={label} tone={statusTone(status)} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  pill: {
-    alignSelf: 'flex-start',
-    borderRadius: radius.full,
-    borderWidth: 1,
-    paddingHorizontal: spacing['3'],
-    paddingVertical: spacing['1'],
-  },
-});
+const styles = StyleSheet.create({ wrap: { alignSelf: 'flex-start' } });

@@ -1,6 +1,7 @@
 // Data hooks of Phase 3: list, quick apply, apply with CV, answers, requested documents.
 // Real client, real hooks, MSW as the server (uploads through the XHR-over-fetch helper).
 import { act, screen, waitFor } from '@testing-library/react-native';
+import * as Haptics from 'expo-haptics';
 import { http, HttpResponse } from 'msw';
 
 import {
@@ -27,6 +28,17 @@ import { APPLICATIONS_KEY } from '../hooks/queryKeys';
 const me = CandidateMeSchema.parse(applicantMe);
 const pdf = { uri: 'file:///cache/cv.pdf', name: 'cv.pdf', size: 1000, mime: 'application/pdf' };
 const contact = { name: 'Demo Applicant', email: 'Applicant@Apronhanger.test', phone: '9876500088' };
+
+// D32: the outcome haptic fires at the native boundary; the rest of expo-haptics is not needed here.
+jest.mock('expo-haptics', () => ({
+  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium' },
+  NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
+  AndroidHaptics: { Segment_Tick: 'segTick', Confirm: 'confirm', Reject: 'reject', Context_Click: 'ctx' },
+  selectionAsync: jest.fn(() => Promise.resolve()),
+  impactAsync: jest.fn(() => Promise.resolve()),
+  notificationAsync: jest.fn(() => Promise.resolve()),
+  performAndroidHapticsAsync: jest.fn(() => Promise.resolve()),
+}));
 
 let restoreXhr: () => void;
 beforeAll(() => {
@@ -305,6 +317,8 @@ describe('useRespond', () => {
     expect(await screen.findByText('Response recorded successfully!')).toBeTruthy();
     expect(b.bodies[0]).toEqual({ status: 'InterviewAccepted' });
     await waitFor(() => expect(result.current.list.data?.[0]?.status).toBe('InterviewAccepted'));
+    // D32: a success haptic marks the outcome (iOS notification; Android maps to Confirm in lib/haptics).
+    expect(jest.mocked(Haptics.notificationAsync)).toHaveBeenCalledWith('success');
   });
 
   it('a reschedule request sends the note', async () => {
@@ -408,6 +422,7 @@ describe('useUploadRequestedDocuments', () => {
     expect(b.forms[0]).toEqual(['documents']);
     expect(await screen.findByText('Documents uploaded successfully!')).toBeTruthy();
     await waitFor(() => expect(result.current.list.data?.[0]?.status).toBe('DocumentsUploaded'));
+    expect(jest.mocked(Haptics.notificationAsync)).toHaveBeenCalledWith('success');
   });
 
   it('a file the app refuses is never sent; the reason is shown with the field', async () => {

@@ -1,12 +1,33 @@
 import type { CustomField } from '@/api/schemas/applications';
 
-import { answersForSubmit, numberAnswer, validateAnswers, visibleChoice } from '../customFields';
+import {
+  answersForSubmit,
+  firstProblem,
+  numberAnswer,
+  validateAnswers,
+  visibleChoice,
+} from '../customFields';
 
 const field = (over: Partial<CustomField> & { id: string }): CustomField => ({
   label: `Question ${over.id}`,
   type: 'text',
   required: false,
   ...over,
+});
+
+describe('firstProblem: the same first problem, with the field it belongs to (D32: error under the field)', () => {
+  it('names the field and the website message, or null', () => {
+    const fields = [
+      field({ id: 'a', label: 'First', required: true }),
+      field({ id: 'n', label: 'N', type: 'number' }),
+    ];
+    expect(firstProblem(fields, {})).toEqual({ fieldId: 'a', message: '"First" is required' });
+    expect(firstProblem(fields, { a: 'x', n: Number.NaN })).toEqual({
+      fieldId: 'n',
+      message: '"N" must be a number',
+    });
+    expect(firstProblem(fields, { a: 'x' })).toBeNull();
+  });
 });
 
 describe('validateAnswers (website: lib/jobCustomFields.ts validateCustomResponses)', () => {
