@@ -4,7 +4,7 @@ import { haptic } from '@/lib/haptics';
 import { motion } from '@/theme/tokens';
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
 
-import { PressableScale } from '../PressableScale';
+import { PressableScale, rippleFor } from '../PressableScale';
 
 jest.mock('@/lib/haptics', () => ({ haptic: jest.fn() }));
 
@@ -63,26 +63,28 @@ describe('PressableScale', () => {
 
   it('shrinks and dims while pressed, and springs back (iOS)', async () => {
     Platform.OS = 'ios';
-    await renderWithProviders(
-      <PressableScale testID="a" onPress={() => {}}>
-        <Text>a</Text>
-      </PressableScale>,
-    );
-    const el = screen.getByTestId('a');
-    await fireEvent(el, 'pressIn');
-    expect(el).toHaveAnimatedStyle({ transform: [{ scale: motion.pressScale }], opacity: motion.pressOpacity });
-    await fireEvent(el, 'pressOut');
-    expect(el).toHaveAnimatedStyle({ transform: [{ scale: 1 }], opacity: 1 });
+    jest.useFakeTimers();
+    try {
+      await renderWithProviders(
+        <PressableScale testID="a" onPress={() => {}}>
+          <Text>a</Text>
+        </PressableScale>,
+      );
+      const el = screen.getByTestId('a');
+      await fireEvent(el, 'pressIn');
+      jest.advanceTimersByTime(2000);
+      expect(el).toHaveAnimatedStyle({ transform: [{ scale: motion.pressScale }], opacity: motion.pressOpacity });
+      await fireEvent(el, 'pressOut');
+      jest.advanceTimersByTime(2000);
+      expect(el).toHaveAnimatedStyle({ transform: [{ scale: 1 }], opacity: 1 });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
-  it('uses a ripple on Android', async () => {
-    Platform.OS = 'android';
-    await renderWithProviders(
-      <PressableScale testID="a" onPress={() => {}}>
-        <Text>a</Text>
-      </PressableScale>,
-    );
-    expect(screen.getByTestId('a')).toHaveProp('android_ripple', expect.objectContaining({ color: motion.ripple }));
+  it('uses a ripple on Android only', () => {
+    expect(rippleFor('android')).toEqual({ color: motion.ripple, foreground: true });
+    expect(rippleFor('ios')).toBeUndefined();
   });
 
   it('keeps the caller style (radius, padding) on the pressable itself so the ripple is clipped to the shape', async () => {

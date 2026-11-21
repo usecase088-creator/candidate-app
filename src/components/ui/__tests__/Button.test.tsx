@@ -44,15 +44,15 @@ describe('Button', () => {
     expect(screen.getByTestId('login.submit')).toBeOnTheScreen();
   });
 
-  it('can cap how much its label grows with the phone font (a button in a tight bar)', async () => {
+  it('caps its label at 1.3x by default (D32) and a caller can tighten it', async () => {
     await renderWithProviders(
       <>
-        <Button testID="capped" label="Sign in" maxFontSizeMultiplier={1.3} onPress={() => {}} />
+        <Button testID="capped" label="Sign in" maxFontSizeMultiplier={1.1} onPress={() => {}} />
         <Button testID="free" label="Sign in" onPress={() => {}} />
       </>,
     );
-    expect(screen.getAllByText('Sign in')[0]).toHaveProp('maxFontSizeMultiplier', 1.3);
-    expect(screen.getAllByText('Sign in')[1]).not.toHaveProp('maxFontSizeMultiplier');
+    expect(screen.getAllByText('Sign in')[0]).toHaveProp('maxFontSizeMultiplier', 1.1);
+    expect(screen.getAllByText('Sign in')[1]).toHaveProp('maxFontSizeMultiplier', 1.3);
   });
 
   it('accepts a separate accessibilityLabel', async () => {

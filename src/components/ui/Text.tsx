@@ -51,6 +51,7 @@ export function AppText({
   color = 'foreground',
   align,
   tabular,
+  maxFontSizeMultiplier,
   style,
   ...rest
 }: AppTextProps) {
@@ -58,8 +59,8 @@ export function AppText({
   return (
     <Text
       accessibilityRole={v.heading ? 'header' : undefined}
-      maxFontSizeMultiplier={v.cap}
       {...rest}
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? v.cap}
       style={[
         v.size,
         {

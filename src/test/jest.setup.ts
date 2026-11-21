@@ -3,6 +3,10 @@ import { configure } from '@testing-library/react-native';
 
 import { server } from './msw/server';
 
+// Reanimated 4 in Jest: animations run synchronously and toHaveAnimatedStyle is available (PressableScale, Toast).
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+require('react-native-reanimated').setUpTests();
+
 // Screen tests start the whole app; on a busy laptop the default 1 s for findBy*/waitFor is too tight.
 configure({ asyncUtilTimeout: 4000 });
 

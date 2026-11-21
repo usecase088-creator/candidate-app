@@ -13,6 +13,10 @@ import { motion } from '@/theme/tokens';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/** Android gets a ripple clipped to the caller's shape (in front of the children); iOS relies on scale + opacity. */
+export const rippleFor = (os: typeof Platform.OS): PressableProps['android_ripple'] =>
+  os === 'android' ? { color: motion.ripple, foreground: true } : undefined;
+
 export type PressableScaleProps = Omit<PressableProps, 'style' | 'children'> & {
   testID: string;
   children: React.ReactNode;
@@ -45,14 +49,15 @@ export function PressableScale({
   const opacity = useSharedValue(1);
 
   const animated = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
+    transform: [{ scale: scale.get() }],
+    opacity: opacity.get(),
   }));
 
   const handleIn = useCallback<NonNullable<PressableProps['onPressIn']>>(
     (e) => {
-      scale.value = reduceMotion ? 1 : withSpring(pressScale, motion.spring);
-      opacity.value = withTiming(motion.pressOpacity, { duration: motion.duration.press });
+      // .set(): the React Compiler-safe way to write a shared value (Reanimated 4).
+      scale.set(reduceMotion ? 1 : withSpring(pressScale, motion.spring));
+      opacity.set(withTiming(motion.pressOpacity, { duration: motion.duration.press }));
       onPressIn?.(e);
     },
     [onPressIn, opacity, pressScale, reduceMotion, scale],
@@ -60,8 +65,8 @@ export function PressableScale({
 
   const handleOut = useCallback<NonNullable<PressableProps['onPressOut']>>(
     (e) => {
-      scale.value = withSpring(1, motion.spring);
-      opacity.value = withTiming(1, { duration: motion.duration.press });
+      scale.set(withSpring(1, motion.spring));
+      opacity.set(withTiming(1, { duration: motion.duration.press }));
       onPressOut?.(e);
     },
     [onPressOut, opacity, scale],
@@ -69,7 +74,7 @@ export function PressableScale({
 
   const handlePress = useCallback<NonNullable<PressableProps['onPress']>>(
     (e) => {
-      haptic(kind);
+      if (kind !== 'none') haptic(kind);
       onPress?.(e);
     },
     [kind, onPress],
@@ -83,7 +88,7 @@ export function PressableScale({
       onPress={handlePress}
       onPressIn={handleIn}
       onPressOut={handleOut}
-      android_ripple={Platform.OS === 'android' ? { color: motion.ripple, foreground: true } : undefined}
+      android_ripple={rippleFor(Platform.OS)}
       style={[style, animated]}
       {...rest}
     >

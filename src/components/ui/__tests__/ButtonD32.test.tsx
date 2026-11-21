@@ -59,14 +59,14 @@ describe('Button (D32)', () => {
   it('keeps its width while loading: the label stays mounted but invisible, the spinner is centred', async () => {
     await renderWithProviders(<Button testID="b" label="Sign in" loading onPress={() => {}} />);
     expect(screen.getByTestId('b.spinner')).toBeOnTheScreen();
-    expect(flat(screen.getByText('Sign in').props.style).opacity).toBe(0);
+    expect(flat(screen.getByTestId('b.content').props.style).opacity).toBe(0);
   });
 
   it('disabled is a muted fill with muted text, not a faded button', async () => {
     await renderWithProviders(<Button testID="b" label="Go" disabled onPress={() => {}} />);
     const s = flat(screen.getByTestId('b').props.style);
     expect(s.backgroundColor).toBe(colors.muted);
-    expect(s.opacity).toBeUndefined();
+    expect(s.opacity ?? 1).toBe(1);
     expect(flat(screen.getByText('Go').props.style).color).toBe(colors.mutedForeground);
   });
 
