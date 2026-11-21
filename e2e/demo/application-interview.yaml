@@ -59,14 +59,18 @@ appId: work.apronhanger.candidate.dev
 - runFlow: _demo/pause-500.yaml
 - assertVisible: 'Status: Interview Accepted'
 - runFlow: _demo/pause-1200.yaml
-- extendedWaitUntil:
-    notVisible:
-      id: toast
-    timeout: 10000
-- runFlow: _demo/pause-500.yaml
-- tapOn:
-    id: application.back
-- runFlow: _demo/pause-900.yaml
+- runFlow:
+    when:
+      platform: Android
+    commands:
+    - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+    - swipe:
+        start: 1%, 50%
+        end: 70%, 50%
 - extendedWaitUntil:
     visible:
       id: applications.screen

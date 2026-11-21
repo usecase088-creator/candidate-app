@@ -77,7 +77,7 @@ appId: work.apronhanger.candidate.dev
 - scrollUntilVisible:
     element:
       id: signup.submit
-    direction: UP
+    direction: DOWN
 - runFlow: _demo/pause-400.yaml
 - runFlow: _demo/cap-auth-signup-4.yaml
 - tapOn:
@@ -111,9 +111,6 @@ appId: work.apronhanger.candidate.dev
 - inputText: '123456'
 - runFlow: _demo/pause-600.yaml
 - runFlow: _common/hideKeyboard.yaml
-- tapOn:
-    id: signup.submit
-- runFlow: _demo/pause-900.yaml
 - extendedWaitUntil:
     notVisible:
       id: signup.screen
