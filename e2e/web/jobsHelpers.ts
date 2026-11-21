@@ -104,7 +104,8 @@ export async function mockBackend(page: Page, jobs: unknown[]): Promise<Backend>
 }
 
 export async function signIn(page: Page) {
-  await page.goto('/');
+  // Guest browsing (D30): the app opens on Home, so go to the login screen directly.
+  await page.goto('/login');
   await expect(page.getByTestId('login.screen')).toBeVisible();
   await page.getByTestId('login.email').fill('candidate@apronhanger.test');
   await page.getByTestId('login.password').fill('Test@1234');

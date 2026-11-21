@@ -34,14 +34,17 @@ export function SavedJobsScreen() {
           {`${jobs.length} role${jobs.length !== 1 ? 's' : ''} bookmarked for later`}
         </AppText>
       )}
-      <Button
-        testID="saved.browse"
-        label="Browse opportunities →"
-        accessibilityLabel="Browse opportunities"
-        variant="ghost"
-        fullWidth={false}
-        onPress={browse}
-      />
+      {view === 'ready' && jobs.length > 0 ? (
+        <Button
+          testID="saved.browse"
+          label="Browse opportunities →"
+          accessibilityLabel="Browse opportunities"
+          variant="ghost"
+          size="sm"
+          fullWidth={false}
+          onPress={browse}
+        />
+      ) : null}
     </View>
   );
 

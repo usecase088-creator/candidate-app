@@ -24,7 +24,7 @@ export function CompletenessRing({ testID, percent }: { testID: string; percent:
       accessibilityValue={{ min: 0, max: 100, now: value }}
       style={styles.wrap}
     >
-      <Svg width={SIZE} height={SIZE} pointerEvents="none">
+      <Svg width={SIZE} height={SIZE} pointerEvents="none" style={styles.rotated}>
         <Circle
           cx={SIZE / 2}
           cy={SIZE / 2}
@@ -43,8 +43,6 @@ export function CompletenessRing({ testID, percent }: { testID: string; percent:
           strokeLinecap="round"
           strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`}
           strokeDashoffset={CIRCUMFERENCE * (1 - value / 100)}
-          rotation={-90}
-          origin={`${SIZE / 2}, ${SIZE / 2}`}
           fill="none"
         />
       </Svg>
@@ -58,6 +56,8 @@ export function CompletenessRing({ testID, percent }: { testID: string; percent:
 }
 
 const styles = StyleSheet.create({
+  // Start the arc at 12 o'clock. A View transform works on iOS, Android and web (the SVG rotation prop breaks on web).
+  rotated: { transform: [{ rotate: '-90deg' }] },
   wrap: { width: SIZE, height: SIZE },
   center: {
     position: 'absolute',

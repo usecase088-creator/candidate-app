@@ -43,7 +43,8 @@ export function TopBar({ title }: { title?: string }) {
           testID="topbar.signin"
           label="Sign in"
           accessibilityLabel="Sign in"
-          variant="outline"
+          variant="secondary"
+          size="sm"
           fullWidth={false}
           // Brand and button share 320 pt at font scale 2: the label grows at most 1.3 times.
           maxFontSizeMultiplier={1.3}

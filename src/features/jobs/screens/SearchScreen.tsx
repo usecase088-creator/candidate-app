@@ -77,7 +77,7 @@ export function SearchScreen() {
           variant="secondary"
           size="sm"
           fullWidth={false}
-          icon={{ ios: 'line.3.horizontal.decrease', android: 'tune' }}
+          icon={{ ios: 'line.3.horizontal.decrease', android: 'tune', web: 'tune' }}
           // Website: filters need an account (a guest is sent to sign-in and comes back here).
           onPress={() => (signedIn ? router.push('/filters') : goToSignIn('/search'))}
         />

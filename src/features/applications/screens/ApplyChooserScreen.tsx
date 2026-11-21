@@ -205,7 +205,7 @@ function ChoiceRow({
           </AppText>
           {recommended ? <Pill testID="apply.recommended" label="Recommended" tone="brand" /> : null}
         </View>
-        <AppText variant="secondary" color="mutedForeground" numberOfLines={2}>
+        <AppText variant="secondary" color="mutedForeground" numberOfLines={3}>
           {description}
         </AppText>
         <AppText variant="secondary" weight="semibold" color={disabled ? 'mutedForeground' : 'brand'}>

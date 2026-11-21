@@ -169,6 +169,7 @@ const styles = StyleSheet.create({
   },
   joinText: { flex: 1 },
   actions: { gap: spacing['2'] },
-  pair: { flexDirection: 'row', gap: spacing['2'] },
-  half: { flex: 1 },
+  // Stacked, not a pair: 'Request Reschedule' wrapped to two lines in half a phone width.
+  pair: { gap: spacing['2'] },
+  half: {},
 });
