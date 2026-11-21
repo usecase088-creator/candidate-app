@@ -1,8 +1,25 @@
-# Handoff (updated 2026-11-21: D32 premium UI redesign in progress; foundation + Home/Search/Gov/Intl done, 1,746 tests green)
+# Handoff (updated 2026-11-22 morning: D32 premium UI redesign built on every screen; 1,864 tests green; phone check pending)
 
 Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
+
+- **2026-11-22 overnight (D32 continued, Raj asleep, asked to finish without waiting):** every screen is redesigned
+  (job details + apply, applications, profile/settings/notifications, auth), then an independent review scored the result
+  (6.2/10, 20 issues) and a polish round fixed them: navy hero band on Home, visible tonal fill token, centred empty-state
+  actions, one red required star (FieldLabel), inset JobRow separators, bookmark pop, panel colour by need, status said
+  once, animated SVG match ring, photo bottom sheet, one card style, settings groups, filters captions, own empty-state
+  icons. **Checks:** `npm run check` 128 suites / 1,864 tests green (Jest now capped at 2 workers: the full run timed out
+  screen tests under load); Playwright web specs 38/38 after fixing stale specs (signIn helper, native header back);
+  visual tours at 390 and 320 pt reviewed by eye. **Device:** a local release APK of the dev variant pointed at staging
+  (`work.apronhanger.candidate.dev`, installs next to the preview app) is installed on Raj's phone and copied to
+  `C:\devh-builds\d32-dev-staging-arm64.apk`, but the phone was PIN-locked all night, so **no screen was checked on the
+  device and no Maestro flow ran**. The cloud iOS build (EAS e2e-test) was refused by the permission classifier; not
+  retried. **Morning steps:** unlock the phone; reseed staging
+  (`npm run backend:local -- --no-start --source ../job-hotfix/backend`, IPv4 fallback `scripts/demo/reseed-ipv4.cjs`);
+  `maestro test e2e/maestro` (flows already use `.dev`); check 320 dp / font scale 2; then a new EAS preview build for the
+  client (needs Raj's OK). Maestro flows changed for the native header (system back / edge swipe) and OTP auto-submit:
+  they are not yet proven on a device.
 
 - **2026-11-21 (D32 UI redesign, Raj in the session):** the client tried the Android preview build and said the flows work but
   the app is not premium (spacing, oversized text). Six frame-by-frame audits + a code inventory (local scratchpad) led to
