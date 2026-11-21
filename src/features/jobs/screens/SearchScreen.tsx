@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Screen } from '@/components/ui/Screen';
+import { SearchField } from '@/components/ui/SearchField';
 import { AppText } from '@/components/ui/Text';
-import { TextInput } from '@/components/ui/TextInput';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 
 import { useIsSignedIn } from '@/features/auth/sessionStore';
 import { goToSignIn } from '@/features/auth/signInGate';
@@ -48,27 +49,25 @@ export function SearchScreen() {
   const active = activeFilterCount(filterState);
   const total = jobs?.length ?? 0;
 
+  // D32: two compact search fields (role, then city), a small Filters button with its count, the category as a
+  // removable chip, then the results heading with the count on one line.
   const header = (
     <View style={styles.header}>
-      <TextInput
+      <SearchField
         testID="search.query"
-        label="Role or specialty"
+        accessibilityLabel="Role or specialty"
         placeholder="Role or specialty"
         value={filterState.query}
         onChangeText={setQuery}
         returnKeyType="next"
-        autoCapitalize="none"
-        autoCorrect={false}
       />
-      <TextInput
+      <SearchField
         testID="search.city"
-        label="City or state"
+        accessibilityLabel="City or state"
         placeholder="City or state"
+        icon={{ ios: 'mappin.and.ellipse', android: 'location_on' }}
         value={filterState.city}
         onChangeText={setCity}
-        returnKeyType="search"
-        autoCapitalize="none"
-        autoCorrect={false}
       />
 
       <View style={styles.toolbar}>
@@ -76,33 +75,31 @@ export function SearchScreen() {
           testID="search.filters"
           label={active > 0 ? `Filters (${active})` : 'Filters'}
           accessibilityLabel={active > 0 ? `Filters, ${active} active` : 'Filters'}
-          variant="outline"
+          variant="secondary"
+          size="sm"
           fullWidth={false}
+          icon={{ ios: 'line.3.horizontal.decrease', android: 'tune' }}
           // Website: filters need an account (a guest is sent to sign-in and comes back here).
           onPress={() => (signedIn ? setSheetOpen(true) : goToSignIn('/search'))}
         />
         {filterState.category ? (
-          <Pressable
+          <Chip
             testID="search.category"
-            accessibilityRole="button"
+            label={filterState.category}
             accessibilityLabel={`${filterState.category}, tap to remove`}
+            selected
             onPress={() => setCategory(null)}
-            style={styles.categoryChip}
-          >
-            <AppText variant="caption" weight="semibold" color="primaryForeground">
-              {filterState.category}
-            </AppText>
-            <AppText variant="caption" weight="semibold" color="primaryForeground">
-              ✕
-            </AppText>
-          </Pressable>
+            onRemove={() => setCategory(null)}
+          />
         ) : null}
       </View>
 
       {view === 'ready' && (
         <View style={styles.heading}>
-          <AppText variant="heading">All Opportunities</AppText>
-          <AppText testID="search.count" variant="caption" color="mutedForeground">
+          <AppText variant="heading" style={styles.flex}>
+            All Opportunities
+          </AppText>
+          <AppText testID="search.count" variant="secondary" color="mutedForeground" numberOfLines={1}>
             {`Showing ${visible.length} of ${total} verified roles`}
           </AppText>
         </View>
@@ -156,16 +153,14 @@ export function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: spacing['4'], padding: spacing['4'] },
+  header: { gap: spacing['3'], paddingHorizontal: spacing['4'], paddingTop: spacing['4'] },
   toolbar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing['2'] },
-  categoryChip: {
-    minHeight: 40,
+  heading: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing['2'],
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing['4'],
+    alignItems: 'flex-end',
+    gap: spacing['3'],
+    paddingTop: spacing['2'],
+    paddingBottom: spacing['1'],
   },
-  heading: { gap: spacing['1'] },
+  flex: { flex: 1 },
 });

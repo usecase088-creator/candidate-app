@@ -21,6 +21,10 @@ type Common = {
   testID: string;
   placeholder?: string;
   accessibilityLabel?: string;
+  /** Leading icon; the magnifier by default (a city field passes a location pin). */
+  icon?: typeof MAGNIFIER | { ios: 'mappin.and.ellipse'; android: 'location_on' };
+  /** The search key by default; `next` when another field follows. */
+  returnKeyType?: 'search' | 'next' | 'done';
 };
 
 export type EditableSearchFieldProps = Common & {
@@ -59,6 +63,8 @@ function EditableSearchField({
   onSubmit,
   placeholder = DEFAULT_PLACEHOLDER,
   accessibilityLabel = DEFAULT_LABEL,
+  icon = MAGNIFIER,
+  returnKeyType = 'search',
   autoFocus,
   onFocus,
   onBlur,
@@ -83,7 +89,7 @@ function EditableSearchField({
 
   return (
     <View testID={`${testID}.field`} style={[styles.field, focused && styles.focused]}>
-      <Icon testID={`${testID}.icon`} name={MAGNIFIER} size={ICON} tintColor={colors.mutedForeground} />
+      <Icon testID={`${testID}.icon`} name={icon} size={ICON} tintColor={colors.mutedForeground} />
       <TextInput
         testID={testID}
         accessibilityLabel={accessibilityLabel}
@@ -97,7 +103,7 @@ function EditableSearchField({
         autoFocus={autoFocus}
         autoCapitalize="none"
         autoCorrect={false}
-        returnKeyType="search"
+        returnKeyType={returnKeyType}
         clearButtonMode="never"
         maxFontSizeMultiplier={1.5}
         style={styles.input}
@@ -122,6 +128,7 @@ function PressableSearchField({
   value,
   placeholder = DEFAULT_PLACEHOLDER,
   accessibilityLabel = DEFAULT_LABEL,
+  icon = MAGNIFIER,
 }: PressableSearchFieldProps) {
   const hasValue = !!value;
   return (
@@ -133,7 +140,7 @@ function PressableSearchField({
       onPress={onPress}
       style={styles.field}
     >
-      <Icon testID={`${testID}.icon`} name={MAGNIFIER} size={ICON} tintColor={colors.mutedForeground} />
+      <Icon testID={`${testID}.icon`} name={icon} size={ICON} tintColor={colors.mutedForeground} />
       <AppText
         variant="body"
         color={hasValue ? 'foreground' : 'placeholder'}

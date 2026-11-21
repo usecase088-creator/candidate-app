@@ -112,4 +112,18 @@ describe('SearchField (pressable)', () => {
     expect(screen.getByText('ICU nurse')).toBeOnTheScreen();
     expect(screen.queryByText('Role or specialty')).toBeNull();
   });
+  it('a city field can swap the magnifier for a location pin and use the next key', async () => {
+    await renderWithProviders(
+      <SearchField
+        testID="search.city"
+        value=""
+        onChangeText={() => {}}
+        placeholder="City or state"
+        icon={{ ios: 'mappin.and.ellipse', android: 'location_on' }}
+        returnKeyType="next"
+      />,
+    );
+    expect(screen.getByTestId('search.city.icon')).toHaveProp('name', 'mappin.and.ellipse');
+    expect(screen.getByTestId('search.city')).toHaveProp('returnKeyType', 'next');
+  });
 });
