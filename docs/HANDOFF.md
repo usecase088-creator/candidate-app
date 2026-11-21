@@ -13,7 +13,7 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
   screen tests under load); Playwright web specs 38/38 after fixing stale specs (signIn helper, native header back);
   visual tours at 390 and 320 pt reviewed by eye. **Device:** a local release APK of the dev variant pointed at staging
   (`work.apronhanger.candidate.dev`, installs next to the preview app) is installed on Raj's phone and copied to
-  `C:\devh-builds\d32-dev-staging-arm64.apk`, but the phone was PIN-locked all night, so **no screen was checked on the
+  `C:\dev\ah-builds\d32-dev-staging-arm64.apk`, but the phone was PIN-locked all night, so **no screen was checked on the
   device and no Maestro flow ran**. The cloud iOS build (EAS e2e-test) was refused by the permission classifier; not
   retried. **Morning steps:** unlock the phone; reseed staging
   (`npm run backend:local -- --no-start --source ../job-hotfix/backend`, IPv4 fallback `scripts/demo/reseed-ipv4.cjs`);
