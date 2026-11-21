@@ -18,7 +18,12 @@ describe('Panel', () => {
       </Panel>,
     );
     const box = flat(screen.getByTestId('app.next').props.style);
-    expect(box).toMatchObject({ backgroundColor: colors.skySoft, borderRadius: radius.md, padding: 16, gap: 8 });
+    expect(box).toMatchObject({
+      backgroundColor: colors.skySoft,
+      borderRadius: radius.md,
+      padding: 16,
+      gap: 8,
+    });
     expect(box.borderWidth).toBeUndefined();
     const title = screen.getByTestId('app.next.title');
     expect(title).toHaveTextContent('What happens next');
@@ -34,18 +39,21 @@ describe('Panel', () => {
     ['success', colors.successSoft, colors.successText],
     ['warning', colors.amberSoft, colors.amberText],
     ['error', colors.destructiveSoft, colors.errorText],
-  ])('tone %s: fill and icon colour from the tokens, body text never coloured', async (tone, fill, iconColor) => {
-    await renderWithProviders(
-      <Panel testID="p" tone={tone} title="Title" icon={{ ios: 'info.circle', android: 'info' }}>
-        <Text>Body</Text>
-      </Panel>,
-    );
-    expect(flat(screen.getByTestId('p').props.style).backgroundColor).toBe(fill);
-    const icon = screen.getByTestId('p.icon');
-    expect(icon.props.tintColor).toBe(iconColor);
-    expect(icon.props.size).toBe(20);
-    expect(flat(screen.getByTestId('p.title').props.style).color).toBe(colors.foreground);
-  });
+  ])(
+    'tone %s: fill and icon colour from the tokens, body text never coloured',
+    async (tone, fill, iconColor) => {
+      await renderWithProviders(
+        <Panel testID="p" tone={tone} title="Title" icon={{ ios: 'info.circle', android: 'info' }}>
+          <Text>Body</Text>
+        </Panel>,
+      );
+      expect(flat(screen.getByTestId('p').props.style).backgroundColor).toBe(fill);
+      const icon = screen.getByTestId('p.icon');
+      expect(icon.props.tintColor).toBe(iconColor);
+      expect(icon.props.size).toBe(20);
+      expect(flat(screen.getByTestId('p.title').props.style).color).toBe(colors.foreground);
+    },
+  );
 
   it('has no icon slot when no icon is given', async () => {
     await renderWithProviders(

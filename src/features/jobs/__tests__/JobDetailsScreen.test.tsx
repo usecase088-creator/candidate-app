@@ -1,5 +1,6 @@
 import { onlineManager } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
+import { router } from 'expo-router';
 import * as Network from 'expo-network';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
@@ -345,19 +346,22 @@ describe('Job details: states', () => {
 });
 
 describe('Job details: navigation', () => {
-  it('Back goes to the previous screen', async () => {
+  // D32: the native header carries the back chevron; there is no in-content Back button any more.
+  it('the system back goes to the previous screen', async () => {
     installJobsBackend({ jobs: [full] });
     const app = await startSignedIn('/', 'home.screen');
     await fireEvent.press(await screen.findByTestId('job.open.j1'));
     await screen.findByTestId('job.screen');
-    await fireEvent.press(screen.getByRole('button', { name: 'Back to opportunities' }));
+    expect(screen.queryByRole('button', { name: /back to opportunities/i })).toBeNull();
+    await act(async () => router.back());
     await waitFor(() => expect(app.getPathname()).toBe('/'));
   });
 
-  it('Back on a deep link (nothing to go back to) goes Home', async () => {
+  it('a deep link still has Home underneath to go back to', async () => {
     installJobsBackend({ jobs: [full] });
     const app = await open();
-    await fireEvent.press(await screen.findByRole('button', { name: 'Back to opportunities' }));
+    await screen.findByTestId('job.screen');
+    await act(async () => router.back());
     await waitFor(() => expect(app.getPathname()).toBe('/'));
   });
 });

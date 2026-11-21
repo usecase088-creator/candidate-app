@@ -13,7 +13,6 @@ import { colors, radius, spacing } from '@/theme/tokens';
 
 import { QueryStatus } from '../components/QueryStatus';
 import {
-  BackToOpportunities,
   DeadlineLine,
   ListingFooter,
   ListingHero,
@@ -44,7 +43,6 @@ export function GovJobsScreen() {
 
   const header = (
     <View style={styles.header}>
-      <BackToOpportunities testID="gov.back" />
       <ListingHero
         testID="gov"
         title="🏛️ Government Jobs & Exams"

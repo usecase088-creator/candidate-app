@@ -1,5 +1,6 @@
 import { onlineManager } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
+import { router } from 'expo-router';
 import * as Network from 'expo-network';
 import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
@@ -38,7 +39,6 @@ describe('Saved jobs', () => {
   it('title, count and the saved jobs in the order the server sends (newest first)', async () => {
     installJobsBackend({ jobs: [a, b], saved: saved(b, a) });
     await open();
-    expect(await screen.findByRole('header', { name: 'Saved jobs' })).toBeOnTheScreen();
     await screen.findByTestId('job.card.a');
     expect(screen.getByTestId('saved.count')).toHaveTextContent('2 roles bookmarked for later');
     expect(ids()).toEqual(['b', 'a']);
@@ -70,10 +70,11 @@ describe('Saved jobs', () => {
     await waitFor(() => expect(app.getPathname()).toBe('/job/a'));
   });
 
-  it('Back goes to the previous screen, or Home on a deep link', async () => {
+  it('the system back goes to the previous screen, or Home on a deep link (native header, D32)', async () => {
     installJobsBackend({ jobs: [a], saved: saved(a) });
     const app = await open();
-    await fireEvent.press(await screen.findByRole('button', { name: 'Back' }));
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    await act(async () => router.back());
     await waitFor(() => expect(app.getPathname()).toBe('/'));
   });
 });

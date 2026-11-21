@@ -19,7 +19,11 @@ describe('Avatar', () => {
       borderRadius: radius.full,
       backgroundColor: colors.brandSoft,
     });
-    expect(flat(initials.props.style)).toMatchObject({ color: colors.brand, fontSize: 16, fontFamily: fonts.semibold });
+    expect(flat(initials.props.style)).toMatchObject({
+      color: colors.brand,
+      fontSize: 16,
+      fontFamily: fonts.semibold,
+    });
     expect(screen.queryByTestId('av.image')).toBeNull();
   });
 
@@ -59,7 +63,7 @@ describe('Avatar', () => {
 
   it('goes back to the initials when the photo fails to load', async () => {
     await renderWithProviders(<Avatar testID="av" name="Asha" uri="https://cdn.example/broken.jpg" />);
-    fireEvent(screen.getByTestId('av.image'), 'error', { nativeEvent: { error: 'x' } });
+    await fireEvent(screen.getByTestId('av.image'), 'error', { nativeEvent: { error: 'x' } });
     expect(screen.queryByTestId('av.image')).toBeNull();
     expect(screen.getByTestId('av')).toHaveProp('accessibilityLabel', 'Asha initials');
   });

@@ -22,13 +22,12 @@ type Props = {
   /** testIDs: `{prefix}.screen`, `.back`, `.loading`, `.offline`, `.error`, `.notfound`, `.applied`. */
   prefix: string;
   jobId: string;
-  onBack: () => void;
   /** Shown instead of the sentence "... for {role} at {hospital}." when set. */
   appliedMessage?: (job: Job) => string;
   children: (ready: ApplyReady) => ReactNode;
 };
 
-export function ApplyFrame({ prefix, jobId, onBack, appliedMessage, children }: Props) {
+export function ApplyFrame({ prefix, jobId, appliedMessage, children }: Props) {
   const router = useRouter();
   const ctx = useApplyContext(jobId);
   const notFound = isApiError(ctx.jobError) && ctx.jobError.status === 404;
@@ -37,15 +36,6 @@ export function ApplyFrame({ prefix, jobId, onBack, appliedMessage, children }: 
   return (
     <Screen testID={`${prefix}.screen`} scroll>
       <View style={styles.stack}>
-        <Button
-          testID={`${prefix}.back`}
-          label="← Back"
-          accessibilityLabel="Back"
-          variant="ghost"
-          fullWidth={false}
-          onPress={onBack}
-        />
-
         {ctx.view === 'loading' && <ApplySkeleton testID={`${prefix}.loading`} />}
 
         {ctx.view === 'offline' && (

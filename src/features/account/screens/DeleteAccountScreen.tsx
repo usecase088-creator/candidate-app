@@ -22,7 +22,6 @@ export function DeleteAccountScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/settings'));
 
   async function submit() {
     if (busy) return;
@@ -48,17 +47,6 @@ export function DeleteAccountScreen() {
   return (
     <Screen testID="delete.screen" scroll>
       <View style={styles.stack}>
-        <Button
-          testID="delete.back"
-          label="← Back"
-          accessibilityLabel="Back"
-          variant="ghost"
-          fullWidth={false}
-          onPress={goBack}
-        />
-        <AppText variant="title" accessibilityRole="header">
-          Delete account
-        </AppText>
         <View testID="delete.warning" style={styles.stack}>
           <AppText>This permanently deletes your ApronHanger account. It cannot be undone.</AppText>
           <AppText color="mutedForeground">

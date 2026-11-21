@@ -34,7 +34,12 @@ export type StickyActionBarProps = {
  * D32: the primary CTA pinned to the bottom of a screen, above the home indicator / gesture bar
  * (job details Apply, apply chooser, builder Back/Continue). White surface, hairline top border, no shadow.
  */
-export function StickyActionBar({ testID, children, leading, hideWhenKeyboardOpen = true }: StickyActionBarProps) {
+export function StickyActionBar({
+  testID,
+  children,
+  leading,
+  hideWhenKeyboardOpen = true,
+}: StickyActionBarProps) {
   const insets = useSafeAreaInsets();
   const keyboardOpen = useKeyboardOpen();
   if (hideWhenKeyboardOpen && keyboardOpen) return null;

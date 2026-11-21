@@ -27,21 +27,9 @@ export function CvPreviewScreen() {
   const me = query.data;
   const profile = (me?.profile ?? null) as Record<string, unknown> | null;
   const build = () => router.push('/profile-builder');
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/profile'));
   const openDocument = () => {
     if (me?.cvUrl && isOpenableLink(me.cvUrl)) void WebBrowser.openBrowserAsync(me.cvUrl);
   };
-
-  const back = (
-    <Button
-      testID="cv.back"
-      label="← Back"
-      accessibilityLabel="Back"
-      variant="ghost"
-      fullWidth={false}
-      onPress={goBack}
-    />
-  );
 
   async function download() {
     if (!profile) return;
@@ -167,7 +155,6 @@ export function CvPreviewScreen() {
   return (
     <Screen testID="cv.screen" scroll>
       <View style={styles.stack}>
-        {back}
         {body}
       </View>
     </Screen>

@@ -117,7 +117,6 @@ function Builder({
     setStep(n);
     void keep({ step: n });
   };
-  const exit = () => (router.canGoBack() ? router.back() : router.replace('/profile'));
   const set = (key: string, value: unknown) => setDraft((d) => ({ ...d, [key]: value }));
 
   function onNext() {
@@ -181,14 +180,6 @@ function Builder({
   return (
     <Screen testID="builder.screen" scroll scrollToTopKey={step}>
       <View style={styles.stack}>
-        <Button
-          testID="builder.exit"
-          label="← Back"
-          accessibilityLabel="Back to profile"
-          variant="ghost"
-          fullWidth={false}
-          onPress={exit}
-        />
         <AppText testID="builder.progress" variant="caption" color="mutedForeground">
           {`Step ${step + 1} of ${STEPS.length}`}
         </AppText>

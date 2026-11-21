@@ -36,9 +36,6 @@ export function ProfileScreen() {
   return (
     <Screen testID="profile.screen" edges={[]} scroll>
       <View style={styles.stack}>
-        <AppText variant="title" accessibilityRole="header">
-          Profile
-        </AppText>
         {view === 'loading' && <Skeleton testID="profile.loading" width="100%" height={72} />}
         {(view === 'error' || view === 'offline') && (
           <ErrorState

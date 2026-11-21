@@ -10,15 +10,31 @@ import { TopBar } from '@/features/notifications/components/TopBar';
 import { tabBarHeight, TAB_LABEL_MAX_SCALE, TAB_LABEL_SIZE } from '@/theme/tabBar';
 import { colors, fonts } from '@/theme/tokens';
 
-type Tab = { name: string; title: string; testID: string; ios: SFSymbol; android: AndroidSymbol };
+type Tab = {
+  name: string;
+  title: string;
+  /** D32: the title the TopBar shows for this tab (Home shows the wordmark instead). */
+  headerTitle?: string;
+  testID: string;
+  ios: SFSymbol;
+  android: AndroidSymbol;
+};
 
 // PHASE-1 Task 7: placeholders until the job screens (Phase 2). Icons: SF Symbols on iOS, Material Symbols elsewhere.
 const TABS: Tab[] = [
   { name: 'index', title: 'Home', testID: 'tabs.home', ios: 'house', android: 'home' },
-  { name: 'search', title: 'Search', testID: 'tabs.search', ios: 'magnifyingglass', android: 'search' },
+  {
+    name: 'search',
+    title: 'Search',
+    headerTitle: 'Search',
+    testID: 'tabs.search',
+    ios: 'magnifyingglass',
+    android: 'search',
+  },
   {
     name: 'applications',
     title: 'Applications',
+    headerTitle: 'My Applications',
     testID: 'tabs.applications',
     ios: 'doc.text',
     android: 'description',
@@ -26,6 +42,7 @@ const TABS: Tab[] = [
   {
     name: 'profile',
     title: 'Profile',
+    headerTitle: 'Profile',
     testID: 'tabs.profile',
     ios: 'person.crop.circle',
     android: 'account_circle',
@@ -48,8 +65,8 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        // One top bar for the four tabs, with the notification bell (website Navbar). It takes the top safe area.
-        header: () => <TopBar />,
+        // One slim top bar for the four tabs (D32): wordmark on Home, the tab's title elsewhere, bell on the right.
+        header: ({ route }) => <TopBar title={TABS.find((t) => t.name === route.name)?.headerTitle} />,
         tabBarActiveTintColor: colors.brand,
         tabBarInactiveTintColor: colors.mutedForeground,
         // 4 tabs at 320 pt: no side padding, so "Applications" fits (label size: styles.label below).

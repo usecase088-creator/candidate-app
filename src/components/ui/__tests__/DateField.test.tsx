@@ -93,7 +93,9 @@ describe('DatePicker on Android (the system dialog)', () => {
   it('a picked day is kept at once and the dialog closes', async () => {
     const onPick = jest.fn();
     const onClose = jest.fn();
-    await render(<AndroidPicker testID="a" visible value={new Date(2020, 0, 1)} onPick={onPick} onClose={onClose} />);
+    await render(
+      <AndroidPicker testID="a" visible value={new Date(2020, 0, 1)} onPick={onPick} onClose={onClose} />,
+    );
     await fireEvent.press(screen.getByTestId('datepicker.native.pick'));
     expect(onPick).toHaveBeenCalledWith(fakePicker.date);
     expect(onClose).toHaveBeenCalled();
@@ -102,14 +104,18 @@ describe('DatePicker on Android (the system dialog)', () => {
   it('dismissing keeps nothing', async () => {
     const onPick = jest.fn();
     const onClose = jest.fn();
-    await render(<AndroidPicker testID="a" visible value={new Date(2020, 0, 1)} onPick={onPick} onClose={onClose} />);
+    await render(
+      <AndroidPicker testID="a" visible value={new Date(2020, 0, 1)} onPick={onPick} onClose={onClose} />,
+    );
     await fireEvent.press(screen.getByTestId('datepicker.native.dismiss'));
     expect(onPick).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
   });
 
   it('shows nothing while closed', async () => {
-    await render(<AndroidPicker testID="a" visible={false} value={new Date()} onPick={jest.fn()} onClose={jest.fn()} />);
+    await render(
+      <AndroidPicker testID="a" visible={false} value={new Date()} onPick={jest.fn()} onClose={jest.fn()} />,
+    );
     expect(screen.queryByTestId('datepicker.native.pick')).toBeNull();
   });
 });

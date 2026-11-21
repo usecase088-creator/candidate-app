@@ -13,7 +13,9 @@ const flat = (s: unknown) => StyleSheet.flatten(s as never) ?? {};
 const HIDDEN = { includeHiddenElements: true };
 
 function rows(n: number) {
-  return Array.from({ length: n }, (_, i) => <ListRow key={i} testID={`r${i}`} title={`Row ${i}`} onPress={() => {}} />);
+  return Array.from({ length: n }, (_, i) => (
+    <ListRow key={i} testID={`r${i}`} title={`Row ${i}`} onPress={() => {}} />
+  ));
 }
 
 // D32: grouped lists. iOS = white rounded container with hairline separators inset 16; Android = flat, full width.
@@ -77,7 +79,9 @@ describe('ListGroup', () => {
           </ListGroup>
         </>,
       );
-      expect(flat(screen.getByTestId('a.separator.0', HIDDEN).props.style)).toMatchObject({ marginLeft: spacing['4'] });
+      expect(flat(screen.getByTestId('a.separator.0', HIDDEN).props.style)).toMatchObject({
+        marginLeft: spacing['4'],
+      });
       expect(flat(screen.getByTestId('b.separator.0', HIDDEN).props.style)).toMatchObject({ marginLeft: 56 });
       expect(flat(screen.getByTestId('a.list').props.style)).toMatchObject({ borderRadius: radius.md });
     });

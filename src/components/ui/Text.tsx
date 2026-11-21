@@ -30,7 +30,13 @@ const VARIANTS = {
   button: { size: fontSizes.base, weight: 'semibold', heading: false, tight: false, cap: 1.3 },
 } as const satisfies Record<
   string,
-  { size: { fontSize: number; lineHeight: number }; weight: FontWeight; heading: boolean; tight: boolean; cap: number }
+  {
+    size: { fontSize: number; lineHeight: number };
+    weight: FontWeight;
+    heading: boolean;
+    tight: boolean;
+    cap: number;
+  }
 >;
 
 export type TextVariant = keyof typeof VARIANTS;

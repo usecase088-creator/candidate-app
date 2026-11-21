@@ -32,15 +32,6 @@ export function ApplicationDetailsScreen() {
   return (
     <Screen testID="application.screen" scroll>
       <View style={styles.stack}>
-        <Button
-          testID="application.back"
-          label="← Back"
-          accessibilityLabel="Back"
-          variant="ghost"
-          fullWidth={false}
-          onPress={back}
-        />
-
         {view === 'loading' && <DetailsSkeleton testID="application.loading" />}
 
         {view === 'offline' && (

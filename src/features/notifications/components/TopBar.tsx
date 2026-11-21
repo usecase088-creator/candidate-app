@@ -11,25 +11,31 @@ import { useIsSignedIn } from '@/features/auth/sessionStore';
 import { NotificationBell } from './NotificationBell';
 
 /**
- * Top bar of the four tabs: the brand on the left, the notification bell on the right (a signed-out visitor gets a
- * Sign in button instead, website Navbar). Takes the top safe area.
+ * Top bar of the four tabs (D32: one slim bar, 44 pt + the top inset). Home shows the wordmark; the other tabs show
+ * their title here, so no tab repeats a big title inside its content. On the right the notification bell, or a Sign in
+ * button for a visitor who is not signed in (website Navbar).
  */
-export function TopBar() {
+export function TopBar({ title }: { title?: string }) {
   const insets = useSafeAreaInsets();
   const signedIn = useIsSignedIn();
   return (
     <View testID="topbar" style={[styles.bar, { paddingTop: insets.top }]}>
-      <AppText
-        testID="topbar.brand"
-        variant="heading"
-        weight="bold"
-        color="primary"
-        numberOfLines={1}
-        maxFontSizeMultiplier={1.5}
-        style={styles.brand}
-      >
-        ApronHanger
-      </AppText>
+      {title ? (
+        <AppText testID="topbar.title" variant="heading" numberOfLines={1} style={styles.brand}>
+          {title}
+        </AppText>
+      ) : (
+        <AppText
+          testID="topbar.brand"
+          weight="bold"
+          color="primary"
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.5}
+          style={[styles.brand, styles.wordmark]}
+        >
+          ApronHanger
+        </AppText>
+      )}
       {signedIn ? (
         <NotificationBell />
       ) : (
@@ -54,10 +60,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingLeft: spacing['4'],
     paddingRight: spacing['2'],
-    minHeight: 56,
+    minHeight: 44,
     backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.separator,
   },
   brand: { flex: 1 },
+  wordmark: { fontSize: 17, lineHeight: 22, letterSpacing: -0.3 },
 });

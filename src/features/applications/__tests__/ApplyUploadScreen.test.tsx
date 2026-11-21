@@ -1,6 +1,7 @@
 import { useFonts } from 'expo-font';
+import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
-import { fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
+import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
 
 import { applicantMe, applied, jobQuestions } from '@/test/fixtures/applications';
@@ -87,7 +88,8 @@ describe('without a form CV', () => {
     await startSignedIn('/apply/job-2', 'apply.screen');
     await fireEvent.press(await screen.findByTestId('apply.choice.form'));
     await screen.findByTestId('apply.form.screen');
-    await fireEvent.press(screen.getByTestId('apply.form.back'));
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    await act(async () => router.back());
     expect(await screen.findByTestId('apply.screen')).toBeOnTheScreen();
   });
 });

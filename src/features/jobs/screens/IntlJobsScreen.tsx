@@ -14,7 +14,6 @@ import { colors, radius, spacing } from '@/theme/tokens';
 
 import { QueryStatus } from '../components/QueryStatus';
 import {
-  BackToOpportunities,
   DeadlineLine,
   ListingFooter,
   ListingHero,
@@ -53,7 +52,6 @@ export function IntlJobsScreen() {
 
   const header = (
     <View style={styles.header}>
-      <BackToOpportunities testID="intl.back" />
       <ListingHero
         testID="intl"
         title="🌍 International Healthcare Jobs"

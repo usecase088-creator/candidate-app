@@ -1,7 +1,5 @@
-import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/Text';
 import { type ColorToken, colors, radius, spacing } from '@/theme/tokens';
 
@@ -13,21 +11,6 @@ const DEADLINE_COLOR: Record<DeadlineInfo['kind'], ColorToken> = {
   soon: 'warningText',
   expired: 'errorText',
 };
-
-/** Back to Home, like the website's "Back to Opportunities" link. */
-export function BackToOpportunities({ testID }: { testID: string }) {
-  const router = useRouter();
-  return (
-    <Button
-      testID={testID}
-      label="← Back to Opportunities"
-      accessibilityLabel="Back to opportunities"
-      variant="ghost"
-      fullWidth={false}
-      onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-    />
-  );
-}
 
 /** Dark hero block of the gov and international screens: title, subtitle and the stat counters. */
 export function ListingHero({

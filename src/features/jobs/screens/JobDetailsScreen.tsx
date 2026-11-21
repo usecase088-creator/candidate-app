@@ -33,21 +33,11 @@ export function JobDetailsScreen() {
   const view = queryView(query);
   const job = query.data;
 
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const notFound = isApiError(query.error) && query.error.status === 404;
 
   return (
     <Screen testID="job.screen" scroll>
       <View style={styles.stack}>
-        <Button
-          testID="job.back"
-          label="← Back to opportunities"
-          accessibilityLabel="Back to opportunities"
-          variant="ghost"
-          fullWidth={false}
-          onPress={goBack}
-        />
-
         {view === 'loading' && <DetailsSkeleton />}
 
         {view === 'offline' && (

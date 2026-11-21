@@ -1,5 +1,6 @@
 import { onlineManager } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
+import { router } from 'expo-router';
 import * as Network from 'expo-network';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
@@ -113,7 +114,6 @@ describe('Apply chooser: content (website wording)', () => {
     setup();
     await open();
     await screen.findByText('Structured form');
-    expect(screen.getByLabelText('Back')).toBeOnTheScreen();
     expect(screen.getByLabelText('Edit & apply')).toBeOnTheScreen();
     expect(screen.getByLabelText('Upload & apply')).toBeOnTheScreen();
     expect(screen.getByLabelText('Quick Apply')).toBeOnTheScreen();
@@ -336,7 +336,8 @@ describe('Structured form card', () => {
     await open();
     await fireEvent.press(await screen.findByTestId('apply.choice.form'));
     await screen.findByTestId('apply.form.screen');
-    await fireEvent.press(screen.getByTestId('apply.form.back'));
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    await act(async () => router.back());
     expect(await screen.findByTestId('apply.screen')).toBeOnTheScreen();
   });
 });

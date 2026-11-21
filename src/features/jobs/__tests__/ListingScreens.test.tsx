@@ -1,5 +1,6 @@
 import { onlineManager } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
+import { router } from 'expo-router';
 import * as Network from 'expo-network';
 import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
 import * as WebBrowser from 'expo-web-browser';
@@ -233,10 +234,11 @@ describe('Government jobs', () => {
     expect(await screen.findByTestId('gov.card.g1')).toBeOnTheScreen();
   });
 
-  it('Back goes Home on a deep link', async () => {
+  it('a deep link still has Home underneath to go back to (native header, D32)', async () => {
     installJobsBackend({ gov: [aiims] });
     const app = await gov();
-    await fireEvent.press(await screen.findByRole('button', { name: 'Back to opportunities' }));
+    expect(screen.queryByRole('button', { name: /back to opportunities/i })).toBeNull();
+    await act(async () => router.back());
     await waitFor(() => expect(app.getPathname()).toBe('/'));
   });
 

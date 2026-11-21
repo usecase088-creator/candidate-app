@@ -1,5 +1,6 @@
 import { useFonts } from 'expo-font';
-import { fireEvent, screen, waitFor } from 'expo-router/testing-library';
+import { router } from 'expo-router';
+import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
 import { http, HttpResponse } from 'msw';
 import { Alert } from 'react-native';
 
@@ -52,7 +53,6 @@ const typePassword = async (value = 'Passw0rd!') =>
 describe('Delete account', () => {
   it('says what will happen', async () => {
     await open();
-    expect(screen.getByText('Delete account')).toBeOnTheScreen();
     expect(screen.getByTestId('delete.warning')).toHaveTextContent(/cannot be undone/);
     expect(screen.getByTestId('delete.warning')).toHaveTextContent(/applications/);
     // What the hospitals keep (docs/store/ACCOUNT-DELETION-DATA.md section 3): Apple asks apps to say what is retained.
@@ -136,11 +136,12 @@ describe('Delete account', () => {
     expect(await secureStorage.getItem(TOKEN_KEY)).not.toBeNull();
   });
 
-  it('is reached from Settings, and Back returns', async () => {
+  it('is reached from Settings, and the system back returns', async () => {
     await startSignedIn('/settings', 'settings.screen');
     await fireEvent.press(screen.getByTestId('settings.delete'));
     expect(await screen.findByTestId('delete.screen')).toBeOnTheScreen();
-    await fireEvent.press(screen.getByTestId('delete.back'));
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    await act(async () => router.back());
     expect(await screen.findByTestId('settings.screen')).toBeOnTheScreen();
   });
 });

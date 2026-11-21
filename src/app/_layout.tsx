@@ -14,7 +14,12 @@ import { getEnv } from '@/lib/env';
 import { appQueryClient, setupFocusManager, setupOnlineManager } from '@/lib/queryClient';
 import { secureStorage } from '@/lib/secureStorage';
 import { initSentry, reportApiError, sendInstallCheckEvent } from '@/lib/sentry';
+import { PUSHED_SCREEN_TITLES } from '@/features/navigation/pushedScreens';
 import { FontGate } from '@/theme/FontGate';
+import { colors, fonts, fontSizes } from '@/theme/tokens';
+
+// A deep link to a pushed screen (job, application, settings...) still has the tabs underneath, so Back works (D32).
+export const unstable_settings = { anchor: '(tabs)' };
 
 // Splash stays until fonts are loaded and the stored session has been checked (FontGate holdSplash).
 void SplashScreen.preventAutoHideAsync();
@@ -57,7 +62,25 @@ export default function RootLayout() {
                 While restoring they render nothing and the splash stays on top. */}
             <UpdateGate>
               <PushListener />
-              <Stack screenOptions={{ headerShown: false }} />
+              {/* D32: pushed screens use the native header (system back chevron + title); the tabs and the auth
+                  screens draw their own chrome. */}
+              <Stack
+                screenOptions={{
+                  headerShown: true,
+                  headerBackButtonDisplayMode: 'minimal',
+                  headerTintColor: colors.brand,
+                  headerShadowVisible: false,
+                  headerStyle: { backgroundColor: colors.surface },
+                  headerTitleStyle: { fontFamily: fonts.semibold, fontSize: fontSizes.xl.fontSize, color: colors.foreground },
+                  contentStyle: { backgroundColor: colors.background },
+                }}
+              >
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                {Object.entries(PUSHED_SCREEN_TITLES).map(([name, title]) => (
+                  <Stack.Screen key={name} name={name} options={{ title }} />
+                ))}
+              </Stack>
             </UpdateGate>
           </ToastProvider>
         </FontGate>

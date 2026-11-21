@@ -1,5 +1,6 @@
 import { onlineManager } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
+import { router } from 'expo-router';
 import * as Network from 'expo-network';
 import * as WebBrowser from 'expo-web-browser';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
@@ -70,7 +71,9 @@ describe('Application details: content', () => {
     await startSignedIn('/applications', 'applications.screen');
     await fireEvent.press(await screen.findByTestId(`application.row.${applied.id}`));
     await screen.findByTestId('application.screen');
-    await fireEvent.press(screen.getByTestId('application.back'));
+    // D32: no in-content Back button; the native header's back pops the screen.
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    await act(async () => router.back());
     expect(await screen.findByTestId('applications.screen')).toBeOnTheScreen();
   });
 

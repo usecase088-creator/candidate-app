@@ -19,15 +19,8 @@ import { answersForSubmit, validateAnswers } from '../logic/customFields';
 
 export function ApplyChooserScreen() {
   const { jobId } = useLocalSearchParams<{ jobId: string }>();
-  const router = useRouter();
   return (
-    <ApplyFrame
-      prefix="apply"
-      jobId={jobId}
-      onBack={() =>
-        router.canGoBack() ? router.back() : router.replace({ pathname: '/job/[id]', params: { id: jobId } })
-      }
-    >
+    <ApplyFrame prefix="apply" jobId={jobId}>
       {(ready) => <Chooser {...ready} />}
     </ApplyFrame>
   );

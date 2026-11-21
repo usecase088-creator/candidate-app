@@ -42,9 +42,6 @@ export function ApplicationsScreen() {
 
   const header = (
     <View style={styles.header}>
-      <AppText variant="title" accessibilityRole="header">
-        My Applications
-      </AppText>
       {view === 'ready' && (
         <>
           <AppText testID="applications.count" color="mutedForeground">

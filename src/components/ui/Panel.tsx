@@ -37,7 +37,13 @@ export function Panel({ testID, tone, icon, title, children, actions }: PanelPro
     <View testID={testID} accessible={false} style={[styles.box, { backgroundColor: colors[t.fill] }]}>
       <View style={styles.header}>
         {icon ? (
-          <Icon testID={`${testID}.icon`} name={icon} size={20} tintColor={colors[t.icon]} style={styles.icon} />
+          <Icon
+            testID={`${testID}.icon`}
+            name={icon}
+            size={20}
+            tintColor={colors[t.icon]}
+            style={styles.icon}
+          />
         ) : null}
         <AppText testID={`${testID}.title`} variant="heading" color="foreground" style={styles.title}>
           {title}

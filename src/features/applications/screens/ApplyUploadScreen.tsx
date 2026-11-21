@@ -31,7 +31,6 @@ export function ApplyUploadScreen() {
     <ApplyFrame
       prefix="apply.upload"
       jobId={jobId}
-      onBack={back}
       appliedMessage={(job) => `You have already submitted an application for ${job.role}.`}
     >
       {(ready) =>

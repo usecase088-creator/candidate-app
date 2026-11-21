@@ -15,7 +15,9 @@ afterEach(() => jest.clearAllMocks());
 // fullWidth={false} really hugs, press feedback through PressableScale, haptic by meaning.
 describe('Button (D32)', () => {
   it('hugs its label when fullWidth is false (was a no-op: the "← Back" ghost buttons stretched and centred)', async () => {
-    await renderWithProviders(<Button testID="b" label="Back" fullWidth={false} variant="ghost" onPress={() => {}} />);
+    await renderWithProviders(
+      <Button testID="b" label="Back" fullWidth={false} variant="ghost" onPress={() => {}} />,
+    );
     expect(flat(screen.getByTestId('b').props.style).alignSelf).toBe('flex-start');
   });
 
@@ -51,7 +53,9 @@ describe('Button (D32)', () => {
   });
 
   it('destructiveText is red text on nothing', async () => {
-    await renderWithProviders(<Button testID="b" label="Delete account" variant="destructiveText" onPress={() => {}} />);
+    await renderWithProviders(
+      <Button testID="b" label="Delete account" variant="destructiveText" onPress={() => {}} />,
+    );
     expect(flat(screen.getByTestId('b').props.style).backgroundColor).toBe('transparent');
     expect(flat(screen.getByText('Delete account').props.style).color).toBe(colors.errorText);
   });
@@ -85,7 +89,12 @@ describe('Button (D32)', () => {
 
   it('can show a leading icon', async () => {
     await renderWithProviders(
-      <Button testID="b" label="Save job" icon={{ ios: 'bookmark', android: 'bookmark' }} onPress={() => {}} />,
+      <Button
+        testID="b"
+        label="Save job"
+        icon={{ ios: 'bookmark', android: 'bookmark' }}
+        onPress={() => {}}
+      />,
     );
     expect(screen.getByTestId('b.icon')).toBeOnTheScreen();
   });

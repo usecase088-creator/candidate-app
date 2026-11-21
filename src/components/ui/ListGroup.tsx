@@ -23,7 +23,13 @@ export type ListGroupProps = {
  * D32 grouped list. iOS: white container, radius 12, hairline border, separators inset. Android: flat, separators full
  * width. The platform look lives in listGroupStyle.ios.ts / .android.ts.
  */
-export function ListGroup({ testID, header, footer, separatorInset = spacing['4'], children }: ListGroupProps) {
+export function ListGroup({
+  testID,
+  header,
+  footer,
+  separatorInset = spacing['4'],
+  children,
+}: ListGroupProps) {
   const rows = Children.toArray(children).filter(isValidElement);
   const inset = listGroupStyle.insetSeparators ? separatorInset : 0;
   return (
@@ -38,7 +44,12 @@ export function ListGroup({ testID, header, footer, separatorInset = spacing['4'
         ))}
       </View>
       {footer ? (
-        <AppText testID={`${testID}.footer`} variant="secondary" color="mutedForeground" style={styles.footer}>
+        <AppText
+          testID={`${testID}.footer`}
+          variant="secondary"
+          color="mutedForeground"
+          style={styles.footer}
+        >
           {footer}
         </AppText>
       ) : null}

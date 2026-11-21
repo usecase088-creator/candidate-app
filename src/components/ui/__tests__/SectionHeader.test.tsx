@@ -28,7 +28,11 @@ describe('SectionHeader', () => {
   it('renders the action as a brand text button with its own testID and calls it', async () => {
     const onPress = jest.fn();
     await renderWithProviders(
-      <SectionHeader testID="h" title="Recent" action={{ label: 'See all', onPress, testID: 'home.recent.seeAll' }} />,
+      <SectionHeader
+        testID="h"
+        title="Recent"
+        action={{ label: 'See all', onPress, testID: 'home.recent.seeAll' }}
+      />,
     );
     const button = screen.getByRole('button', { name: 'See all' });
     expect(button).toHaveProp('testID', 'home.recent.seeAll');

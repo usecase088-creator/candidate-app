@@ -1,10 +1,5 @@
 import { useCallback, useState } from 'react';
-import {
-  StyleSheet,
-  TextInput,
-  type TextInputProps,
-  View,
-} from 'react-native';
+import { StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
 
 import { colors, fonts, fontSizes, radius, spacing } from '@/theme/tokens';
 

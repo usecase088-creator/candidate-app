@@ -39,17 +39,6 @@ export function NotificationsScreen() {
   return (
     <Screen testID="notifications.screen" scroll>
       <View style={styles.stack}>
-        <Button
-          testID="notifications.back"
-          label="← Back"
-          accessibilityLabel="Back"
-          variant="ghost"
-          fullWidth={false}
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/profile'))}
-        />
-        <AppText variant="title" accessibilityRole="header">
-          Notifications
-        </AppText>
         {view === 'loading' && <Skeleton testID="notifications.loading" width="100%" height={72} />}
         {(view === 'error' || view === 'offline') && (
           <ErrorState

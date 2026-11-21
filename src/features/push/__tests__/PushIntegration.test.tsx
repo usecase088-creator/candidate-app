@@ -81,7 +81,7 @@ describe('tapping a notification', () => {
     await secureStorage.setItem(TOKEN_KEY, 'stored-token');
     server.use(http.get(`${API}/api/auth/me`, () => HttpResponse.json(meResponse)));
     await renderRouter(appRoutes, { initialUrl: '/profile' });
-    expect(await screen.findByTestId('saved.back')).toBeOnTheScreen();
+    expect(await screen.findByTestId('saved.screen')).toBeOnTheScreen();
   });
 });
 

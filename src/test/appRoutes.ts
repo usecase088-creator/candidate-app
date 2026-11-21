@@ -1,5 +1,5 @@
 // The real route files, for renderRouter in screen and navigation tests.
-import AuthLayout from '@/app/(auth)/_layout';
+import * as AuthLayout from '@/app/(auth)/_layout';
 import ForgotPassword from '@/app/(auth)/forgot-password';
 import Login from '@/app/(auth)/login';
 import Signup from '@/app/(auth)/signup';
@@ -21,7 +21,7 @@ import Notifications from '@/app/notifications';
 import ProfileBuilder from '@/app/profile-builder';
 import SavedJobs from '@/app/saved-jobs';
 import Settings from '@/app/settings';
-import RootLayout from '@/app/_layout';
+import * as RootLayout from '@/app/_layout';
 
 export const appRoutes = {
   _layout: RootLayout,

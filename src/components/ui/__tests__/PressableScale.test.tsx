@@ -73,7 +73,10 @@ describe('PressableScale', () => {
       const el = screen.getByTestId('a');
       await fireEvent(el, 'pressIn');
       jest.advanceTimersByTime(2000);
-      expect(el).toHaveAnimatedStyle({ transform: [{ scale: motion.pressScale }], opacity: motion.pressOpacity });
+      expect(el).toHaveAnimatedStyle({
+        transform: [{ scale: motion.pressScale }],
+        opacity: motion.pressOpacity,
+      });
       await fireEvent(el, 'pressOut');
       jest.advanceTimersByTime(2000);
       expect(el).toHaveAnimatedStyle({ transform: [{ scale: 1 }], opacity: 1 });

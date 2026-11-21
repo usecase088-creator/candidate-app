@@ -37,7 +37,16 @@ describe('tintFor', () => {
   });
 
   it('spreads different names over more than one tint', () => {
-    const names = ['Apollo', 'Fortis', 'Max Healthcare', 'Manipal', 'Narayana', 'Medanta', 'AIIMS', 'Seed City'];
+    const names = [
+      'Apollo',
+      'Fortis',
+      'Max Healthcare',
+      'Manipal',
+      'Narayana',
+      'Medanta',
+      'AIIMS',
+      'Seed City',
+    ];
     expect(new Set(names.map((n) => tintFor(n).bg)).size).toBeGreaterThan(1);
   });
 });
@@ -115,7 +124,7 @@ describe('LogoTile', () => {
 
   it('hides the image and keeps the initials when the image fails to load', async () => {
     await renderWithProviders(<LogoTile testID="logo" name={NAME} uri="https://cdn.example/broken.png" />);
-    fireEvent(screen.getByTestId('logo.image'), 'error', { nativeEvent: { error: 'not found' } });
+    await fireEvent(screen.getByTestId('logo.image'), 'error', { nativeEvent: { error: 'not found' } });
     expect(screen.queryByTestId('logo.image')).toBeNull();
     expect(screen.queryByTestId('logo.ring')).toBeNull();
     expect(screen.getByTestId('logo.initials')).toHaveTextContent('SC');
@@ -125,9 +134,9 @@ describe('LogoTile', () => {
     const { rerender } = await renderWithProviders(
       <LogoTile testID="logo" name={NAME} uri="https://cdn.example/broken.png" />,
     );
-    fireEvent(screen.getByTestId('logo.image'), 'error', { nativeEvent: { error: 'not found' } });
+    await fireEvent(screen.getByTestId('logo.image'), 'error', { nativeEvent: { error: 'not found' } });
     expect(screen.queryByTestId('logo.image')).toBeNull();
-    rerender(<LogoTile testID="logo" name={NAME} uri="https://cdn.example/fixed.png" />);
+    await rerender(<LogoTile testID="logo" name={NAME} uri="https://cdn.example/fixed.png" />);
     expect(screen.getByTestId('logo.image')).toHaveProp('source', [{ uri: 'https://cdn.example/fixed.png' }]);
   });
 

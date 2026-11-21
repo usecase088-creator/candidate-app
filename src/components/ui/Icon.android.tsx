@@ -6,5 +6,7 @@ import { useWindowDimensions } from 'react-native';
 
 export function Icon({ size = 24, style, ...props }: SymbolViewProps) {
   const { fontScale } = useWindowDimensions();
-  return <SymbolView {...props} size={size / (fontScale || 1)} style={[{ width: size, height: size }, style]} />;
+  return (
+    <SymbolView {...props} size={size / (fontScale || 1)} style={[{ width: size, height: size }, style]} />
+  );
 }

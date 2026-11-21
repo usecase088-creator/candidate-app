@@ -14,21 +14,9 @@ import { spacing } from '@/theme/tokens';
 export function SettingsScreen() {
   const router = useRouter();
   const signOut = useSession((s) => s.signOut);
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/profile'));
   return (
     <Screen testID="settings.screen" scroll>
       <View style={styles.stack}>
-        <Button
-          testID="settings.back"
-          label="← Back"
-          accessibilityLabel="Back"
-          variant="ghost"
-          fullWidth={false}
-          onPress={goBack}
-        />
-        <AppText variant="title" accessibilityRole="header">
-          Settings
-        </AppText>
         <PushSettings />
         <Button
           testID="settings.privacy"

@@ -6,7 +6,13 @@ import { haptic } from '../haptics';
 jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium' },
   NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
-  AndroidHaptics: { Segment_Tick: 'segTick', Confirm: 'confirm', Reject: 'reject', Context_Click: 'ctx', Toggle_On: 'toggleOn' },
+  AndroidHaptics: {
+    Segment_Tick: 'segTick',
+    Confirm: 'confirm',
+    Reject: 'reject',
+    Context_Click: 'ctx',
+    Toggle_On: 'toggleOn',
+  },
   selectionAsync: jest.fn(() => Promise.resolve()),
   impactAsync: jest.fn(() => Promise.resolve()),
   notificationAsync: jest.fn(() => Promise.resolve()),

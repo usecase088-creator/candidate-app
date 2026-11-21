@@ -25,22 +25,10 @@ export function SavedJobsScreen() {
 
   const jobs = useMemo(() => (query.data ?? []).map((s) => s.job), [query.data]);
   const savedIds = useMemo(() => new Set(jobs.map((j) => j.id)), [jobs]);
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const browse = () => router.navigate('/');
 
   const header = (
     <View style={styles.header}>
-      <Button
-        testID="saved.back"
-        label="← Back"
-        accessibilityLabel="Back"
-        variant="ghost"
-        fullWidth={false}
-        onPress={goBack}
-      />
-      <AppText variant="title" accessibilityRole="header">
-        Saved jobs
-      </AppText>
       {view === 'ready' && (
         <AppText testID="saved.count" color="mutedForeground">
           {`${jobs.length} role${jobs.length !== 1 ? 's' : ''} bookmarked for later`}

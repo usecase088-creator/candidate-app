@@ -10,14 +10,7 @@ import { PressableScale } from './PressableScale';
 import { AppText } from './Text';
 
 export type ButtonVariant =
-  | 'primary'
-  | 'brand'
-  | 'secondary'
-  | 'outline'
-  | 'ghost'
-  | 'destructive'
-  | 'destructiveText'
-  | 'gradient';
+  'primary' | 'brand' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'destructiveText' | 'gradient';
 export type ButtonSize = 'lg' | 'md' | 'sm';
 
 type VariantStyle = { bg: ColorToken | 'transparent'; fg: ColorToken; border?: ColorToken };
@@ -136,6 +129,14 @@ const styles = StyleSheet.create({
   content: { flexDirection: 'row', alignItems: 'center', gap: spacing['2'], flexShrink: 1 },
   // Loading keeps the width: the label stays in layout, invisible, and the spinner sits over it.
   invisible: { opacity: 0 },
-  spinner: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
+  spinner: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   disabledText: { opacity: 0.5 },
 });

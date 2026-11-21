@@ -19,7 +19,6 @@ export function ApplyFormScreen() {
     <ApplyFrame
       prefix="apply.form"
       jobId={jobId}
-      onBack={back}
       appliedMessage={(job) => `You have already submitted an application for ${job.role}.`}
     >
       {({ job }) => (

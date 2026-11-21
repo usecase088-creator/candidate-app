@@ -25,7 +25,13 @@ describe('ListRow', () => {
     await renderWithProviders(
       <>
         <ListRow testID="a" title="Language" value="English" onPress={() => {}} />
-        <ListRow testID="b" title="Mobile" value="+91" accessibilityLabel="Mobile number, verified" onPress={() => {}} />
+        <ListRow
+          testID="b"
+          title="Mobile"
+          value="+91"
+          accessibilityLabel="Mobile number, verified"
+          onPress={() => {}}
+        />
       </>,
     );
     expect(screen.getByRole('button', { name: 'Language, English' })).toBeOnTheScreen();
@@ -56,7 +62,12 @@ describe('ListRow', () => {
     await renderWithProviders(
       <>
         <ListRow testID="a" title="No chevron" trailing="none" onPress={() => {}} />
-        <ListRow testID="b" title="Custom" trailing={<Text testID="b.switch">switch</Text>} onPress={() => {}} />
+        <ListRow
+          testID="b"
+          title="Custom"
+          trailing={<Text testID="b.switch">switch</Text>}
+          onPress={() => {}}
+        />
       </>,
     );
     expect(screen.queryByTestId('a.chevron')).toBeNull();
@@ -90,8 +101,15 @@ describe('ListRow', () => {
     );
     const a = screen.getByTestId('a.title');
     expect(a).toHaveProp('numberOfLines', 1);
-    expect(flat(a.props.style)).toMatchObject({ fontSize: 15, fontFamily: fonts.medium, color: colors.foreground });
-    expect(flat(screen.getByTestId('b.title').props.style)).toMatchObject({ fontSize: 16, fontFamily: fonts.semibold });
+    expect(flat(a.props.style)).toMatchObject({
+      fontSize: 15,
+      fontFamily: fonts.medium,
+      color: colors.foreground,
+    });
+    expect(flat(screen.getByTestId('b.title').props.style)).toMatchObject({
+      fontSize: 16,
+      fontFamily: fonts.semibold,
+    });
   });
 
   it('paints a destructive title in errorText', async () => {
