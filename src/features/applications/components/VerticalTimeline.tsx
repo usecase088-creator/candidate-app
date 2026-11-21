@@ -46,10 +46,15 @@ export function VerticalTimeline({ testID, application: a }: { testID: string; a
         const date = stageDate(i, a);
         const last = view.kind === 'steps' && i === rows - 1;
         return (
-          <View key={name} testID={`${testID}.row.${i}`} style={styles.row}>
+          <View key={name} testID={`${testID}.row.${i}`} style={[styles.row, !last && styles.rowStep]}>
             <View style={styles.spine}>
               <Node testID={`${testID}.node.${i}`} state={state} tone={tone} />
-              {!last && <View style={[styles.rail, state === 'done' ? styles.railDone : styles.railTodo]} />}
+              {!last && (
+                <View
+                  testID={`${testID}.rail.${i}`}
+                  style={[styles.rail, state === 'done' ? styles.railDone : styles.railTodo]}
+                />
+              )}
             </View>
             <View style={[styles.text, !last && styles.textGap]}>
               <AppText variant="label" color={state === 'todo' ? 'mutedForeground' : 'foreground'}>
@@ -120,6 +125,8 @@ function Node({ testID, state, tone }: { testID: string; state: NodeState; tone:
 const styles = StyleSheet.create({
   list: {},
   row: { flexDirection: 'row', gap: spacing['3'] },
+  // Every stage before the last is at least 48 pt, so the rail segments are even with or without a date line.
+  rowStep: { minHeight: 48 },
   spine: { width: NODE, alignItems: 'center' },
   // Centred on the 20-pt first text line.
   node: {
@@ -134,7 +141,8 @@ const styles = StyleSheet.create({
   nodeTodo: { borderWidth: 1.5, borderColor: colors.separator, backgroundColor: colors.surface },
   nodeTerminalDanger: { backgroundColor: colors.destructive },
   nodeTerminalMuted: { backgroundColor: colors.mutedForeground },
-  rail: { flex: 1, width: 2, marginVertical: spacing['1'], borderRadius: radius.full },
+  // A 2-pt gap at each node keeps the rail reading as one continuous line.
+  rail: { flex: 1, width: 2, marginVertical: 2, borderRadius: radius.full },
   railDone: { backgroundColor: colors.brand },
   railTodo: { backgroundColor: colors.separator },
   text: { flex: 1, gap: spacing['0.5'] },

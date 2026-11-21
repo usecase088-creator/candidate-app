@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import type { Job } from '@/api/schemas/jobs';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +12,11 @@ import { colors, radius, shadows, spacing } from '@/theme/tokens';
 
 import { formatLPA } from '../logic/format';
 import type { MatchedJob } from '../logic/match';
+import { MatchRing } from './MatchRing';
+
+const SPARKLES = { ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' } as const;
+const SEAL = { ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' } as const;
+const CARD_WIDTH = 240;
 
 type Props = {
   jobs: MatchedJob[];
@@ -21,21 +26,21 @@ type Props = {
 };
 
 /**
- * Website RecommendedRail. D32: no panel around it; a section header, then borderless white cards that bleed to the
- * screen edges, each with the logo, the match as a pill, the role and one meta line. The prompt's "Build my CV"
- * button opens the profile form.
+ * Website RecommendedRail. D32: no panel around it; a small brand "Matched to your profile" pill and the section
+ * header, then borderless white cards that bleed to the screen edges, each with the logo, the match as an animated
+ * ring, the role, the hospital with its seal right after the name, and one meta line. A single card takes the full
+ * content width. The prompt's "Build my CV" button opens the profile form.
  */
 export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
   const router = useRouter();
+  const { width: windowWidth } = useWindowDimensions();
+  // One card alone would leave a third of the row empty: it takes the content width (16-pt margins) instead.
+  const cardWidth = jobs.length === 1 ? windowWidth - spacing['4'] * 2 : CARD_WIDTH;
   if (jobs.length === 0) {
     if (!showPrompt) return null;
     return (
       <View testID="recommended.prompt" style={styles.prompt}>
-        <Icon
-          name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
-          tintColor={colors.brand}
-          size={22}
-        />
+        <Icon name={SPARKLES} tintColor={colors.brand} size={22} />
         <AppText variant="heading" align="center">
           Unlock personalised recommendations
         </AppText>
@@ -58,16 +63,7 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
     <View testID="recommended.rail" style={styles.section}>
       {/* Website order: the tag, then the heading (side by side they wrapped at 320 pt). */}
       <View style={styles.heading}>
-        <View style={styles.tag}>
-          <Icon
-            name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
-            tintColor={colors.brand}
-            size={12}
-          />
-          <AppText variant="caption" color="brand">
-            Matched to your profile
-          </AppText>
-        </View>
+        <Pill testID="recommended.tag" label="Matched to your profile" tone="brand" icon={SPARKLES} />
         <AppText variant="heading">Recommended for you</AppText>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
@@ -77,7 +73,7 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
             testID={`recommended.job.${j.id}`}
             accessibilityLabel={`${j.role} at ${j.hospital}, ${j.matchPercent}% match`}
             onPress={() => onOpen(j)}
-            style={styles.card}
+            style={[styles.card, { width: cardWidth }]}
           >
             <View style={styles.cardTop}>
               <LogoTile
@@ -86,23 +82,19 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
                 uri={j.hospitalLogoUrl}
                 size={40}
               />
-              <Pill
-                testID={`recommended.match.${j.id}`}
-                label={`${j.matchPercent}% match`}
-                tone="brand"
-                tabular
-              />
+              <MatchRing testID={`recommended.match.${j.id}`} value={j.matchPercent} size={36} />
             </View>
             <AppText variant="rowTitle" numberOfLines={2}>
               {j.role}
             </AppText>
             <View style={styles.hospital}>
-              <AppText variant="secondary" numberOfLines={1} style={styles.flex}>
+              <AppText variant="secondary" numberOfLines={1} style={styles.shrink}>
                 {j.hospital}
               </AppText>
               {j.hospitalVerified ? (
                 <Icon
-                  name={{ ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' }}
+                  testID={`recommended.verified.${j.id}`}
+                  name={SEAL}
                   tintColor={colors.brand}
                   size={14}
                 />
@@ -125,11 +117,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing['4'],
     paddingBottom: spacing['2'],
   },
-  flex: { flex: 1 },
-  tag: { flexDirection: 'row', alignItems: 'center', gap: spacing['1'] },
+  shrink: { flexShrink: 1 },
   row: { gap: spacing['3'], paddingHorizontal: spacing['4'], paddingVertical: spacing['2'] },
   card: {
-    width: 240,
     gap: spacing['1'],
     backgroundColor: colors.surface,
     borderRadius: radius.md,

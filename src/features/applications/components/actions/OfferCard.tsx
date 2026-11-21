@@ -1,6 +1,7 @@
 // Offer Letter Received and Joining Date (website: CandidateActionCard.tsx). The website's "View Offer Letter" opens the
 // home page; the app opens the letter, and can also download and share it. Reject asks once more (D26): it is final.
-// D32: success panel, the letter as a document row with a share button, one full-width primary, Reject as red text.
+// D32: the panel wears the status tone (amber: the offer needs an answer; green once joining is confirmed), the letter
+// as a document row with a share button, one full-width primary, Reject as red text.
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
@@ -56,7 +57,7 @@ export function OfferCard({ application: a }: { application: Application }) {
   };
 
   return (
-    <CardFrame tone="success" icon={OFFER} title="Offer Letter Received">
+    <CardFrame status={a.status} icon={OFFER} title="Offer Letter Received">
       <View style={styles.body}>
         <AppText>Congratulations! The hospital has sent you an offer letter.</AppText>
         {letter ? (
@@ -69,7 +70,7 @@ export function OfferCard({ application: a }: { application: Application }) {
               onPress={() => void run('view', openOfferLetter)}
               style={styles.letter}
             >
-              <Icon name={PDF} size={22} tintColor={colors.successText} />
+              <Icon name={PDF} size={22} tintColor={colors.amberText} />
               <View style={styles.letterText}>
                 <AppText variant="label" numberOfLines={2}>
                   View Offer Letter
@@ -127,7 +128,7 @@ export function OfferCard({ application: a }: { application: Application }) {
 
 export function JoiningCard({ application: a }: { application: Application }) {
   return (
-    <CardFrame tone="success" icon={CELEBRATE} title="Joining Date">
+    <CardFrame status={a.status} icon={CELEBRATE} title="Joining Date">
       <View style={styles.body}>
         <AppText testID="action.joining.text">
           {'Your joining date is '}

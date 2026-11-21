@@ -3,7 +3,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import * as WebBrowser from 'expo-web-browser';
 import { delay, http, HttpResponse } from 'msw';
-import { Alert, Linking } from 'react-native';
+import { Alert, Linking, StyleSheet } from 'react-native';
 
 import { ApplicationSchema } from '@/api/schemas/applications';
 import * as Sharing from 'expo-sharing';
@@ -21,6 +21,7 @@ import { API } from '@/test/msw/handlers';
 import { server } from '@/test/msw/server';
 import { fireEvent, renderWithProviders, screen, waitFor, within } from '@/test/render';
 import { installXhrOverFetch } from '@/test/xhrOverFetch';
+import { colors } from '@/theme/tokens';
 
 import { ActionCard } from '../ActionCard';
 
@@ -75,6 +76,21 @@ function confirmAlert(buttonText: string) {
   };
 }
 
+describe('panel colour (D32: one meaning per colour, the same as the status pill)', () => {
+  // The interview and offer panels were blue and green while their pills were amber: the panel now follows statusTone.
+  it.each([
+    ['interview invitation: amber (needs you)', interviewVirtual, colors.amberSoft],
+    ['documents requested: amber (needs you)', documentsRequested, colors.amberSoft],
+    ['offer sent: amber (needs you)', offerSent, colors.amberSoft],
+    ['documents submitted: blue (waiting)', documentsUploaded, colors.skySoft],
+    ['joining confirmed: green (done)', joiningConfirmed, colors.successSoft],
+  ])('%s', async (_name, row, fill) => {
+    await show(row);
+    const panel = screen.getByTestId('action.card');
+    expect(StyleSheet.flatten(panel.props.style).backgroundColor).toBe(fill);
+  });
+});
+
 describe('no card', () => {
   it.each([[applied], [{ ...applied, status: 'Rejected' }], [{ ...applied, status: 'InterviewAccepted' }]])(
     '%#: nothing is shown',
@@ -92,8 +108,14 @@ describe('interview', () => {
     expect(screen.getByText('30 Oct 2026, 7:30 pm')).toBeOnTheScreen();
     expect(screen.getByText('Virtual')).toBeOnTheScreen();
     expect(screen.getByText('Dr. Seed Interviewer')).toBeOnTheScreen();
-    expect(screen.getByText('Link:')).toBeOnTheScreen();
-    await fireEvent.press(screen.getByTestId('action.interview.join'));
+    // D32: no "Link:" label and no white row inside the panel; Join Meeting is a full-width secondary button.
+    expect(screen.queryByText('Link:')).not.toBeOnTheScreen();
+    const join = screen.getByTestId('action.interview.join');
+    expect(join.props.accessibilityRole).toBe('button');
+    expect(within(join).getByText('Join Meeting')).toBeOnTheScreen();
+    expect(screen.getByTestId('action.interview.join.icon')).toBeOnTheScreen();
+    expect(StyleSheet.flatten(join.props.style).alignSelf).toBe('stretch');
+    await fireEvent.press(join);
     expect(browser).toHaveBeenCalledWith('https://example.org/meet/seed-interview');
   });
 

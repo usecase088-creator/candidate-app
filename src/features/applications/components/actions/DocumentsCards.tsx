@@ -1,7 +1,7 @@
 // Document request and "Documents Submitted" (website: CandidateActionCard.tsx). Files come from the phone's file
 // picker, photo picker or camera; type and size are checked on the phone first (the server answers 500 for a big file).
-// D32: warning panel (needs you) for the request, info panel (waiting) once submitted; the file chooser is the shared
-// FilePickerField; the Upload button appears once a file is chosen (the Maestro flow scrolls to it then).
+// D32: the panel wears the status tone: amber (needs you) for the request, blue (waiting) once submitted; the file
+// chooser is the shared FilePickerField; the Upload button appears once a file is chosen (the Maestro flow scrolls to it).
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -67,7 +67,7 @@ export function DocumentsRequestCard({ application: a }: { application: Applicat
   };
 
   return (
-    <CardFrame tone="warning" icon={DOC} title="Document Request">
+    <CardFrame status={a.status} icon={DOC} title="Document Request">
       <View style={styles.body}>
         <AppText>
           The hospital has requested the following documents to proceed with your application:
@@ -153,7 +153,7 @@ export function DocumentsRequestCard({ application: a }: { application: Applicat
 export function DocumentsSubmittedCard({ application: a }: { application: Application }) {
   const openLink = useOpenLink();
   return (
-    <CardFrame tone="info" icon={DOC} title="Documents Submitted">
+    <CardFrame status={a.status} icon={DOC} title="Documents Submitted">
       <View style={styles.body}>
         <AppText>
           {

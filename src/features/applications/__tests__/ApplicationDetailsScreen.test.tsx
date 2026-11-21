@@ -58,6 +58,24 @@ describe('Application details: content', () => {
     expect(screen.getByText('Application received by hospital')).toBeOnTheScreen();
   });
 
+  it('D32 round 2: the native header says "Application"; the role is said once, by the hero title', async () => {
+    setup([applied]);
+    await open(applied.id);
+    expect(await screen.findByRole('header', { name: 'ICU Nurse' })).toBeOnTheScreen();
+    // The native header is not drawn in Jest; its config node carries the title the header will show.
+    const titles: unknown[] = [];
+    type Node = { type?: string; props?: { title?: unknown }; children?: unknown[] | null };
+    const walk = (n: unknown) => {
+      if (!n || typeof n !== 'object') return;
+      if (Array.isArray(n)) return n.forEach(walk);
+      const node = n as Node;
+      if (node.type === 'RNSScreenStackHeaderConfig') titles.push(node.props?.title);
+      node.children?.forEach(walk);
+    };
+    walk(screen.toJSON());
+    expect(titles.at(-1)).toBe('Application');
+  });
+
   it('D32: the action panel comes first, then the vertical timeline with its dates, then View job as a row', async () => {
     setup([interviewVirtual]);
     await open(interviewVirtual.id);

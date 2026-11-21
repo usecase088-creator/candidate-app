@@ -156,9 +156,9 @@ export function timelineStep(status: string): number {
   return 1;
 }
 
-/** "Step 3 of 5 · Interview": the bar caption and the spoken progress. */
+/** "Step 3 of 5": the bar caption. The stage name is left to the status pill next to it (D32 round 2). */
 export function stepLabel(current: number): string {
-  return `Step ${current + 1} of ${TIMELINE_STEPS.length} · ${TIMELINE_STEPS[current] ?? ''}`;
+  return `Step ${current + 1} of ${TIMELINE_STEPS.length}`;
 }
 
 export type TimelineView =
@@ -181,6 +181,16 @@ export function lastUpdateText(status: string): string {
   if (status === 'JobClosed') return 'This job posting has been closed by the recruiter';
   if (status === 'New' || status === 'Applied') return 'Application received by hospital';
   return `Status updated to ${statusLabel(status)}`;
+}
+
+/**
+ * The last-update line of a list card, only when it adds something to the pill (D32 round 2): "Status updated to X"
+ * under an X pill is dropped, and so is the closed sentence the progress line already says.
+ */
+export function cardUpdateText(status: string): string | undefined {
+  if (timelineView(status).kind === 'message') return undefined;
+  const text = lastUpdateText(status);
+  return text === `Status updated to ${statusLabel(status)}` ? undefined : text;
 }
 
 /** Newest first by applied date; rows without a date go last. The input is not changed. */

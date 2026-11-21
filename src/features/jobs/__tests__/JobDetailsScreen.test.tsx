@@ -257,6 +257,17 @@ describe('Job details: D32 layout', () => {
     const panel = await screen.findByTestId('job.match');
     expect(within(panel).getByText('Match insights')).toBeOnTheScreen();
     expect(within(panel).getByText("Your profile matches 82% of this role's criteria.")).toBeOnTheScreen();
+    // D32 signature touch: the score as a 44-pt animated ring inside the panel.
+    const ring = within(panel).getByTestId('job.match.ring');
+    expect(ring.props.accessibilityLabel).toBe('82% match');
+    expect(StyleSheet.flatten(ring.props.style).width).toBe(44);
+  });
+
+  it('no match score: no ring, only the website sentence', async () => {
+    installJobsBackend({ jobs: [{ ...full, matchPercent: null }] });
+    await open();
+    expect(await screen.findByText('Complete your profile for a personalized match.')).toBeOnTheScreen();
+    expect(screen.queryByTestId('job.match.ring')).not.toBeOnTheScreen();
   });
 
   it('a closed job keeps the bar with a disabled "Position closed"', async () => {

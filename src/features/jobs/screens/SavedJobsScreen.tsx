@@ -2,10 +2,10 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Screen } from '@/components/ui/Screen';
 import { AppText } from '@/components/ui/Text';
+import { TextButton } from '@/components/ui/TextButton';
 import { spacing } from '@/theme/tokens';
 
 import { JobListSkeleton } from '../components/JobCardSkeleton';
@@ -15,7 +15,10 @@ import { queryView } from '../hooks/queryView';
 import { useSavedJobs, useToggleSave } from '../hooks/useSavedJobs';
 import { useOpenJob } from '../useOpenJob';
 
-/** Website saved-jobs.tsx. The list is the saved-jobs cache, so unsaving a card removes it at once. */
+/**
+ * Website saved-jobs.tsx. The list is the saved-jobs cache, so unsaving a card removes it at once. D32 round 2: the
+ * count and the browse link only above a list; with nothing saved the empty state says it (and has its own button).
+ */
 export function SavedJobsScreen() {
   const router = useRouter();
   const openJob = useOpenJob();
@@ -27,26 +30,18 @@ export function SavedJobsScreen() {
   const savedIds = useMemo(() => new Set(jobs.map((j) => j.id)), [jobs]);
   const browse = () => router.navigate('/');
 
-  const header = (
-    <View style={styles.header}>
-      {view === 'ready' && (
+  const header =
+    view === 'ready' && jobs.length > 0 ? (
+      <View style={styles.header}>
         <AppText testID="saved.count" color="mutedForeground">
           {`${jobs.length} role${jobs.length !== 1 ? 's' : ''} bookmarked for later`}
         </AppText>
-      )}
-      {view === 'ready' && jobs.length > 0 ? (
-        <Button
-          testID="saved.browse"
-          label="Browse opportunities →"
-          accessibilityLabel="Browse opportunities"
-          variant="ghost"
-          size="sm"
-          fullWidth={false}
-          onPress={browse}
-        />
-      ) : null}
-    </View>
-  );
+        {/* A text link on the 16-pt margin (its touch target comes from hitSlop, not padding). */}
+        <TextButton testID="saved.browse" label="Browse opportunities" onPress={browse} />
+      </View>
+    ) : (
+      <View style={styles.spacer} />
+    );
 
   const footer =
     view !== 'ready' ? (
@@ -84,4 +79,7 @@ export function SavedJobsScreen() {
   );
 }
 
-const styles = StyleSheet.create({ header: { gap: spacing['2'], padding: spacing['4'] } });
+const styles = StyleSheet.create({
+  header: { gap: spacing['2'], padding: spacing['4'] },
+  spacer: { height: spacing['4'] },
+});

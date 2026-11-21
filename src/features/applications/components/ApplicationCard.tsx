@@ -1,18 +1,19 @@
 // One application in the list (website: the row in routes/applications.tsx). The whole card opens the application,
 // where the hospital's questions are answered: long forms inside a recycled list lose what was typed (D27).
 // D32: ~130 pt white card, status pill coloured by need, five-segment bar, and an amber action row when the
-// candidate has to answer.
+// candidate has to answer. The status is said once, by the pill (round 2): no "Status updated to X" under it.
 import { StyleSheet, View } from 'react-native';
 
 import type { Application } from '@/api/schemas/applications';
 import { Icon } from '@/components/ui/Icon';
 import { LogoTile } from '@/components/ui/LogoTile';
+import { pillTones } from '@/components/ui/Pill';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
 import { colors, radius, shadows, spacing } from '@/theme/tokens';
 
 import { type ActionKind, candidateAction, formatIndianDate } from '../logic/interview';
-import { lastUpdateText, statusLabel } from '../logic/status';
+import { cardUpdateText, statusLabel, statusTone } from '../logic/status';
 import { ProgressSegments } from './ProgressSegments';
 import { StatusPill } from './StatusPill';
 
@@ -34,6 +35,9 @@ export function ApplicationCard({
 }) {
   const action = candidateAction(a);
   const hint = action ? ACTION_HINTS[action] : undefined;
+  const update = cardUpdateText(a.status);
+  // The action row wears the pill's tone (amber = needs you): one meaning per colour across pill, panel and row.
+  const tone = pillTones[statusTone(a.status)];
   const place = a.job.city || a.job.location || '';
   const applied = formatIndianDate(a.appliedOn);
   const testID = `application.row.${a.id}`;
@@ -67,9 +71,11 @@ export function ApplicationCard({
 
       <View style={styles.progress}>
         <ProgressSegments testID={`application.timeline.${a.id}`} status={a.status} />
-        <AppText variant="secondary" color="mutedForeground">
-          {lastUpdateText(a.status)}
-        </AppText>
+        {update ? (
+          <AppText variant="secondary" color="mutedForeground">
+            {update}
+          </AppText>
+        ) : null}
         {a.joiningDate && ['JoiningConfirmed', 'Joined', 'Onboarded'].includes(a.status) ? (
           <AppText variant="secondary" weight="medium" color="successText" tabular>
             {`Joining on ${formatIndianDate(a.joiningDate)}`}
@@ -78,11 +84,11 @@ export function ApplicationCard({
       </View>
 
       {hint ? (
-        <View testID={`${testID}.action`} style={styles.action}>
-          <AppText variant="label" color="amberText" numberOfLines={2} style={styles.actionText}>
+        <View testID={`${testID}.action`} style={[styles.action, { backgroundColor: colors[tone.bg] }]}>
+          <AppText variant="label" color={tone.fg} numberOfLines={2} style={styles.actionText}>
             {hint}
           </AppText>
-          <Icon testID={`${testID}.action.chevron`} name={CHEVRON} size={18} tintColor={colors.amberText} />
+          <Icon testID={`${testID}.action.chevron`} name={CHEVRON} size={18} tintColor={colors[tone.fg]} />
         </View>
       ) : null}
     </PressableScale>
@@ -110,7 +116,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing['3'],
     paddingVertical: spacing['1'],
     borderRadius: radius.sm,
-    backgroundColor: colors.amberSoft,
   },
   actionText: { flex: 1 },
 });

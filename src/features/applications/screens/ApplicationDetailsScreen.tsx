@@ -1,8 +1,8 @@
 // One application with its answer card (website: the row and CandidateActionCard in routes/applications.tsx). It lives on
 // its own screen because forms and file pickers inside a recycled list would lose what was typed (D27).
-// D32: native header titled with the role, identity block, then the panel that needs the candidate, then the vertical
-// timeline, then "View job" as a row.
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+// D32: native header titled "Application" (the role is the hero title, said once), identity block, then the panel that
+// needs the candidate, then the vertical timeline, then "View job" as a row.
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { ERROR_MESSAGES, isApiError } from '@/api/errors';
@@ -85,8 +85,6 @@ function Details({ application: a }: { application: Application }) {
 
   return (
     <>
-      <Stack.Screen options={{ title: a.job.role }} />
-
       <View style={styles.identity}>
         <LogoTile testID="application.logo" name={a.job.hospital} uri={a.job.hospitalLogoUrl} size={48} />
         <View style={styles.text}>

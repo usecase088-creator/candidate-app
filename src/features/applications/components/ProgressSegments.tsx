@@ -1,6 +1,6 @@
 // The five-stage progress of an application on a list card (website: Timeline in routes/applications.tsx).
-// D32: a 4-pt five-segment bar and a "Step n of 5 · Name" caption instead of numbered dots; closed applications
-// show the website sentence instead of the bar.
+// D32: a 4-pt five-segment bar and a "Step n of 5" caption instead of numbered dots (the stage name is spoken, the
+// pill shows the status); closed applications show the website sentence instead of the bar.
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/Text';

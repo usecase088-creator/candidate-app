@@ -3,6 +3,7 @@ import { useFonts } from 'expo-font';
 import * as Network from 'expo-network';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
+import { StyleSheet } from 'react-native';
 
 import { useSession } from '@/features/auth/sessionStore';
 import { appQueryClient } from '@/lib/queryClient';
@@ -18,6 +19,7 @@ import { API } from '@/test/msw/handlers';
 import { installJobsBackend } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
+import { colors } from '@/theme/tokens';
 
 import { APPLICATIONS_KEY } from '../hooks/queryKeys';
 import { APPLICATIONS_LIST_PROPS } from '../screens/ApplicationsScreen';
@@ -52,6 +54,16 @@ describe('My Applications: content (website wording)', () => {
     expect(await screen.findByText(/^8 applications · fetched at \d{2}:\d{2} (am|pm)$/)).toBeOnTheScreen();
     for (const row of seededApplications)
       expect(screen.getByTestId(`application.row.${row.id}`)).toBeOnTheScreen();
+  });
+
+  it('D32 round 2: the fetch time stays (website wording) but reads as a 12-pt muted timestamp', async () => {
+    installApplicationsBackend({ apps: [applied] as never });
+    await open();
+    const fetched = await screen.findByTestId('applications.fetched');
+    expect(fetched).toHaveTextContent(/· fetched at \d{2}:\d{2} (am|pm)$/);
+    const style = StyleSheet.flatten(fetched.props.style);
+    expect(style.fontSize).toBe(12);
+    expect(style.color).toBe(colors.mutedForeground);
   });
 
   it('says "1 application" for one', async () => {

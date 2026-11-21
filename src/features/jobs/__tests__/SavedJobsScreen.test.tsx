@@ -56,9 +56,12 @@ describe('Saved jobs', () => {
     expect(await screen.findByLabelText('Remove from saved jobs')).toBeOnTheScreen();
   });
 
-  it('"Browse opportunities →" goes Home', async () => {
+  // D32 round 2: a text link on the 16-pt margin without the "→" glyph (glyph icons are gone from the app).
+  it('"Browse opportunities" goes Home', async () => {
     installJobsBackend({ jobs: [a], saved: saved(a) });
     const app = await open();
+    expect(await screen.findByText('Browse opportunities')).toBeOnTheScreen();
+    expect(screen.queryByText(/→/)).not.toBeOnTheScreen();
     await fireEvent.press(await screen.findByRole('button', { name: 'Browse opportunities' }));
     await waitFor(() => expect(app.getPathname()).toBe('/'));
   });
@@ -116,7 +119,9 @@ describe('Saved jobs: states', () => {
     const app = await open();
     expect(await screen.findByText('No saved jobs yet')).toBeOnTheScreen();
     expect(screen.getByText('Tap the bookmark icon on any job to save it here.')).toBeOnTheScreen();
-    expect(screen.getByTestId('saved.count')).toHaveTextContent('0 roles bookmarked for later');
+    // D32 round 2: the empty state carries the message; no "0 roles bookmarked for later" above it.
+    expect(screen.queryByTestId('saved.count')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('saved.browse')).not.toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Find opportunities' }));
     await waitFor(() => expect(app.getPathname()).toBe('/'));
   });

@@ -19,6 +19,7 @@ import { goToSignIn } from '@/features/auth/signInGate';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import { JobRow } from '../components/JobRow';
+import { MatchRing } from '../components/MatchRing';
 import { SaveButton } from '../components/SaveButton';
 import { queryView } from '../hooks/queryView';
 import { useJob, useSimilarJobs } from '../hooks/useJobsData';
@@ -159,11 +160,17 @@ function Details({ job }: { job: Job }) {
         icon={job.matchPercent ? ICONS.sparkles : ICONS.person}
         title="Match insights"
       >
-        <AppText>
-          {job.matchPercent
-            ? `Your profile matches ${job.matchPercent}% of this role's criteria.`
-            : 'Complete your profile for a personalized match.'}
-        </AppText>
+        {job.matchPercent ? (
+          // D32 signature touch: the score as a 44-pt ring that fills on first view, beside the website sentence.
+          <View style={styles.matchRow}>
+            <MatchRing testID="job.match.ring" value={job.matchPercent} size={44} />
+            <AppText style={styles.matchText}>
+              {`Your profile matches ${job.matchPercent}% of this role's criteria.`}
+            </AppText>
+          </View>
+        ) : (
+          <AppText>Complete your profile for a personalized match.</AppText>
+        )}
       </Panel>
 
       {job.description ? (
@@ -338,6 +345,8 @@ function DetailsSkeleton() {
 const styles = StyleSheet.create({
   // D32: screen margin 16, section gap 24; the similar list bleeds to the edges.
   content: { flexGrow: 1, gap: spacing['6'], paddingVertical: spacing['4'] },
+  matchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing['3'] },
+  matchText: { flex: 1 },
   center: { alignItems: 'center', gap: spacing['4'], padding: spacing['6'] },
   flex: { flex: 1, flexShrink: 1 },
   // In a content-sized row `flex: 1` collapses the text to zero width on Android; shrink only.

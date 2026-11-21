@@ -1,18 +1,17 @@
 // Interview Scheduled: date and place, then Accept, Request Reschedule or Decline (website: CandidateActionCard.tsx).
 // Decline asks once more (D26): it is final. Everything waits for the server's answer.
-// D32: info panel, date block, Join Meeting as a row, one full-width primary and an equal-width pair under it.
+// D32: the panel wears the status tone (amber: the invitation needs an answer), date block, Join Meeting as a
+// full-width secondary button (no card inside the card), then Accept, Request Reschedule and Decline stacked full width.
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { Application } from '@/api/schemas/applications';
 import { Button } from '@/components/ui/Button';
-import { Icon } from '@/components/ui/Icon';
-import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
 import { confirmAction } from '@/lib/confirm';
 import { useOpenLink } from '@/features/jobs/components/listings/useOpenLink';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 
 import { useRespond } from '../../hooks/useRespond';
 import { formatIstDateTime, interviewPlace } from '../../logic/interview';
@@ -40,7 +39,7 @@ export function InterviewCard({ application: a }: { application: Application }) 
   };
 
   return (
-    <CardFrame tone="info" icon={CALENDAR} title="Interview Scheduled">
+    <CardFrame status={a.status} icon={CALENDAR} title="Interview Scheduled">
       <View style={styles.body}>
         <View style={styles.when}>
           <AppText variant="heading" tabular>
@@ -59,28 +58,24 @@ export function InterviewCard({ application: a }: { application: Application }) 
           ) : null}
         </View>
 
-        <View style={styles.where}>
-          <AppText variant="caption" color="mutedForeground">
-            {place.label.trim()}
-          </AppText>
-          {place.kind === 'link' ? (
-            <PressableScale
-              testID="action.interview.join"
-              accessibilityRole="link"
-              accessibilityLabel="Join meeting"
-              pressScale={1}
-              onPress={() => openLink(place.url)}
-              style={styles.joinRow}
-            >
-              <AppText variant="label" color="brand" style={styles.joinText}>
-                Join Meeting
-              </AppText>
-              <Icon name={OPEN} size={18} tintColor={colors.brand} />
-            </PressableScale>
-          ) : (
+        {place.kind === 'link' ? (
+          <Button
+            testID="action.interview.join"
+            label="Join Meeting"
+            accessibilityLabel="Join meeting"
+            variant="secondary"
+            size="md"
+            icon={OPEN}
+            onPress={() => openLink(place.url)}
+          />
+        ) : (
+          <View style={styles.where}>
+            <AppText variant="caption" color="mutedForeground">
+              {place.label.trim()}
+            </AppText>
             <AppText variant="label">{place.text}</AppText>
-          )}
-        </View>
+          </View>
+        )}
 
         {rescheduling ? (
           <View style={styles.actions}>
@@ -121,30 +116,25 @@ export function InterviewCard({ application: a }: { application: Application }) 
               disabled={busy}
               onPress={() => send('InterviewAccepted')}
             />
-            <View style={styles.pair}>
-              <View style={styles.half}>
-                <Button
-                  testID="action.interview.reschedule"
-                  label="Request Reschedule"
-                  accessibilityLabel="Request reschedule"
-                  variant="secondary"
-                  size="md"
-                  disabled={busy}
-                  onPress={() => setRescheduling(true)}
-                />
-              </View>
-              <View style={styles.half}>
-                <Button
-                  testID="action.interview.decline"
-                  label="Decline"
-                  accessibilityLabel="Decline interview"
-                  variant="destructiveText"
-                  size="md"
-                  disabled={busy}
-                  onPress={() => void confirmDecline()}
-                />
-              </View>
-            </View>
+            {/* Stacked, not a pair: 'Request Reschedule' wrapped to two lines in half a phone width. */}
+            <Button
+              testID="action.interview.reschedule"
+              label="Request Reschedule"
+              accessibilityLabel="Request reschedule"
+              variant="secondary"
+              size="md"
+              disabled={busy}
+              onPress={() => setRescheduling(true)}
+            />
+            <Button
+              testID="action.interview.decline"
+              label="Decline"
+              accessibilityLabel="Decline interview"
+              variant="destructiveText"
+              size="md"
+              disabled={busy}
+              onPress={() => void confirmDecline()}
+            />
           </View>
         )}
       </View>
@@ -158,18 +148,5 @@ const styles = StyleSheet.create({
   fact: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['1'] },
   factValue: { flexShrink: 1 },
   where: { gap: spacing['0.5'] },
-  joinRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing['2'],
-    minHeight: 44,
-    paddingHorizontal: spacing['3'],
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-  },
-  joinText: { flex: 1 },
   actions: { gap: spacing['2'] },
-  // Stacked, not a pair: 'Request Reschedule' wrapped to two lines in half a phone width.
-  pair: { gap: spacing['2'] },
-  half: {},
 });

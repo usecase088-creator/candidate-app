@@ -2,6 +2,7 @@ import {
   ALL_STATUSES,
   countByTab,
   inTab,
+  cardUpdateText,
   isTerminalStatus,
   lastUpdateText,
   needsCandidate,
@@ -201,9 +202,11 @@ describe('timeline', () => {
     expect(timelineView('OfferSent')).toEqual({ kind: 'steps', current: 4 });
   });
 
-  it('stepLabel names the step for the bar and for screen readers', () => {
-    expect(stepLabel(0)).toBe('Step 1 of 5 · Applied');
-    expect(stepLabel(4)).toBe('Step 5 of 5 · Offer & Joining');
+  // D32 round 2: the caption no longer repeats the stage name next to the status pill ("Step 1 of 5 · Applied" under
+  // an "Applied" pill); screen readers still hear the stage through the bar's own label.
+  it('stepLabel counts the step for the bar caption', () => {
+    expect(stepLabel(0)).toBe('Step 1 of 5');
+    expect(stepLabel(4)).toBe('Step 5 of 5');
   });
 });
 
@@ -214,6 +217,20 @@ describe('lastUpdateText', () => {
     expect(lastUpdateText('New')).toBe('Application received by hospital');
     expect(lastUpdateText('OfferSent')).toBe('Status updated to Offer Sent');
     expect(lastUpdateText('Contacted')).toBe('Status updated to Offer Sent');
+  });
+});
+
+describe('cardUpdateText (D32: the list card says the status once)', () => {
+  it('keeps the website sentence when it adds something to the pill', () => {
+    expect(cardUpdateText('Applied')).toBe('Application received by hospital');
+    expect(cardUpdateText('New')).toBe('Application received by hospital');
+  });
+
+  it('drops "Status updated to X" under an X pill, and the closed sentence the bar already shows', () => {
+    expect(cardUpdateText('InterviewScheduled')).toBeUndefined();
+    expect(cardUpdateText('OfferSent')).toBeUndefined();
+    expect(cardUpdateText('JobClosed')).toBeUndefined();
+    expect(cardUpdateText('Rejected')).toBeUndefined();
   });
 });
 

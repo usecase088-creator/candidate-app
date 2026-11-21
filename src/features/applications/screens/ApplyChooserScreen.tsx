@@ -1,7 +1,7 @@
 // "Choose one way to apply" (website: routes/apply.$jobId.index.tsx): structured form, upload CV, quick apply, and the
-// job's own questions. Wording is the website's. D32: the methods are pressable rows (icon tile, title, one line,
-// CTA as the spoken name), the questions are a flat form with the error under its field, and Quick Apply is the
-// sticky bar at the bottom (`apply.quick.card` keeps its testID for the flows).
+// job's own questions. Wording is the website's. D32: the methods are pressable rows (icon tile, title, the full
+// description, the CTA line as the one affordance and the spoken name), the questions are a flat form with the error
+// under its field, and Quick Apply is the sticky bar at the bottom (`apply.quick.card` keeps its testID for the flows).
 import type { SymbolViewProps } from 'expo-symbols';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -29,7 +29,6 @@ const ICONS = {
   form: { ios: 'doc.text', android: 'description', web: 'description' },
   upload: { ios: 'arrow.up.doc', android: 'upload_file', web: 'upload_file' },
   lock: { ios: 'lock', android: 'lock', web: 'lock' },
-  chevron: { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' },
 } as const satisfies Record<string, SymbolViewProps['name']>;
 
 export function ApplyChooserScreen() {
@@ -70,28 +69,36 @@ function Chooser({ job, me, hasFormCv }: ApplyReady) {
 
   const bar =
     quickOpen && me ? (
-      <StickyActionBar
-        testID="apply.quick.card"
-        leading={
-          <View>
+      <StickyActionBar testID="apply.quick.card">
+        {/* One slot holding text + button: the text column takes the free width (the bar's own leading area is capped
+            at half the width, which left "CV" alone on the last line), the button keeps its own width. */}
+        <View style={styles.quick}>
+          <View testID="apply.quick.text" style={styles.quickText}>
             <AppText variant="label" numberOfLines={1}>
               {me.name}
             </AppText>
-            <AppText variant="caption" color="mutedForeground" numberOfLines={2}>
+            <AppText
+              variant="caption"
+              weight="regular"
+              color="mutedForeground"
+              numberOfLines={2}
+              textBreakStrategy="balanced"
+            >
               One tap with your saved form CV
             </AppText>
           </View>
-        }
-      >
-        <Button
-          testID="apply.quick"
-          label={quick.isPending ? 'Submitting…' : 'Quick Apply'}
-          accessibilityLabel="Quick Apply"
-          size="md"
-          loading={quick.isPending}
-          haptic="medium"
-          onPress={onQuickApply}
-        />
+          <View testID="apply.quick.button" style={styles.quickButton}>
+            <Button
+              testID="apply.quick"
+              label={quick.isPending ? 'Submitting…' : 'Quick Apply'}
+              accessibilityLabel="Quick Apply"
+              size="md"
+              loading={quick.isPending}
+              haptic="medium"
+              onPress={onQuickApply}
+            />
+          </View>
+        </View>
       </StickyActionBar>
     ) : null;
 
@@ -172,7 +179,10 @@ type ChoiceProps = {
   disabledReason?: string;
 };
 
-/** A method row: 40-pt icon tile, title, one-line description, the CTA as a brand text link, chevron. */
+/**
+ * A method row: 40-pt icon tile, title, the description (wraps, never cut), and the CTA line as the one affordance
+ * (also the row's spoken name; round 2 dropped the chevron that repeated it).
+ */
 function ChoiceRow({
   testID,
   icon,
@@ -205,7 +215,7 @@ function ChoiceRow({
           </AppText>
           {recommended ? <Pill testID="apply.recommended" label="Recommended" tone="brand" /> : null}
         </View>
-        <AppText variant="secondary" color="mutedForeground" numberOfLines={3}>
+        <AppText variant="secondary" color="mutedForeground">
           {description}
         </AppText>
         <AppText variant="secondary" weight="semibold" color={disabled ? 'mutedForeground' : 'brand'}>
@@ -220,7 +230,6 @@ function ChoiceRow({
           </View>
         ) : null}
       </View>
-      <Icon name={ICONS.chevron} size={16} tintColor={colors.mutedForeground} style={styles.chevron} />
     </PressableScale>
   );
 }
@@ -248,8 +257,10 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing['2'] },
   shrink: { flexShrink: 1 },
   reason: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing['1'] },
-  chevron: { marginTop: spacing['3'] },
   questions: { gap: spacing['2'] },
+  quick: { flexDirection: 'row', alignItems: 'center', gap: spacing['3'] },
+  quickText: { flex: 1, minWidth: 0 },
+  quickButton: { flexShrink: 0 },
 });
 
 export type { Job };

@@ -54,7 +54,18 @@ export function ApplicationsScreen() {
             tabular
             style={styles.count}
           >
-            {`${all.length} application${all.length !== 1 ? 's' : ''}${fetched}`}
+            {`${all.length} application${all.length !== 1 ? 's' : ''}`}
+            {/* Website wording, kept; D32 round 2 sets it as a 12-pt muted timestamp, not a second sentence. */}
+            {fetched ? (
+              <AppText
+                testID="applications.fetched"
+                variant="caption"
+                weight="regular"
+                color="mutedForeground"
+              >
+                {fetched}
+              </AppText>
+            ) : null}
           </AppText>
           {/* The chip row bleeds edge to edge; the 16-pt margin lives inside the scroll content. */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>

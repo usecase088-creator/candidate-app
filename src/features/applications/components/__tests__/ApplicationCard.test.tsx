@@ -59,12 +59,12 @@ describe('StatusPill', () => {
 });
 
 describe('ProgressSegments', () => {
-  // D32: the numbered dots became a 4-pt five-segment bar with a "Step n of 5 · Name" caption; the spoken
-  // progress keeps its shape.
+  // D32: the numbered dots became a 4-pt five-segment bar with a "Step n of 5" caption (round 2: the stage name left
+  // the caption, the pill next to it already says it); the spoken progress keeps its shape and the name.
   it('fills the segments up to the current step, names it, and says it in words for screen readers', async () => {
     await renderWithProviders(<ProgressSegments testID="t" status="DocumentsRequested" />);
     expect(screen.getByLabelText('Progress: step 4 of 5, Documents')).toBeOnTheScreen();
-    expect(screen.getByText('Step 4 of 5 · Documents')).toBeOnTheScreen();
+    expect(screen.getByText('Step 4 of 5')).toBeOnTheScreen();
     for (let i = 0; i < 5; i++) expect(screen.getByTestId(`t.segment.${i}`)).toBeOnTheScreen();
     expect(flat(screen.getByTestId('t.segment.3').props.style).backgroundColor).toBe(colors.brand);
     expect(flat(screen.getByTestId('t.segment.4').props.style).backgroundColor).not.toBe(colors.brand);
@@ -105,6 +105,17 @@ describe('VerticalTimeline', () => {
     expect(screen.getByText('Status updated to Interview Scheduled')).toBeOnTheScreen();
   });
 
+  it('D32 round 2: the rail is continuous (2-pt gap at the nodes) and every non-last row is at least 48 pt', async () => {
+    await show(interviewVirtual);
+    for (let i = 0; i < 4; i++) {
+      const rail = flat(screen.getByTestId(`vt.rail.${i}`).props.style);
+      expect(rail.marginVertical).toBe(2);
+      expect(rail.width).toBe(2);
+      expect(flat(screen.getByTestId(`vt.row.${i}`).props.style).minHeight).toBe(48);
+    }
+    expect(screen.queryByTestId('vt.rail.4')).not.toBeOnTheScreen();
+  });
+
   it('shows the dates the data has: applied on, interview, joining', async () => {
     await show(interviewVirtual);
     expect(screen.getByText('21 Oct 2026')).toBeOnTheScreen();
@@ -133,8 +144,25 @@ describe('ApplicationCard', () => {
     expect(screen.getByText('Applied 25 Oct 2026')).toBeOnTheScreen();
     expect(screen.getByLabelText('Status: Applied')).toBeOnTheScreen();
     expect(screen.getByLabelText('Progress: step 1 of 5, Applied')).toBeOnTheScreen();
-    expect(screen.getByText('Step 1 of 5 · Applied')).toBeOnTheScreen();
+    expect(screen.getByText('Step 1 of 5')).toBeOnTheScreen();
     expect(screen.getByText('Application received by hospital')).toBeOnTheScreen();
+  });
+
+  it('says the status once: no "Status updated to X" under the X pill (D32 round 2)', async () => {
+    await render(interviewVirtual);
+    expect(screen.getByLabelText('Status: Interview Scheduled')).toBeOnTheScreen();
+    expect(screen.queryByText('Status updated to Interview Scheduled')).not.toBeOnTheScreen();
+    expect(screen.queryByText(/· Interview$/)).not.toBeOnTheScreen();
+  });
+
+  it('a closed job says it once (the bar sentence), not twice', async () => {
+    await render({ ...applied, status: 'JobClosed' });
+    expect(
+      screen.getByText(
+        'This job posting has been closed. You are no longer in the active pipeline for this role.',
+      ),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText('This job posting has been closed by the recruiter')).not.toBeOnTheScreen();
   });
 
   it('the whole card opens the application, and says what it is for a screen reader', async () => {

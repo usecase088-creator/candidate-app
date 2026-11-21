@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import * as Network from 'expo-network';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
+import { StyleSheet } from 'react-native';
 
 import { haptic } from '@/lib/haptics';
 import { applicantMe, applied, jobQuestions } from '@/test/fixtures/applications';
@@ -51,6 +52,26 @@ afterEach(() => {
 });
 
 const open = (id = 'job-1') => startSignedIn(`/apply/${id}`, 'apply.screen');
+
+type JsonNode = { type?: string; props?: Record<string, unknown>; children?: unknown[] | null };
+/** The rendered tree under the node with this testID (host JSON, so icons show their `name`). */
+function subtree(testID: string): JsonNode[] {
+  const all: JsonNode[] = [];
+  let inside = false;
+  const walk = (n: unknown, under: boolean) => {
+    if (!n || typeof n !== 'object') return;
+    if (Array.isArray(n)) return n.forEach((c) => walk(c, under));
+    const node = n as JsonNode;
+    const here = under || node.props?.testID === testID;
+    if (here) {
+      inside = true;
+      all.push(node);
+    }
+    node.children?.forEach((c) => walk(c, here));
+  };
+  walk(screen.toJSON(), false);
+  return inside ? all : [];
+}
 const setup = (over: { jobs?: unknown[]; me?: unknown; apps?: unknown[] } = {}) => {
   const jobs = installJobsBackend({ jobs: (over.jobs ?? [job]) as never, me: over.me ?? applicantMe });
   const apps = installApplicationsBackend({ apps: (over.apps ?? []) as never });
@@ -134,6 +155,38 @@ describe('Apply chooser: content (website wording)', () => {
     expect(
       await screen.findByText('Quick Apply unlocks after you complete the structured form once.'),
     ).toBeOnTheScreen();
+  });
+
+  // D32 round 2: a row has one affordance (the CTA line, which is also its spoken name), not a link and a chevron;
+  // the description wraps instead of being cut mid-sentence.
+  it('a method row has its CTA line and no chevron, and its description is never cut', async () => {
+    setup();
+    await open();
+    await screen.findByText('Structured form');
+    for (const id of ['apply.choice.form', 'apply.choice.upload']) {
+      const nodes = subtree(id);
+      expect(nodes.length).toBeGreaterThan(0);
+      const chevrons = nodes.filter((n) => JSON.stringify(n.props?.name ?? '').includes('chevron'));
+      expect(chevrons).toHaveLength(0);
+    }
+    expect(
+      screen.getByText("Submit a PDF or DOCX only. Your portal form CV won't be used for this application.")
+        .props.numberOfLines,
+    ).toBeUndefined();
+    expect(within(screen.getByTestId('apply.choice.upload')).getByText('Upload & apply')).toBeOnTheScreen();
+  });
+
+  it('the Quick Apply bar: name on line 1, the 12-pt subtitle in a text column that takes the free width', async () => {
+    setup();
+    await open();
+    const text = await screen.findByTestId('apply.quick.text');
+    expect(StyleSheet.flatten(text.props.style).flex).toBe(1);
+    const subtitle = within(text).getByText('One tap with your saved form CV');
+    expect(subtitle.props.numberOfLines).toBe(2);
+    expect(StyleSheet.flatten(subtitle.props.style).fontSize).toBe(12);
+    expect(within(text).getByText(applicantMe.name)).toBeOnTheScreen();
+    // The button keeps its width; the text, not the button, gives way.
+    expect(StyleSheet.flatten(screen.getByTestId('apply.quick.button').props.style).flexShrink).toBe(0);
   });
 
   it('every button has a spoken label', async () => {
