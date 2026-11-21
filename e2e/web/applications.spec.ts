@@ -36,7 +36,8 @@ test('Interview: Accept changes the status; Decline asks first', async ({ page }
   const backend = await mockApplications(page, { apps: [interview], me: profileMe });
   await signIn(page);
   await openApplication(page, 'a-interview');
-  await expect(page.getByText('30 Oct 2026, 7:30 pm')).toBeVisible();
+  // D32: the date shows in the interview panel and again in the progress timeline; check the panel.
+  await expect(page.getByTestId('action.card').getByText('30 Oct 2026, 7:30 pm')).toBeVisible();
 
   // Decline: the browser confirm box. Cancel keeps everything as it was.
   page.once('dialog', (dialog) => void dialog.dismiss());

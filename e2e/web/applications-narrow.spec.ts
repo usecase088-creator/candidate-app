@@ -46,9 +46,9 @@ test('Apply chooser, upload form, My Applications and answer cards fit 320 px', 
   expect(await overflow(page)).toMatchObject({ offenders: [] });
   await page.screenshot({ path: testInfo.outputPath('upload-320.png'), fullPage: true });
 
-  await page.getByTestId('apply.upload.back').click();
-  await page.getByTestId('apply.back').click();
-  await page.getByTestId('job.back').click();
+  await page.goBack(); // D32: native header back (apply.upload.back was removed)
+  await page.goBack(); // D32: native header back (apply.back was removed)
+  await page.goBack(); // D32: native header back (job.back was removed)
   await expect(page.getByTestId('home.screen')).toBeVisible();
 
   await page.getByTestId('tabs.applications').click();
@@ -61,7 +61,7 @@ test('Apply chooser, upload form, My Applications and answer cards fit 320 px', 
   expect(await overflow(page)).toMatchObject({ offenders: [] });
   await page.screenshot({ path: testInfo.outputPath('interview-320.png'), fullPage: true });
 
-  await page.getByTestId('application.back').click();
+  await page.goBack(); // D32: native header back (application.back was removed)
   await page.getByTestId('application.row.a-offer').click();
   await expect(page.getByTestId('action.offer.accept')).toBeVisible();
   expect(await overflow(page)).toMatchObject({ offenders: [] });

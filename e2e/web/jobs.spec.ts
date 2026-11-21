@@ -13,7 +13,8 @@ test('Home lists the jobs, then a job opens with its details', async ({ page }) 
   await page.getByTestId('job.open.n1').click();
 
   await expect(page.getByTestId('job.screen')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Staff Nurse' })).toBeVisible();
+  // D32: the native header repeats the role; check the one in the screen's header block.
+  await expect(page.getByTestId('job.header').getByRole('heading', { name: 'Staff Nurse' })).toBeVisible();
   await expect(page.getByText('Verified Hospital')).toBeVisible();
   await expect(page.getByTestId('job.salary')).toHaveText('₹3–4.5 LPA');
   await expect(page.getByText("Your profile matches 80% of this role's criteria.")).toBeVisible();

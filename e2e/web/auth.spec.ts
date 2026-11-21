@@ -77,7 +77,7 @@ test('shows the website validation messages without calling the API', async ({ p
 
   await expect(page.getByTestId('login.email.error')).toHaveText('Enter a valid email');
   await expect(page.getByTestId('login.password.error')).toHaveText('Password is required');
-  await expect(page.getByTestId('login.error')).toHaveText('Enter a valid email');
+  await expect(page.getByTestId('login.error.text')).toHaveText('Enter a valid email');
   expect(called).toBe(false);
 });
 
@@ -89,7 +89,7 @@ test('rejects a recruiter account with the website message', async ({ page }) =>
   await openLogin(page);
   await fillAndSubmit(page, 'recruiter@apronhanger.test', 'Test@1234');
 
-  await expect(page.getByTestId('login.error')).toHaveText(
+  await expect(page.getByTestId('login.error.text')).toHaveText(
     'This email is registered as a recruiter account. Please sign in on the Recruiter Portal instead.',
   );
   await expect(page.getByTestId('login.screen')).toBeVisible();
@@ -102,5 +102,5 @@ test('shows the backend message for a wrong password', async ({ page }) => {
   await mockApi(page, '/api/auth/login', 401, { error: 'Invalid email or password' });
   await openLogin(page);
   await fillAndSubmit(page, 'candidate@apronhanger.test', 'wrong');
-  await expect(page.getByTestId('login.error')).toHaveText('Invalid email or password. Please try again.');
+  await expect(page.getByTestId('login.error.text')).toHaveText('Invalid email or password. Please try again.');
 });
