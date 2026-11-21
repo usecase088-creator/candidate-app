@@ -23,7 +23,8 @@ describe('Chip (D32)', () => {
       minHeight: 32,
       borderRadius: radius.full,
       paddingHorizontal: 12,
-      backgroundColor: colors.surface2,
+      // Was surface2 (invisible on the canvas). R2 issue 2: the tonal `fill`.
+      backgroundColor: colors.fill,
     });
     expect(style.borderWidth ?? 0).toBe(0);
   });

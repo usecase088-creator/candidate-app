@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
 
-import { colors, fonts, fontSizes, radius, spacing } from '@/theme/tokens';
+import { colors, fonts, fontSizes, radius, shadows, spacing } from '@/theme/tokens';
 
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
@@ -14,15 +14,27 @@ const RING = 1.5;
 const DEFAULT_PLACEHOLDER = 'Role or specialty';
 const DEFAULT_LABEL = 'Search jobs';
 
-const MAGNIFIER = { ios: 'magnifyingglass', android: 'search' } as const;
-const CLEAR = { ios: 'xmark.circle.fill', android: 'cancel' } as const;
+const MAGNIFIER = { ios: 'magnifyingglass', android: 'search', web: 'search' } as const;
+const CLEAR = { ios: 'xmark.circle.fill', android: 'cancel', web: 'cancel' } as const;
+export const SEARCH_ICONS = { magnifier: MAGNIFIER, clear: CLEAR } as const;
+
+type FieldIcon =
+  typeof MAGNIFIER | { ios: 'mappin.and.ellipse'; android: 'location_on'; web?: 'location_on' };
+
+/** Web draws Material Symbols by their web name; an icon without one falls back to its (same) Android name. */
+export const withWebName = <I extends { android: string; web?: string }>(icon: I) => ({
+  web: icon.android,
+  ...icon,
+});
 
 type Common = {
   testID: string;
   placeholder?: string;
   accessibilityLabel?: string;
   /** Leading icon; the magnifier by default (a city field passes a location pin). */
-  icon?: typeof MAGNIFIER | { ios: 'mappin.and.ellipse'; android: 'location_on' };
+  icon?: FieldIcon;
+  /** R2: white + soft shadow instead of the tonal fill (Home, where the field sits on the navy band). */
+  elevated?: boolean;
   /** The search key by default; `next` when another field follows. */
   returnKeyType?: 'search' | 'next' | 'done';
 };
@@ -48,7 +60,7 @@ export type PressableSearchFieldProps = Common & {
 export type SearchFieldProps = EditableSearchFieldProps | PressableSearchFieldProps;
 
 /**
- * D32: the one 44-pt search field. Tonal fill, no border at rest, 1.5-pt brand ring while focused, leading magnifier,
+ * D32: the one 44-pt search field. Tonal fill (R2: `fill`; `elevated` = white + soft shadow), no border at rest, 1.5-pt brand ring while focused, leading magnifier,
  * our own 44-pt clear button (so both platforms behave the same), text 15 that grows to 1.5x.
  */
 export function SearchField(props: SearchFieldProps) {
@@ -68,6 +80,7 @@ function EditableSearchField({
   autoFocus,
   onFocus,
   onBlur,
+  elevated,
 }: EditableSearchFieldProps) {
   const [focused, setFocused] = useState(false);
 
@@ -88,8 +101,16 @@ function EditableSearchField({
   const clear = useCallback(() => onChangeText(''), [onChangeText]);
 
   return (
-    <View testID={`${testID}.field`} style={[styles.field, focused && styles.focused]}>
-      <Icon testID={`${testID}.icon`} name={icon} size={ICON} tintColor={colors.mutedForeground} />
+    <View
+      testID={`${testID}.field`}
+      style={[styles.field, elevated && styles.elevated, focused && styles.focused]}
+    >
+      <Icon
+        testID={`${testID}.icon`}
+        name={withWebName(icon)}
+        size={ICON}
+        tintColor={colors.mutedForeground}
+      />
       <TextInput
         testID={testID}
         accessibilityLabel={accessibilityLabel}
@@ -115,7 +136,7 @@ function EditableSearchField({
           onPress={clear}
           style={styles.clear}
         >
-          <Icon name={CLEAR} size={ICON} tintColor={colors.mutedForeground} />
+          <Icon testID={`${testID}.clear.icon`} name={CLEAR} size={ICON} tintColor={colors.mutedForeground} />
         </PressableScale>
       ) : null}
     </View>
@@ -129,6 +150,7 @@ function PressableSearchField({
   placeholder = DEFAULT_PLACEHOLDER,
   accessibilityLabel = DEFAULT_LABEL,
   icon = MAGNIFIER,
+  elevated,
 }: PressableSearchFieldProps) {
   const hasValue = !!value;
   return (
@@ -138,9 +160,14 @@ function PressableSearchField({
       accessibilityLabel={accessibilityLabel}
       accessibilityValue={hasValue ? { text: value } : undefined}
       onPress={onPress}
-      style={styles.field}
+      style={[styles.field, elevated && styles.elevated]}
     >
-      <Icon testID={`${testID}.icon`} name={icon} size={ICON} tintColor={colors.mutedForeground} />
+      <Icon
+        testID={`${testID}.icon`}
+        name={withWebName(icon)}
+        size={ICON}
+        tintColor={colors.mutedForeground}
+      />
       <AppText
         variant="body"
         color={hasValue ? 'foreground' : 'placeholder'}
@@ -161,12 +188,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing['2'],
     paddingLeft: spacing['3'],
-    backgroundColor: colors.surface2,
+    backgroundColor: colors.fill,
     borderRadius: radius.md,
     // Same width focused and not: the ring is a colour change, not a layout change.
     borderWidth: RING,
     borderColor: 'transparent',
   },
+  elevated: { backgroundColor: colors.surface, boxShadow: shadows.soft },
   focused: { borderColor: colors.ring },
   input: {
     flex: 1,

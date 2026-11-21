@@ -8,6 +8,7 @@ import {
 
 import { colors, fonts, fontSizes, radius, spacing } from '@/theme/tokens';
 
+import { FieldLabel } from './FieldLabel';
 import { AppText } from './Text';
 
 /** What a TextInput ref points at (focus(), blur(), clear()). */
@@ -58,14 +59,13 @@ export function TextInput({
   return (
     <View style={styles.container}>
       <View testID={`${testID}.labelRow`} style={styles.labelRow}>
-        <AppText variant="label" nativeID={`${testID}.label`} style={styles.label}>
-          {label}
-          {required ? (
-            <AppText testID={`${testID}.required`} variant="label" color="errorText">
-              {' *'}
-            </AppText>
-          ) : null}
-        </AppText>
+        <FieldLabel
+          testID={testID}
+          label={label}
+          required={required}
+          nativeID={`${testID}.label`}
+          style={styles.label}
+        />
         {labelAccessory}
       </View>
       <View

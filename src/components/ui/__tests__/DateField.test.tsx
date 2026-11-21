@@ -1,6 +1,8 @@
 import { fireEvent, renderWithProviders as render, screen } from '@/test/render';
 import { useState } from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
+
+import { colors } from '@/theme/tokens';
 
 import { fakePicker } from '@/test/fakeDateTimePicker';
 
@@ -117,5 +119,16 @@ describe('DatePicker on Android (the system dialog)', () => {
       <AndroidPicker testID="a" visible={false} value={new Date()} onPick={jest.fn()} onClose={jest.fn()} />,
     );
     expect(screen.queryByTestId('datepicker.native.pick')).toBeNull();
+  });
+});
+
+// R2 issue 9: one required marker across the app, the red `errorText` asterisk TextInput already uses.
+describe('DateField required marker', () => {
+  it('a required date shows the red asterisk as its own text after the label', async () => {
+    await render(<Host required />);
+    const asterisk = screen.getByTestId('f.start.required');
+    expect(asterisk).toHaveTextContent('*');
+    expect(StyleSheet.flatten(asterisk.props.style).color).toBe(colors.errorText);
+    expect(screen.queryByTestId('f.other.required')).toBeNull();
   });
 });

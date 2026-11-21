@@ -5,11 +5,15 @@ export const colors = {
   background: '#F7FBFD',
   surface: '#FFFFFF',
   surface2: '#F2F8FC',
+  /** R2: tonal control fill (search fields, idle chips, stepper, secondary buttons); visible on `background`. */
+  fill: '#E9EFF6',
   foreground: '#0A121F',
   card: '#FFFFFF',
   navy: '#0D172F',
   primary: '#0D172F',
   primaryForeground: '#F7FBFD',
+  /** R2: secondary text on the navy hero band (80% of primaryForeground; AA on every gradient stop). */
+  primaryForegroundMuted: 'rgba(247,251,253,0.8)',
   brand: '#326AD9',
   brandForeground: '#F7FBFD',
   brandSoft: '#E1F0FF',

@@ -20,7 +20,7 @@ const VARIANTS: Record<ButtonVariant, VariantStyle> = {
   primary: { bg: 'primary', fg: 'primaryForeground' },
   brand: { bg: 'brand', fg: 'brandForeground' },
   /** Tonal: the second action next to a primary. */
-  secondary: { bg: 'surface2', fg: 'foreground' },
+  secondary: { bg: 'fill', fg: 'foreground' },
   outline: { bg: 'surface', fg: 'foreground', border: 'border' },
   ghost: { bg: 'transparent', fg: 'foreground' },
   destructive: { bg: 'destructive', fg: 'destructiveForeground' },
@@ -47,6 +47,11 @@ export type ButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   haptic?: HapticKind;
   /** Leading 18-pt icon. */
   icon?: SymbolViewProps['name'];
+  /**
+   * Cross-axis placement. Default: `stretch` when fullWidth, `start` when it hugs. `center` for the hugging action of
+   * a centred block (empty and error states).
+   */
+  align?: 'start' | 'center' | 'stretch';
   /** Overrides the button label's font-scale cap (default 1.3 from the `button` text variant). */
   maxFontSizeMultiplier?: number;
 };
@@ -59,6 +64,7 @@ export function Button({
   loading = false,
   disabled = false,
   fullWidth = true,
+  align,
   haptic,
   icon,
   maxFontSizeMultiplier,
@@ -83,6 +89,7 @@ export function Button({
         styles.base,
         SIZES[size],
         fullWidth ? styles.fullWidth : styles.hug,
+        align && ALIGN[align],
         {
           backgroundColor: mutedLook ? colors.muted : v.bg === 'transparent' ? 'transparent' : colors[v.bg],
           ...(v.border && !mutedLook ? { borderWidth: 1, borderColor: colors[v.border] } : {}),
@@ -116,6 +123,12 @@ export function Button({
     </PressableScale>
   );
 }
+
+const ALIGN = {
+  start: { alignSelf: 'flex-start' },
+  center: { alignSelf: 'center' },
+  stretch: { alignSelf: 'stretch' },
+} as const;
 
 const styles = StyleSheet.create({
   base: {

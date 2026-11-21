@@ -27,7 +27,7 @@ const MINUS = { ios: 'minus', android: 'remove', web: 'remove' } as const;
 const PLUS = { ios: 'plus', android: 'add', web: 'add' } as const;
 
 /**
- * D32 compact stepper: a 36-pt surface2 pill with two 44 x 36 icon buttons around a tabular value.
+ * D32 compact stepper: a 36-pt tonal (`fill`) pill with two 44 x 36 icon buttons around a tabular value.
  * Used where the website has a slider: sliders are hard to hit on small phones and need a native library.
  */
 export function Stepper({ testID, label, value, min, max, step, display, onChange }: Props) {
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     minHeight: HEIGHT,
     borderRadius: radius.full,
-    backgroundColor: colors.surface2,
+    backgroundColor: colors.fill,
     overflow: 'hidden',
   },
   value: { minWidth: 64, paddingHorizontal: spacing['1'] },

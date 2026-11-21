@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     paddingHorizontal: spacing['3'],
   },
-  idle: { backgroundColor: colors.surface2 },
+  idle: { backgroundColor: colors.fill },
   // minHeight is the border box in Yoga, so the chip stays 32 tall in both states.
   selected: { backgroundColor: colors.brandSoft, borderWidth: 1.5, borderColor: colors.brand },
   remove: { borderRadius: radius.full },

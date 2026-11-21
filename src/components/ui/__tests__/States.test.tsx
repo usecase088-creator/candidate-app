@@ -94,10 +94,11 @@ describe('ErrorState', () => {
       await renderWithProviders(<ErrorState testID="e" message="x" onRetry={() => {}} />);
       const button = flat(screen.getByTestId('e.retry').props.style);
       // Was: `outline` (white + 1-px border). D32: tonal secondary, 44-pt md, hugging its label.
+      // R2: `fill` instead of surface2 (issue 2) and centred instead of flex-start (issue 1: it sat off-centre).
       expect(button).toMatchObject({
-        backgroundColor: colors.surface2,
+        backgroundColor: colors.fill,
         minHeight: 44,
-        alignSelf: 'flex-start',
+        alignSelf: 'center',
       });
       expect(button.borderWidth).toBeUndefined();
       expect(flat(screen.getByTestId('e').props.style)).toMatchObject({
@@ -177,10 +178,11 @@ describe('EmptyState', () => {
         maxWidth: 320,
       });
       // Was: `outline`. D32: tonal secondary, md, hugging its label.
+      // R2: `fill` instead of surface2 (issue 2) and centred instead of flex-start (issue 1: it sat off-centre).
       expect(flat(screen.getByTestId('e.action').props.style)).toMatchObject({
-        backgroundColor: colors.surface2,
+        backgroundColor: colors.fill,
         minHeight: 44,
-        alignSelf: 'flex-start',
+        alignSelf: 'center',
       });
       expect(flat(screen.getByTestId('e').props.style)).toMatchObject({
         flexGrow: 1,

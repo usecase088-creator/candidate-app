@@ -34,7 +34,8 @@ describe('Stepper (D32)', () => {
     expect(flat(screen.getByTestId('filters.salary').props.style)).toMatchObject({
       minHeight: 36,
       borderRadius: radius.full,
-      backgroundColor: colors.surface2,
+      // Was surface2 (invisible on the canvas). R2 issue 2: the tonal `fill`.
+      backgroundColor: colors.fill,
     });
   });
 

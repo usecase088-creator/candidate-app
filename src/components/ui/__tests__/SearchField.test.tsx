@@ -1,9 +1,9 @@
 import { StyleSheet } from 'react-native';
 
-import { colors, fonts, radius } from '@/theme/tokens';
+import { colors, fonts, radius, shadows } from '@/theme/tokens';
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
 
-import { SearchField } from '../SearchField';
+import { SEARCH_ICONS, SearchField, withWebName } from '../SearchField';
 
 const flat = (s: unknown) => StyleSheet.flatten(s as never) ?? {};
 
@@ -25,7 +25,8 @@ describe('SearchField (editable)', () => {
       color: colors.foreground,
     });
     const field = flat(screen.getByTestId('search.query.field').props.style);
-    expect(field).toMatchObject({ minHeight: 44, backgroundColor: colors.surface2, borderRadius: radius.md });
+    // Was surface2 (invisible on the canvas). R2 issue 2: the tonal `fill`.
+    expect(field).toMatchObject({ minHeight: 44, backgroundColor: colors.fill, borderRadius: radius.md });
     expect(field.borderColor).toBe('transparent');
     expect(screen.getByTestId('search.query.icon')).toBeOnTheScreen();
   });
@@ -99,7 +100,8 @@ describe('SearchField (pressable)', () => {
     expect(screen.getByText('Role or specialty')).toBeOnTheScreen();
     expect(flat(bar.props.style)).toMatchObject({
       minHeight: 44,
-      backgroundColor: colors.surface2,
+      // Was surface2 (invisible on the canvas). R2 issue 2: the tonal `fill`.
+      backgroundColor: colors.fill,
       borderRadius: radius.md,
     });
     expect(screen.queryByTestId('home.search.clear')).toBeNull();
@@ -125,5 +127,41 @@ describe('SearchField (pressable)', () => {
     );
     expect(screen.getByTestId('search.city.icon')).toHaveProp('name', 'mappin.and.ellipse');
     expect(screen.getByTestId('search.city')).toHaveProp('returnKeyType', 'next');
+  });
+});
+
+// R2 issue 2: on Home the search sits on the navy band, so it is elevated (white + soft shadow), not tonal.
+describe('SearchField (elevated)', () => {
+  it('pressable: white surface with the soft shadow', async () => {
+    await renderWithProviders(<SearchField testID="home.search" elevated onPress={() => {}} />);
+    expect(flat(screen.getByTestId('home.search').props.style)).toMatchObject({
+      backgroundColor: colors.surface,
+      boxShadow: shadows.soft,
+    });
+  });
+
+  it('editable: white surface with the soft shadow', async () => {
+    await renderWithProviders(<SearchField testID="s" elevated value="" onChangeText={() => {}} />);
+    expect(flat(screen.getByTestId('s.field').props.style)).toMatchObject({
+      backgroundColor: colors.surface,
+      boxShadow: shadows.soft,
+    });
+  });
+});
+
+// Web draws Material Symbols by their web name; without one the magnifier was missing on Expo web.
+// (Jest renders as iOS, so the names are checked on the constants the field uses.)
+describe('SearchField icons on web', () => {
+  it('the magnifier and the clear icon carry a web name', () => {
+    expect(SEARCH_ICONS.magnifier).toMatchObject({ web: 'search' });
+    expect(SEARCH_ICONS.clear).toMatchObject({ web: 'cancel' });
+  });
+
+  it('a caller icon without a web name (the city pin) gets its Android name on web', () => {
+    expect(withWebName({ ios: 'mappin.and.ellipse', android: 'location_on' })).toEqual({
+      ios: 'mappin.and.ellipse',
+      android: 'location_on',
+      web: 'location_on',
+    });
   });
 });

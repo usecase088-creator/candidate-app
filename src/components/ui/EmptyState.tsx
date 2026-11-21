@@ -44,6 +44,7 @@ export function EmptyState({ testID, title, message, action, icon = DEFAULT_ICON
           variant="secondary"
           size="md"
           fullWidth={false}
+          align="center"
           onPress={action.onPress}
         />
       )}

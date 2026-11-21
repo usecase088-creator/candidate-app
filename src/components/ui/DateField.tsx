@@ -5,6 +5,7 @@ import { parseWebsiteDate } from '@/lib/dates';
 import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
 
 import { DatePicker } from './datePicker';
+import { FieldLabel } from './FieldLabel';
 import { AppText } from './Text';
 import { TextButton } from './TextButton';
 
@@ -39,7 +40,7 @@ export function DateField({ testID, label, helper, value, onChange, required, ma
   const shown = day ? inWords(day) : '';
   return (
     <View style={styles.container}>
-      <AppText variant="label">{required ? `${label} *` : label}</AppText>
+      <FieldLabel testID={testID} label={label} required={required} />
       <View style={styles.row}>
         <Pressable
           testID={testID}

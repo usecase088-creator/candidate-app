@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 import { haptic } from '@/lib/haptics';
+import { colors } from '@/theme/tokens';
 import { makeJob } from '@/test/msw/jobs';
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
 
@@ -99,10 +100,22 @@ describe('JobRow', () => {
     expect(screen.getByTestId('job.verified.n1')).toBeOnTheScreen();
   });
 
-  it('no border, no card background: rows sit on the canvas with a hairline between them', async () => {
+  // Was "no card background: rows sit on the canvas" with a full-bleed bottom border. R2 issue 15: white rows read as
+  // one sheet, and the hairline is inset under the text column (16 margin + 40 logo + 12 gap), not edge to edge.
+  it('no border or radius: a white row with a hairline inset under the text column', async () => {
     await renderWithProviders(<JobRow job={job} saved={false} onOpen={() => {}} onToggleSave={() => {}} />);
     const s = flat(screen.getByTestId('job.card.n1').props.style);
     expect(s.borderWidth).toBeUndefined();
     expect(s.borderRadius).toBeUndefined();
+    expect(s.borderBottomWidth).toBeUndefined();
+    expect(s.backgroundColor).toBe(colors.surface);
+    expect(flat(screen.getByTestId('job.separator.n1').props.style)).toMatchObject({
+      position: 'absolute',
+      left: 16 + 40 + 12,
+      right: 0,
+      bottom: 0,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.separator,
+    });
   });
 });

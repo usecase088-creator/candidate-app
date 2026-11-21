@@ -21,6 +21,17 @@ describe('Button (D32)', () => {
     expect(flat(screen.getByTestId('b').props.style).alignSelf).toBe('flex-start');
   });
 
+  it.each([
+    ['start', 'flex-start'],
+    ['center', 'center'],
+    ['stretch', 'stretch'],
+  ] as const)('align=%s sets alignSelf %s (R2 issue 1: centred empty-state actions)', async (align, self) => {
+    await renderWithProviders(
+      <Button testID="b" label="Go" fullWidth={false} align={align} onPress={() => {}} />,
+    );
+    expect(flat(screen.getByTestId('b').props.style).alignSelf).toBe(self);
+  });
+
   it('stretches by default', async () => {
     await renderWithProviders(<Button testID="b" label="Go" onPress={() => {}} />);
     expect(flat(screen.getByTestId('b').props.style).alignSelf).toBe('stretch');
@@ -48,7 +59,8 @@ describe('Button (D32)', () => {
   it('secondary is a tonal fill with no border', async () => {
     await renderWithProviders(<Button testID="b" label="Go" variant="secondary" onPress={() => {}} />);
     const s = flat(screen.getByTestId('b').props.style);
-    expect(s.backgroundColor).toBe(colors.surface2);
+    // Was surface2 (1.02:1 on the canvas, invisible). R2 issue 2: the darker tonal `fill`.
+    expect(s.backgroundColor).toBe(colors.fill);
     expect(s.borderWidth).toBeUndefined();
   });
 

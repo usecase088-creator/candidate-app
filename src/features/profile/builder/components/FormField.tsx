@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Chip } from '@/components/ui/Chip';
 import { DateField } from '@/components/ui/DateField';
+import { FieldLabel } from '@/components/ui/FieldLabel';
 import { Icon } from '@/components/ui/Icon';
 import { TextButton } from '@/components/ui/TextButton';
 import { TextInput } from '@/components/ui/TextInput';
@@ -28,6 +29,7 @@ const LOCK = { ios: 'lock', android: 'lock', web: 'lock' } as const;
 const asString = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v));
 const asList = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+/** OptionPicker takes a plain string label (its own file); the chip groups use FieldLabel's red asterisk. */
 const label = (spec: FieldSpec) => (spec.required ? `${spec.label} *` : spec.label);
 
 /** One form field of the profile builder. The kind decides the control; the website's labels are kept. */
@@ -127,7 +129,7 @@ export function FormField({ testID, spec, value, onChange }: Props) {
       }
       return (
         <View style={styles.group}>
-          <AppText variant="label">{label(spec)}</AppText>
+          <FieldLabel testID={testID} label={spec.label} required={spec.required} />
           <View style={styles.wrap}>
             {options.map((option, i) => (
               <Chip
@@ -146,7 +148,7 @@ export function FormField({ testID, spec, value, onChange }: Props) {
       const selected = asList(value);
       return (
         <View style={styles.group}>
-          <AppText variant="label">{label(spec)}</AppText>
+          <FieldLabel testID={testID} label={spec.label} required={spec.required} />
           <View style={styles.wrap}>
             {(spec.options ?? []).map((option, i) => (
               <Chip

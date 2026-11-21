@@ -3,11 +3,13 @@ import { useFonts } from 'expo-font';
 import * as Network from 'expo-network';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
+import { StyleSheet } from 'react-native';
 
 import { API } from '@/test/msw/handlers';
 import { installJobsBackend, makeJob } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
+import { colors, shadows } from '@/theme/tokens';
 
 jest.mock('expo-font', () => ({ ...jest.requireActual('expo-font'), useFonts: jest.fn() }));
 jest.mock('expo-splash-screen', () => ({
@@ -54,6 +56,56 @@ afterEach(() => {
 });
 
 const home = () => startSignedIn('/', 'home.screen');
+const flat = (s: unknown) => StyleSheet.flatten(s as never) ?? {};
+
+// R2: the brand moment (a navy band behind the headline, the white search overlapping its bottom edge) and the
+// elevated tiles (white + soft shadow instead of an invisible tonal fill). Wording and testIDs stay.
+describe('Home: hero band and tiles (R2)', () => {
+  it('the headline and subtitle sit on a navy gradient band in white and 80% white', async () => {
+    installJobsBackend({ jobs: [nurse] });
+    await home();
+    await screen.findByTestId('job.card.n1');
+    expect(screen.getByTestId('home.hero.gradient')).toBeOnTheScreen();
+    const headline = screen.getByRole('header', { name: 'Your next clinical role, curated for you.' });
+    expect(flat(headline.props.style).color).toBe(colors.primaryForeground);
+    const subtitle = screen.getByText(
+      'Browse verified healthcare openings across India — salary disclosed, credentials checked.',
+    );
+    expect(flat(subtitle.props.style).color).toBe(colors.primaryForegroundMuted);
+    // No fixed heights on the band: it grows with the text (font scale 2).
+    expect(flat(screen.getByTestId('home.hero').props.style).height).toBeUndefined();
+  });
+
+  it('the search is white with the soft shadow and overlaps the band by 22 pt', async () => {
+    installJobsBackend({ jobs: [nurse] });
+    await home();
+    await screen.findByTestId('job.card.n1');
+    expect(flat(screen.getByTestId('home.search').props.style)).toMatchObject({
+      backgroundColor: colors.surface,
+      boxShadow: shadows.soft,
+    });
+    expect(flat(screen.getByTestId('home.searchWrap').props.style).marginTop).toBe(-22);
+  });
+
+  it('the three tiles are white with the soft shadow, the same min height, icons on top', async () => {
+    installJobsBackend({ jobs: [nurse] });
+    await home();
+    await screen.findByTestId('job.card.n1');
+    const tiles = ['home.link.saved', 'home.link.gov', 'home.link.intl'].map((id) =>
+      flat(screen.getByTestId(id).props.style),
+    );
+    for (const t of tiles) {
+      expect(t).toMatchObject({
+        backgroundColor: colors.surface,
+        boxShadow: shadows.soft,
+        justifyContent: 'flex-start',
+      });
+      // Two 13/18 label lines + the 22-pt icon + padding.
+      expect(t.minHeight).toBeGreaterThanOrEqual(12 + 22 + 4 + 2 * 18 + 8);
+    }
+    expect(new Set(tiles.map((t) => t.minHeight)).size).toBe(1);
+  });
+});
 
 describe('Home: loaded', () => {
   it('shows the website wording and every job card', async () => {

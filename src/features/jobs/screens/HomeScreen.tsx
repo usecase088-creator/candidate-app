@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -10,7 +11,7 @@ import { SearchField } from '@/components/ui/SearchField';
 import { useIsSignedIn } from '@/features/auth/sessionStore';
 import { goToSignIn } from '@/features/auth/signInGate';
 import { AppText } from '@/components/ui/Text';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, fontSizes, gradients, radius, shadows, spacing } from '@/theme/tokens';
 
 import { CategoryChips } from '../components/CategoryChips';
 import { JobList } from '../components/JobList';
@@ -56,7 +57,8 @@ const QUICK_LINKS: QuickLink[] = [
 ];
 
 /**
- * Home (website "Opportunities"). D32: the headline is one compact line pair, the search field comes first, the three
+ * Home (website "Opportunities"). D32: the headline is one compact line pair (R2: on a navy gradient band, with the
+ * white search overlapping its bottom edge), the search field comes first, the three
  * destinations are a row of tiles, the recommended rail bleeds to the edges, and the jobs are rows (JobRow).
  * Search text, city and filters live on the Search tab (same store, so they stay when switching tabs).
  */
@@ -85,19 +87,34 @@ export function HomeScreen() {
 
   const header = (
     <View>
-      <View style={styles.hero}>
-        <AppText variant="title" accessibilityRole="header">
+      {/* R2 brand moment: the website's signup gradient behind the headline; the search overlaps its bottom edge. */}
+      <View testID="home.hero" style={styles.band}>
+        <LinearGradient
+          testID="home.hero.gradient"
+          colors={gradients.signup.colors}
+          locations={gradients.signup.locations}
+          // 135deg: top-left to bottom-right, as on the website.
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <AppText variant="title" color="primaryForeground" accessibilityRole="header">
           Your next clinical role, curated for you.
         </AppText>
-        <AppText variant="secondary" color="mutedForeground">
+        <AppText variant="secondary" color="primaryForegroundMuted">
           Browse verified healthcare openings across India — salary disclosed, credentials checked.
         </AppText>
+      </View>
+      <View testID="home.searchWrap" style={styles.searchWrap}>
         <SearchField
           testID="home.search"
+          elevated
           accessibilityLabel="Search jobs by role, specialty or city"
           placeholder="Role or specialty, city or state"
           onPress={() => router.navigate('/search')}
         />
+      </View>
+      <View style={styles.hero}>
         <View style={styles.tiles}>
           {QUICK_LINKS.map((link) => (
             <PressableScale
@@ -107,7 +124,11 @@ export function HomeScreen() {
               onPress={() => (signedIn ? router.push(link.path) : goToSignIn(link.path))}
               style={styles.tile}
             >
-              <Icon name={{ ...link.icon, web: link.icon.android }} tintColor={colors.brand} size={22} />
+              <Icon
+                name={{ ...link.icon, web: link.icon.android }}
+                tintColor={colors.brand}
+                size={TILE_ICON}
+              />
               <AppText
                 variant="secondary"
                 weight="medium"
@@ -188,21 +209,42 @@ export function HomeScreen() {
   );
 }
 
+/** The search field overlaps the band's bottom edge by this much. */
+const OVERLAP = 22;
+const TILE_ICON = 22;
+const TILE_PAD_TOP = spacing['3'];
+const TILE_PAD_BOTTOM = spacing['2'];
+/** Fits the icon and two 13-pt label lines, so a wrapped "International Jobs" keeps the three tiles equal. */
+const TILE_MIN_HEIGHT =
+  TILE_PAD_TOP + TILE_ICON + spacing['1'] + 2 * fontSizes.sm.lineHeight + TILE_PAD_BOTTOM;
+
 const styles = StyleSheet.create({
-  hero: { gap: spacing['3'], paddingHorizontal: spacing['4'], paddingTop: spacing['4'] },
-  tiles: { flexDirection: 'row', gap: spacing['2'], marginTop: spacing['1'] },
+  // No fixed height: the band grows with the text (320 pt, font scale 2).
+  band: {
+    gap: spacing['2'],
+    paddingHorizontal: spacing['4'],
+    paddingTop: spacing['5'],
+    paddingBottom: spacing['5'] + OVERLAP,
+    backgroundColor: colors.primary,
+    overflow: 'hidden',
+  },
+  searchWrap: { marginTop: -OVERLAP, paddingHorizontal: spacing['4'] },
+  hero: { paddingHorizontal: spacing['4'], paddingTop: spacing['3'] },
+  tiles: { flexDirection: 'row', gap: spacing['2'] },
   tile: {
     flex: 1,
-    minHeight: 72,
+    minHeight: TILE_MIN_HEIGHT,
     alignItems: 'center',
     // Icons on one line even when a label wraps ("International Jobs" on narrow phones).
     justifyContent: 'flex-start',
     gap: spacing['1'],
     paddingHorizontal: spacing['1'],
-    paddingTop: spacing['3'],
-    paddingBottom: spacing['2'],
+    paddingTop: TILE_PAD_TOP,
+    paddingBottom: TILE_PAD_BOTTOM,
     borderRadius: radius.md,
-    backgroundColor: colors.surface2,
+    // R2: elevated white tiles; the tonal surface2 was invisible on the canvas.
+    backgroundColor: colors.surface,
+    boxShadow: shadows.soft,
   },
   chips: { paddingHorizontal: spacing['4'], paddingTop: spacing['4'] },
   // Title, then the count under it: side by side they broke at 320 pt.

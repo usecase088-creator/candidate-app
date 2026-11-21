@@ -56,6 +56,7 @@ export function ErrorState({
           variant="secondary"
           size="md"
           fullWidth={false}
+          align="center"
           loading={retrying}
           onPress={onRetry}
         />

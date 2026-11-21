@@ -12,6 +12,8 @@ import { colors, spacing } from '@/theme/tokens';
 import { formatExp, formatLPA, postedLabel } from '../logic/format';
 import { SaveButton } from './SaveButton';
 
+const LOGO = 40;
+
 type Props = {
   job: Job;
   saved: boolean;
@@ -51,7 +53,7 @@ function JobRowView({ job, saved, onToggleSave, onOpen }: Props) {
         onPress={() => onOpen(job)}
         style={styles.main}
       >
-        <LogoTile testID={`job.logo.${job.id}`} name={job.hospital} uri={job.hospitalLogoUrl} size={40} />
+        <LogoTile testID={`job.logo.${job.id}`} name={job.hospital} uri={job.hospitalLogoUrl} size={LOGO} />
         <View style={styles.text}>
           <AppText testID={`job.title.${job.id}`} variant="rowTitle" numberOfLines={2}>
             {job.role}
@@ -85,6 +87,7 @@ function JobRowView({ job, saved, onToggleSave, onOpen }: Props) {
         </View>
       </PressableScale>
       <SaveButton testID={`job.save.${job.id}`} saved={saved} onPress={() => onToggleSave(job)} />
+      <View testID={`job.separator.${job.id}`} style={styles.separator} pointerEvents="none" />
     </View>
   );
 }
@@ -98,9 +101,17 @@ const styles = StyleSheet.create({
     paddingLeft: spacing['4'],
     paddingRight: spacing['1'],
     paddingVertical: spacing['3'],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
-    backgroundColor: colors.background,
+    // R2: white rows read as one sheet on the canvas.
+    backgroundColor: colors.surface,
+  },
+  // R2: the hairline starts under the text column (16 margin + 40 logo + 12 gap), like a native inset list.
+  separator: {
+    position: 'absolute',
+    left: spacing['4'] + LOGO + spacing['3'],
+    right: 0,
+    bottom: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.separator,
   },
   main: { flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: spacing['3'] },
   text: { flex: 1, gap: 2 },
