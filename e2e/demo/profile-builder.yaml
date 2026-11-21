@@ -47,6 +47,7 @@ appId: work.apronhanger.candidate.dev
 - runFlow: _demo/pause-500.yaml
 - assertVisible: Medical Work Profile
 - runFlow: _demo/pause-1200.yaml
+- runFlow: _demo/cap-profile-builder-5.yaml
 - runFlow:
     when:
       platform: Android

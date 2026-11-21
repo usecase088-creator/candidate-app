@@ -159,7 +159,7 @@
           "text": "Continue: your medical work profile"
         },
         {
-          "at": "tapOn:\\s+id: builder\\.exit",
+          "at": "platform: Android",
           "text": "Leave any time: your answers stay on the phone"
         },
         {
