@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { MIN_TOUCH, spacing } from '@/theme/tokens';
+import { colors, radius, spacing } from '@/theme/tokens';
 
-import { AppText } from './Text';
+import { Icon } from './Icon';
+import { PressableScale } from './PressableScale';
 import { TextInput, type TextInputProps } from './TextInput';
 
 export type PasswordInputProps = Omit<TextInputProps, 'secureTextEntry' | 'accessory'> & {
@@ -11,6 +12,12 @@ export type PasswordInputProps = Omit<TextInputProps, 'secureTextEntry' | 'acces
   isNew?: boolean;
 };
 
+const TOGGLE = 44;
+const ICON_SIZE = 20;
+const EYE = { ios: 'eye', android: 'visibility', web: 'visibility' } as const;
+const EYE_OFF = { ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' } as const;
+
+/** D32: the Show/Hide toggle is a 44-pt eye icon button inside the field (`{id}.toggle`, `{id}.toggle.icon`). */
 export function PasswordInput({ testID, isNew = false, ...rest }: PasswordInputProps) {
   const [visible, setVisible] = useState(false);
   return (
@@ -22,18 +29,20 @@ export function PasswordInput({ testID, isNew = false, ...rest }: PasswordInputP
       autoComplete={isNew ? 'new-password' : 'current-password'}
       textContentType={isNew ? 'newPassword' : 'password'}
       accessory={
-        <Pressable
+        <PressableScale
           testID={`${testID}.toggle`}
-          accessibilityRole="button"
           accessibilityLabel={visible ? 'Hide password' : 'Show password'}
-          hitSlop={spacing['2']}
+          pressScale={1}
           onPress={() => setVisible((v) => !v)}
           style={styles.toggle}
         >
-          <AppText variant="caption" weight="semibold" color="brand">
-            {visible ? 'Hide' : 'Show'}
-          </AppText>
-        </Pressable>
+          <Icon
+            testID={`${testID}.toggle.icon`}
+            name={visible ? EYE_OFF : EYE}
+            size={ICON_SIZE}
+            tintColor={colors.mutedForeground}
+          />
+        </PressableScale>
       }
       {...rest}
     />
@@ -41,5 +50,13 @@ export function PasswordInput({ testID, isNew = false, ...rest }: PasswordInputP
 }
 
 const styles = StyleSheet.create({
-  toggle: { minHeight: MIN_TOUCH, justifyContent: 'center', paddingLeft: spacing['2'] },
+  toggle: {
+    width: TOGGLE,
+    height: TOGGLE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.full,
+    // The field has 12-pt side padding; pull the button out so the icon sits 12 pt from the edge.
+    marginRight: -spacing['2'],
+  },
 });

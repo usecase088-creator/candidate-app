@@ -1,18 +1,20 @@
+import { useRef } from 'react';
 import { TextInput as RNTextInput, StyleSheet, View } from 'react-native';
 
-import { colors, fonts, fontSizes, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
+import { colors, fonts, fontSizes, radius, spacing } from '@/theme/tokens';
 
 import { otpAutofill } from './otpAutofill';
 import { AppText } from './Text';
 
 const LENGTH = 6;
+const BOX_HEIGHT = 52;
 
 export type OtpInputProps = {
   testID: string;
   label: string;
   value: string;
   onChangeText: (digits: string) => void;
-  /** Called with the code once all 6 digits are entered (typed, pasted or autofilled). */
+  /** Called once per completed code, when the 6th digit lands (typed, pasted or autofilled). Never twice for the same code. */
   onComplete?: (code: string) => void;
   error?: string;
   autoFocus?: boolean;
@@ -21,6 +23,7 @@ export type OtpInputProps = {
 /**
  * Six boxes drawn over one real TextInput (boxes on top, touches pass through), so typing, paste and SMS
  * autofill all work and screen readers still reach the input.
+ * D32: 52-pt boxes, radius 12, 22/600 tabular digits, surface2 once filled, 1.5-px ring on the active box.
  * testIDs: `{id}` input, `{id}.box.N`, `{id}.boxes`, `{id}.error`.
  */
 export function OtpInput({
@@ -32,10 +35,18 @@ export function OtpInput({
   error,
   autoFocus,
 }: OtpInputProps) {
+  // The last code handed to onComplete: a 7th key press or a repeated autofill event yields the same 6 digits again
+  // and must not submit twice.
+  const completed = useRef<string | null>(null);
   const handleChange = (text: string) => {
     const digits = text.replace(/\D/g, '').slice(0, LENGTH);
     onChangeText(digits);
-    if (digits.length === LENGTH) onComplete?.(digits);
+    if (digits.length < LENGTH) {
+      completed.current = null;
+    } else if (completed.current !== digits) {
+      completed.current = digits;
+      onComplete?.(digits);
+    }
   };
 
   return (
@@ -68,10 +79,19 @@ export function OtpInput({
         >
           {Array.from({ length: LENGTH }, (_, i) => {
             const active = i === value.length;
-            const borderColor = error ? colors.destructive : active ? colors.ring : colors.input;
+            const filled = i < value.length;
             return (
-              <View key={i} testID={`${testID}.box.${i}`} style={[styles.box, { borderColor }]}>
-                <AppText variant="body" weight="semibold">
+              <View
+                key={i}
+                testID={`${testID}.box.${i}`}
+                style={[
+                  styles.box,
+                  filled && styles.filled,
+                  active && styles.active,
+                  error && styles.errorBox,
+                ]}
+              >
+                <AppText variant="title" tabular accessibilityRole="none">
                   {value[i] ?? ''}
                 </AppText>
               </View>
@@ -82,7 +102,7 @@ export function OtpInput({
       {error ? (
         <AppText
           testID={`${testID}.error`}
-          variant="caption"
+          variant="secondary"
           color="errorText"
           accessibilityLiveRegion="polite"
           accessibilityRole="alert"
@@ -99,13 +119,17 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: spacing['2'] },
   box: {
     flex: 1,
-    minHeight: MIN_TOUCH,
+    minHeight: BOX_HEIGHT,
     borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  filled: { backgroundColor: colors.surface2 },
+  active: { borderWidth: 1.5, borderColor: colors.ring },
+  errorBox: { borderColor: colors.destructive },
   // Same area as the boxes, drawn under them. Not transparent: at opacity 0.02 digits showed through on Android,
   // and at 0 Android dropped it from the accessibility tree. Text in the box colour, in case any edge shows.
   hiddenInput: {

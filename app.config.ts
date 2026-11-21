@@ -149,7 +149,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           }
         : {}),
       adaptiveIcon: {
-        backgroundColor: '#E6F4FE',
+        backgroundColor: '#E1F0FF', // tokens.brandSoft (D32)
         foregroundImage: './assets/images/android-icon-foreground.png',
         backgroundImage: './assets/images/android-icon-background.png',
         monochromeImage: './assets/images/android-icon-monochrome.png',
@@ -207,7 +207,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // faceIDPermission false: the app uses no biometrics, so the iPhone gets no Face ID usage text.
       ['expo-secure-store', { faceIDPermission: false }],
       // Push (Phase 4): the plugin adds the Android 13+ notification permission and the iOS push entitlement.
-      ['expo-notifications', { color: '#208AEF' }],
+      ['expo-notifications', { color: '#326AD9' }], // tokens.brand (D32)
       // Release builds block plain http. Development and preview talk to the http test backend (D20);
       // the store build stays https-only.
       ['expo-build-properties', { android: { usesCleartextTraffic: variant !== 'production' } }],
@@ -224,7 +224,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-splash-screen',
         {
-          backgroundColor: '#208AEF',
+          backgroundColor: '#0D172F', // tokens.navy (D32)
           image: './assets/images/splash-icon.png',
           imageWidth: 76,
         },

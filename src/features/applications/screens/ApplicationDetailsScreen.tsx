@@ -27,7 +27,6 @@ export function ApplicationDetailsScreen() {
   const query = useApplications();
   const view = queryView(query);
   const application = query.data?.find((a) => a.id === id);
-  const back = () => (router.canGoBack() ? router.back() : router.replace('/applications'));
 
   return (
     <Screen testID="application.screen" scroll>

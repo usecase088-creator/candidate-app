@@ -1,5 +1,6 @@
 import { AccessibilityInfo, StyleSheet } from 'react-native';
 
+import { haptic } from '@/lib/haptics';
 import { colors } from '@/theme/tokens';
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
 
@@ -8,8 +9,12 @@ import { FormErrorBox } from '../FormErrorBox';
 import { LottieAnimation } from '../LottieAnimation';
 import { TextButton } from '../TextButton';
 
+jest.mock('@/lib/haptics', () => ({ haptic: jest.fn() }));
+
 const flat = (s: unknown) => StyleSheet.flatten(s as never) ?? {};
 const HIDDEN = { includeHiddenElements: true };
+
+afterEach(() => jest.clearAllMocks());
 
 describe('Checkbox', () => {
   it('is a checkbox with its label as name and state', async () => {
@@ -42,6 +47,70 @@ describe('Checkbox', () => {
     );
     expect(screen.getByRole('checkbox')).toBeChecked();
   });
+
+  // D32: 22-pt box, radius 6, 1.5-px border; brand fill with an Icon check (no glyph text); 15-pt label.
+  it('draws a 22-pt box with radius 6 and a 1.5-px border', async () => {
+    await renderWithProviders(
+      <Checkbox testID="c" checked={false} onChange={() => {}} accessibilityLabel="x">
+        label
+      </Checkbox>,
+    );
+    expect(flat(screen.getByTestId('c.box').props.style)).toMatchObject({
+      width: 22,
+      height: 22,
+      borderRadius: 6,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+    });
+    expect(screen.queryByTestId('c.check')).toBeNull();
+    expect(flat(screen.getByTestId('c').props.style)).toMatchObject({ paddingVertical: 8 });
+  });
+
+  it('fills the box in brand with a white 14-pt Icon check when checked', async () => {
+    await renderWithProviders(
+      <Checkbox testID="c" checked onChange={() => {}} accessibilityLabel="x">
+        label
+      </Checkbox>,
+    );
+    expect(flat(screen.getByTestId('c.box').props.style)).toMatchObject({
+      backgroundColor: colors.brand,
+      borderColor: colors.brand,
+    });
+    const check = screen.getByTestId('c.check');
+    expect(check).toHaveProp('tintColor', colors.surface);
+    // expo-symbols resolves `{ ios, android, web }` to the running platform's name (iOS under jest-expo).
+    expect(check).toHaveProp('name', 'checkmark');
+    expect(flat(check.props.style)).toMatchObject({ width: 14, height: 14 });
+    expect(screen.queryByText('✓')).toBeNull();
+  });
+
+  it('sets a string label in the body ramp (15/20)', async () => {
+    await renderWithProviders(
+      <Checkbox testID="c" checked={false} onChange={() => {}} accessibilityLabel="x">
+        I agree
+      </Checkbox>,
+    );
+    expect(flat(screen.getByText('I agree').props.style)).toMatchObject({ fontSize: 15, lineHeight: 20 });
+  });
+
+  it('fires a selection haptic without shrinking the row', async () => {
+    await renderWithProviders(
+      <Checkbox testID="c" checked={false} onChange={() => {}} accessibilityLabel="x">
+        label
+      </Checkbox>,
+    );
+    await fireEvent.press(screen.getByTestId('c'));
+    expect(haptic).toHaveBeenCalledWith('selection');
+  });
+
+  it('outlines an invalid unchecked box in red', async () => {
+    await renderWithProviders(
+      <Checkbox testID="c" checked={false} onChange={() => {}} accessibilityLabel="x" invalid>
+        label
+      </Checkbox>,
+    );
+    expect(flat(screen.getByTestId('c.box').props.style).borderColor).toBe(colors.destructive);
+  });
 });
 
 describe('FormErrorBox', () => {
@@ -61,15 +130,48 @@ describe('FormErrorBox', () => {
 });
 
 describe('TextButton', () => {
-  it('is a brand-coloured button with a testID, at least 48 tall', async () => {
+  // D32: a compact link (14/500 brand, 8-pt vertical padding, hitSlop 12 reaches 44) instead of a 48-pt block.
+  // The old "at least 48 tall" assertion encoded the pre-D32 layout; the touch target now comes from hitSlop.
+  it('is a brand-coloured button with a testID whose touch target reaches 44 through hitSlop', async () => {
     const onPress = jest.fn();
     await renderWithProviders(
       <TextButton testID="login.forgot" label="Forgot password?" onPress={onPress} />,
     );
     await fireEvent.press(screen.getByRole('button', { name: 'Forgot password?' }));
     expect(onPress).toHaveBeenCalled();
-    expect(flat(screen.getByText('Forgot password?').props.style).color).toBe(colors.brand);
-    expect(flat(screen.getByTestId('login.forgot').props.style).minHeight).toBeGreaterThanOrEqual(44);
+    const label = screen.getByText('Forgot password?');
+    expect(flat(label.props.style)).toMatchObject({ color: colors.brand, fontSize: 14, lineHeight: 20 });
+    const button = screen.getByTestId('login.forgot');
+    const style = flat(button.props.style);
+    expect(style).toMatchObject({ paddingVertical: 8, alignSelf: 'flex-start' });
+    expect(style.minHeight).toBeUndefined();
+    expect(button.props.hitSlop).toBe(12);
+    expect(20 + 8 * 2 + 12 * 2).toBeGreaterThanOrEqual(44);
+  });
+
+  it('keeps the given colour and spoken label', async () => {
+    await renderWithProviders(
+      <TextButton
+        testID="t"
+        label="Edit"
+        color="destructive"
+        accessibilityLabel="Edit details"
+        onPress={() => {}}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Edit details' })).toBeOnTheScreen();
+    expect(flat(screen.getByText('Edit').props.style).color).toBe(colors.destructive);
+  });
+
+  it('fades to half when disabled and does not press', async () => {
+    const onPress = jest.fn();
+    await renderWithProviders(<TextButton testID="t" label="Resend" onPress={onPress} disabled />);
+    const button = screen.getByTestId('t');
+    expect(button).toBeDisabled();
+    // Like Button: the fade sits on the label (the pressable's own opacity belongs to the press animation).
+    expect(flat(screen.getByText('Resend').props.style).opacity).toBe(0.5);
+    await fireEvent.press(button);
+    expect(onPress).not.toHaveBeenCalled();
   });
 });
 

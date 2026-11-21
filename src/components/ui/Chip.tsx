@@ -1,7 +1,10 @@
-import { Pressable, StyleSheet } from 'react-native';
+import type { SymbolViewProps } from 'expo-symbols';
+import { StyleSheet } from 'react-native';
 
-import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
+import { colors, radius, spacing } from '@/theme/tokens';
 
+import { Icon } from './Icon';
+import { PressableScale } from './PressableScale';
 import { AppText } from './Text';
 
 export type ChipProps = {
@@ -11,35 +14,73 @@ export type ChipProps = {
   onPress: () => void;
   /** Spoken label; defaults to `label`. */
   accessibilityLabel?: string;
+  /** Optional 14-pt leading icon, drawn in the text colour. */
+  icon?: SymbolViewProps['name'];
+  /** Adds a trailing 16-pt clear button (`{testID}.remove`, "Remove {label}") that fires instead of onPress. */
+  onRemove?: () => void;
 };
 
-/** Selectable pill (categories, countries, cities, job types). Website: bg-primary when active. */
-export function Chip({ testID, label, selected, onPress, accessibilityLabel }: ChipProps) {
+const HEIGHT = 32;
+const ICON_SIZE = 14;
+const REMOVE_ICON_SIZE = 16;
+/** Pads the touch area of a 32-pt chip to 44 (D32), without changing its drawn size. */
+const CHIP_SLOP = (44 - HEIGHT) / 2;
+const REMOVE_SLOP = (44 - REMOVE_ICON_SIZE) / 2;
+const XMARK = { ios: 'xmark', android: 'close', web: 'close' } as const;
+
+/**
+ * D32 selectable pill (categories, countries, cities, job types, sort). Tonal when idle, brandSoft + brand when
+ * selected; press feedback and a selection haptic through PressableScale.
+ */
+export function Chip({ testID, label, selected, onPress, accessibilityLabel, icon, onRemove }: ChipProps) {
+  const tint = selected ? colors.brand : colors.foreground;
   return (
-    <Pressable
+    <PressableScale
       testID={testID}
-      accessibilityRole="button"
+      haptic="selection"
+      hitSlop={CHIP_SLOP}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ selected }}
       onPress={onPress}
       style={[styles.chip, selected ? styles.selected : styles.idle]}
     >
-      <AppText variant="caption" weight="semibold" color={selected ? 'primaryForeground' : 'foreground'}>
+      {icon ? <Icon testID={`${testID}.icon`} name={icon} size={ICON_SIZE} tintColor={tint} /> : null}
+      <AppText
+        testID={`${testID}.label`}
+        variant="secondary"
+        weight="medium"
+        color={selected ? 'brand' : 'foreground'}
+        numberOfLines={1}
+      >
         {label}
       </AppText>
-    </Pressable>
+      {onRemove ? (
+        <PressableScale
+          testID={`${testID}.remove`}
+          accessibilityLabel={`Remove ${label}`}
+          hitSlop={REMOVE_SLOP}
+          onPress={onRemove}
+          style={styles.remove}
+        >
+          <Icon testID={`${testID}.remove.icon`} name={XMARK} size={REMOVE_ICON_SIZE} tintColor={tint} />
+        </PressableScale>
+      ) : null}
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   chip: {
-    minHeight: MIN_TOUCH - 8,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: spacing['4'],
-    paddingVertical: spacing['2'],
+    gap: spacing['1'],
+    minHeight: HEIGHT,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing['3'],
   },
-  idle: { backgroundColor: colors.surface, borderColor: colors.border },
-  selected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  idle: { backgroundColor: colors.surface2 },
+  // minHeight is the border box in Yoga, so the chip stays 32 tall in both states.
+  selected: { backgroundColor: colors.brandSoft, borderWidth: 1.5, borderColor: colors.brand },
+  remove: { borderRadius: radius.full },
 });

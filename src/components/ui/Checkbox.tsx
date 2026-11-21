@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
+import { colors, radius, spacing } from '@/theme/tokens';
 
+import { Icon } from './Icon';
+import { PressableScale } from './PressableScale';
 import { AppText } from './Text';
 
 export type CheckboxProps = {
@@ -15,7 +17,14 @@ export type CheckboxProps = {
   invalid?: boolean;
 };
 
-/** Website signup consent checkboxes (accent #3778D7). The whole row is the touch target. */
+const BOX = 22;
+const CHECK_SIZE = 14;
+const CHECK = { ios: 'checkmark', android: 'check', web: 'check' } as const;
+
+/**
+ * D32 consent checkbox (signup, profile builder): 22-pt box with radius 6, brand fill and an Icon check.
+ * The whole row is the touch target; it does not shrink on press (only the opacity dips) and ticks on change.
+ */
 export function Checkbox({
   testID,
   checked,
@@ -25,8 +34,10 @@ export function Checkbox({
   invalid,
 }: CheckboxProps) {
   return (
-    <Pressable
+    <PressableScale
       testID={testID}
+      haptic="selection"
+      pressScale={1}
       accessibilityRole="checkbox"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked }}
@@ -34,6 +45,7 @@ export function Checkbox({
       style={styles.row}
     >
       <View
+        testID={`${testID}.box`}
         style={[
           styles.box,
           checked && styles.checked,
@@ -41,15 +53,13 @@ export function Checkbox({
         ]}
       >
         {checked ? (
-          <AppText variant="caption" weight="bold" color="primaryForeground">
-            ✓
-          </AppText>
+          <Icon testID={`${testID}.check`} name={CHECK} size={CHECK_SIZE} tintColor={colors.surface} />
         ) : null}
       </View>
       <View style={styles.label}>
-        {typeof children === 'string' ? <AppText variant="caption">{children}</AppText> : children}
+        {typeof children === 'string' ? <AppText variant="body">{children}</AppText> : children}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -57,17 +67,17 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: spacing['3'],
-    minHeight: MIN_TOUCH,
     alignItems: 'flex-start',
-    paddingVertical: spacing['1'],
+    paddingVertical: spacing['2'],
   },
   box: {
-    width: 20,
-    height: 20,
-    marginTop: 2,
+    width: BOX,
+    height: BOX,
+    // Body text has a 20-pt line; this centres the box on the first line.
+    marginTop: (20 - BOX) / 2,
     borderWidth: 1.5,
-    borderColor: colors.input,
-    borderRadius: radius.sm / 2,
+    borderColor: colors.border,
+    borderRadius: radius.sm - 2,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',

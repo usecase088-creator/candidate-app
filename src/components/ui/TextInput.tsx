@@ -1,4 +1,4 @@
-import type { ComponentRef, ReactNode, Ref } from 'react';
+import { type ComponentRef, type ReactNode, type Ref, useState } from 'react';
 import {
   TextInput as RNTextInput,
   type TextInputProps as RNTextInputProps,
@@ -6,7 +6,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, fonts, fontSizes, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
+import { colors, fonts, fontSizes, radius, spacing } from '@/theme/tokens';
 
 import { AppText } from './Text';
 
@@ -20,45 +20,78 @@ export type TextInputProps = Omit<RNTextInputProps, 'style'> & {
   error?: string;
   /** Element inside the field on the right (e.g. the password toggle). */
   accessory?: ReactNode;
+  /** Shows a red asterisk after the label and tells screen readers the field is required. */
+  required?: boolean;
+  /** Element on the right of the label row (e.g. "Forgot password?"). */
+  labelAccessory?: ReactNode;
   ref?: Ref<TextInputRef>;
 };
 
-/** Labelled input with helper and error text. testIDs: `{id}` input, `{id}.field`, `{id}.error`. */
+const HEIGHT = 48;
+const MULTILINE_HEIGHT = 96;
+
+/**
+ * D32 labelled input: 48 pt, radius 12, 15-pt text, 1-px border at rest, 1.5-px ring while focused, 1.5-px
+ * destructive + 13-pt message on error, muted fill when disabled.
+ * testIDs: `{id}` input, `{id}.field`, `{id}.labelRow`, `{id}.required`, `{id}.error`, `{id}.helper`.
+ */
 export function TextInput({
   testID,
   label,
   helper,
   error,
   accessory,
+  required,
+  labelAccessory,
   accessibilityLabel,
   editable = true,
+  multiline,
+  onFocus,
+  onBlur,
   ref,
   ...rest
 }: TextInputProps) {
+  const [focused, setFocused] = useState(false);
   const hasError = !!error;
+  const borderStyle = hasError ? styles.borderError : focused ? styles.borderFocused : styles.borderRest;
+  const spokenLabel = accessibilityLabel ?? label;
   return (
     <View style={styles.container}>
-      <AppText variant="label" nativeID={`${testID}.label`}>
-        {label}
-      </AppText>
+      <View testID={`${testID}.labelRow`} style={styles.labelRow}>
+        <AppText variant="label" nativeID={`${testID}.label`} style={styles.label}>
+          {label}
+          {required ? (
+            <AppText testID={`${testID}.required`} variant="label" color="errorText">
+              {' *'}
+            </AppText>
+          ) : null}
+        </AppText>
+        {labelAccessory}
+      </View>
       <View
         testID={`${testID}.field`}
-        style={[
-          styles.field,
-          { borderColor: hasError ? colors.destructive : colors.input },
-          !editable && styles.disabled,
-        ]}
+        style={[styles.field, borderStyle, multiline && styles.fieldMultiline, !editable && styles.disabled]}
       >
         <RNTextInput
           ref={ref}
           testID={testID}
-          accessibilityLabel={accessibilityLabel ?? label}
+          accessibilityLabel={required ? `${spokenLabel}, required` : spokenLabel}
           accessibilityLabelledBy={`${testID}.label`}
           accessibilityHint={error}
           accessibilityState={{ disabled: !editable }}
           editable={editable}
-          placeholderTextColor={colors.mutedForeground}
-          style={styles.input}
+          multiline={multiline}
+          textAlignVertical={multiline ? 'top' : undefined}
+          placeholderTextColor={colors.placeholder}
+          onFocus={(e) => {
+            setFocused(true);
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            onBlur?.(e);
+          }}
+          style={[styles.input, !editable && styles.inputDisabled]}
           {...rest}
         />
         {accessory}
@@ -66,7 +99,7 @@ export function TextInput({
       {hasError ? (
         <AppText
           testID={`${testID}.error`}
-          variant="caption"
+          variant="secondary"
           color="errorText"
           accessibilityLiveRegion="polite"
           accessibilityRole="alert"
@@ -74,7 +107,7 @@ export function TextInput({
           {error}
         </AppText>
       ) : helper ? (
-        <AppText testID={`${testID}.helper`} variant="caption" color="mutedForeground">
+        <AppText testID={`${testID}.helper`} variant="secondary" color="mutedForeground">
           {helper}
         </AppText>
       ) : null}
@@ -83,24 +116,37 @@ export function TextInput({
 }
 
 const styles = StyleSheet.create({
-  container: { gap: spacing['2'], alignSelf: 'stretch' },
+  // D32: label-to-field 6.
+  container: { gap: spacing['1'] + spacing['0.5'], alignSelf: 'stretch' },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing['2'],
+  },
+  label: { flexShrink: 1 },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: MIN_TOUCH,
-    borderWidth: 1,
+    minHeight: HEIGHT,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
     paddingHorizontal: spacing['3'],
   },
+  fieldMultiline: { minHeight: MULTILINE_HEIGHT, alignItems: 'flex-start' },
+  borderRest: { borderWidth: 1, borderColor: colors.border },
+  borderFocused: { borderWidth: 1.5, borderColor: colors.ring },
+  borderError: { borderWidth: 1.5, borderColor: colors.destructive },
   input: {
     flex: 1,
-    ...fontSizes.sm,
+    alignSelf: 'stretch',
+    ...fontSizes.base,
     // RN clips text with a fixed lineHeight inside inputs on Android; let it size itself.
     lineHeight: undefined,
     fontFamily: fonts.regular,
     color: colors.foreground,
     paddingVertical: spacing['3'],
   },
-  disabled: { opacity: 0.6, backgroundColor: colors.muted },
+  inputDisabled: { color: colors.mutedForeground },
+  disabled: { backgroundColor: colors.muted },
 });

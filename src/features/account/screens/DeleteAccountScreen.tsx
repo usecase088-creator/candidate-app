@@ -1,6 +1,5 @@
 // Delete my account (Google Play and the App Store both require it inside the app). Password, one more question, then
 // the phone is signed out and forgets everything. What the server keeps and removes: backend PR 9.
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -17,7 +16,6 @@ import { spacing } from '@/theme/tokens';
 import { accountApi } from '../accountApi';
 
 export function DeleteAccountScreen() {
-  const router = useRouter();
   const signOut = useSession((s) => s.signOut);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string>();

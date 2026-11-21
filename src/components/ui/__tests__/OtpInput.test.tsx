@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { colors } from '@/theme/tokens';
+import { colors, radius } from '@/theme/tokens';
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
 
 import { OtpInput } from '../OtpInput';
@@ -62,6 +62,57 @@ it('calls onComplete only when all 6 digits are there', async () => {
   await s.render();
   await fireEvent.changeText(screen.getByTestId('signup.otp'), '12345');
   expect(s.onComplete).not.toHaveBeenCalled();
+});
+
+// D32: fire once per completed code, so a screen that submits on complete never double-submits (a 7th key press
+// or a repeated autofill event hands the same 6 digits back).
+it('calls onComplete once per completed code, not again for the same digits', async () => {
+  const s = setup();
+  await s.render();
+  const input = screen.getByTestId('signup.otp');
+  await fireEvent.changeText(input, '123456');
+  await fireEvent.changeText(input, '1234567');
+  expect(s.onComplete).toHaveBeenCalledTimes(1);
+  await fireEvent.changeText(input, '12345');
+  await fireEvent.changeText(input, '123457');
+  expect(s.onComplete).toHaveBeenCalledTimes(2);
+  expect(s.onComplete).toHaveBeenLastCalledWith('123457');
+});
+
+describe('boxes (D32)', () => {
+  it('are 52 tall with radius 12 and white when empty', async () => {
+    await setup({ value: '' }).render();
+    expect(flat(screen.getByTestId('signup.otp.box.1', HIDDEN).props.style)).toMatchObject({
+      minHeight: 52,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      backgroundColor: colors.surface,
+    });
+  });
+
+  it('fill with surface2 once they hold a digit, and show it at 22/600 tabular', async () => {
+    await setup({ value: '12' }).render();
+    expect(flat(screen.getByTestId('signup.otp.box.0', HIDDEN).props.style).backgroundColor).toBe(
+      colors.surface2,
+    );
+    expect(flat(screen.getByTestId('signup.otp.box.2', HIDDEN).props.style).backgroundColor).toBe(
+      colors.surface,
+    );
+    expect(flat(screen.getByText('1', HIDDEN).props.style)).toMatchObject({
+      fontSize: 22,
+      fontFamily: 'Inter_600SemiBold',
+      fontVariant: ['tabular-nums'],
+    });
+  });
+
+  it('draw the active box with a 1.5-px ring', async () => {
+    await setup({ value: '12' }).render();
+    expect(flat(screen.getByTestId('signup.otp.box.2', HIDDEN).props.style)).toMatchObject({
+      borderWidth: 1.5,
+      borderColor: colors.ring,
+    });
+    expect(flat(screen.getByTestId('signup.otp.box.3', HIDDEN).props.style).borderWidth).toBe(1);
+  });
 });
 
 it('draws one box per digit', async () => {

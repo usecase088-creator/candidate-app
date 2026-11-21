@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { type ColorToken, MIN_TOUCH, spacing } from '@/theme/tokens';
+import { type ColorToken, spacing } from '@/theme/tokens';
 
+import { PressableScale } from './PressableScale';
 import { AppText } from './Text';
 
 export type TextButtonProps = {
@@ -13,7 +14,13 @@ export type TextButtonProps = {
   disabled?: boolean;
 };
 
-/** Link-style action ("Forgot password?", "Edit signup details"). Full touch height even though it looks like text. */
+/** Hit slop that takes the 20-pt line + 8-pt padding each side to a 44-pt touch target (D32). */
+const SLOP = 12;
+
+/**
+ * D32 link-style action ("Forgot password?", "Edit signup details"): compact 14/500 text, no press scale (only the
+ * opacity dips), touch target padded to 44 through hitSlop so it sits tight against its neighbours.
+ */
 export function TextButton({
   testID,
   label,
@@ -23,24 +30,24 @@ export function TextButton({
   disabled,
 }: TextButtonProps) {
   return (
-    <Pressable
+    <PressableScale
       testID={testID}
-      accessibilityRole="button"
+      pressScale={1}
       accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
-      hitSlop={spacing['1']}
+      hitSlop={SLOP}
       onPress={onPress}
-      style={({ pressed }) => [styles.base, pressed && styles.pressed]}
+      style={styles.base}
     >
-      <AppText variant="caption" weight="semibold" color={color}>
+      <AppText variant="label" color={color} style={disabled && styles.disabledText}>
         {label}
       </AppText>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  base: { minHeight: MIN_TOUCH, justifyContent: 'center', alignSelf: 'flex-start' },
-  pressed: { opacity: 0.7 },
+  base: { paddingVertical: spacing['2'], alignSelf: 'flex-start' },
+  // Like Button: the fade sits on the label; the pressable's own opacity belongs to the press animation.
+  disabledText: { opacity: 0.5 },
 });

@@ -1,7 +1,7 @@
 import { createRef } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
-import { colors, fonts } from '@/theme/tokens';
+import { colors, fonts, radius } from '@/theme/tokens';
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
 
 import { PasswordInput } from '../PasswordInput';
@@ -70,6 +70,115 @@ describe('TextInput', () => {
   });
 });
 
+// D32: 48-pt field, radius 12, 15-pt text, placeholder token, 1-px border at rest, 1.5-px ring when focused,
+// 1.5-px destructive + 13-pt message on error, muted fill when disabled (no opacity), `required`, `labelAccessory`.
+describe('TextInput (D32)', () => {
+  it('is a 48-pt field with radius 12, 15-pt text and the placeholder token', async () => {
+    await renderWithProviders(<TextInput testID="i" label="Email" placeholder="you@example.com" />);
+    expect(flat(screen.getByTestId('i.field').props.style)).toMatchObject({
+      minHeight: 48,
+      borderRadius: radius.md,
+      backgroundColor: colors.surface,
+    });
+    const input = screen.getByTestId('i');
+    expect(flat(input.props.style).fontSize).toBe(15);
+    expect(input).toHaveProp('placeholderTextColor', colors.placeholder);
+  });
+
+  it('has a 1-px border at rest and a 1.5-px ring while focused', async () => {
+    await renderWithProviders(<TextInput testID="i" label="Email" />);
+    const input = screen.getByTestId('i');
+    expect(flat(screen.getByTestId('i.field').props.style)).toMatchObject({
+      borderWidth: 1,
+      borderColor: colors.border,
+    });
+    await fireEvent(input, 'focus');
+    expect(flat(screen.getByTestId('i.field').props.style)).toMatchObject({
+      borderWidth: 1.5,
+      borderColor: colors.ring,
+    });
+    await fireEvent(input, 'blur');
+    expect(flat(screen.getByTestId('i.field').props.style)).toMatchObject({
+      borderWidth: 1,
+      borderColor: colors.border,
+    });
+  });
+
+  it('keeps calling the given onFocus and onBlur', async () => {
+    const onFocus = jest.fn();
+    const onBlur = jest.fn();
+    await renderWithProviders(<TextInput testID="i" label="Email" onFocus={onFocus} onBlur={onBlur} />);
+    await fireEvent(screen.getByTestId('i'), 'focus');
+    await fireEvent(screen.getByTestId('i'), 'blur');
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(onBlur).toHaveBeenCalledTimes(1);
+  });
+
+  it('error: 1.5-px destructive border even while focused, 13-pt message', async () => {
+    await renderWithProviders(<TextInput testID="i" label="Email" error="Required" />);
+    await fireEvent(screen.getByTestId('i'), 'focus');
+    expect(flat(screen.getByTestId('i.field').props.style)).toMatchObject({
+      borderWidth: 1.5,
+      borderColor: colors.destructive,
+    });
+    expect(flat(screen.getByTestId('i.error').props.style)).toMatchObject({ fontSize: 13, lineHeight: 18 });
+  });
+
+  it('disabled: muted fill and mutedForeground text, no opacity', async () => {
+    await renderWithProviders(<TextInput testID="i" label="Email" editable={false} />);
+    const field = flat(screen.getByTestId('i.field').props.style);
+    expect(field.backgroundColor).toBe(colors.muted);
+    expect(field.opacity).toBeUndefined();
+    expect(flat(screen.getByTestId('i').props.style).color).toBe(colors.mutedForeground);
+  });
+
+  it('required: shows a red asterisk after the label and says "required" to screen readers', async () => {
+    await renderWithProviders(<TextInput testID="i" label="Email" required />);
+    const asterisk = screen.getByTestId('i.required');
+    expect(asterisk).toHaveTextContent('*');
+    expect(flat(asterisk.props.style).color).toBe(colors.errorText);
+    expect(screen.getByTestId('i').props.accessibilityLabel).toMatch(/required/);
+  });
+
+  it('is not marked required by default', async () => {
+    await renderWithProviders(<TextInput testID="i" label="Email" />);
+    expect(screen.queryByTestId('i.required')).toBeNull();
+    expect(screen.getByTestId('i').props.accessibilityLabel).toBe('Email');
+  });
+
+  it('places a labelAccessory on the right of the label row', async () => {
+    await renderWithProviders(
+      <TextInput
+        testID="i"
+        label="Password"
+        labelAccessory={<Text testID="i.forgot">Forgot password?</Text>}
+      />,
+    );
+    expect(screen.getByTestId('i.forgot')).toBeOnTheScreen();
+    expect(flat(screen.getByTestId('i.labelRow').props.style)).toMatchObject({
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    });
+  });
+
+  it('multiline: at least 96 tall, text starts at the top', async () => {
+    await renderWithProviders(<TextInput testID="i" label="Cover note" multiline />);
+    expect(flat(screen.getByTestId('i.field').props.style).minHeight).toBe(96);
+    expect(screen.getByTestId('i')).toHaveProp('textAlignVertical', 'top');
+  });
+
+  it('passes returnKeyType and onSubmitEditing through', async () => {
+    const onSubmitEditing = jest.fn();
+    await renderWithProviders(
+      <TextInput testID="i" label="Email" returnKeyType="next" onSubmitEditing={onSubmitEditing} />,
+    );
+    const input = screen.getByTestId('i');
+    expect(input).toHaveProp('returnKeyType', 'next');
+    await fireEvent(input, 'submitEditing');
+    expect(onSubmitEditing).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('PasswordInput', () => {
   it('hides the password and offers to show it', async () => {
     await renderWithProviders(<PasswordInput testID="login.password" label="Password" />);
@@ -106,5 +215,33 @@ describe('PasswordInput', () => {
   it('shows errors like TextInput', async () => {
     await renderWithProviders(<PasswordInput testID="p" label="Password" error="Password is required" />);
     expect(screen.getByTestId('p.error')).toHaveTextContent('Password is required');
+  });
+
+  // D32: the toggle is a 44-pt icon button (eye / eye.slash), not a "Show" text link.
+  it('toggles with a 44-pt eye icon button instead of Show/Hide text', async () => {
+    await renderWithProviders(<PasswordInput testID="p" label="Password" />);
+    const toggle = screen.getByTestId('p.toggle');
+    expect(flat(toggle.props.style)).toMatchObject({ width: 44, height: 44 });
+    expect(screen.queryByText('Show')).toBeNull();
+    const icon = screen.getByTestId('p.toggle.icon');
+    // expo-symbols resolves `{ ios, android, web }` to the running platform's name (iOS under jest-expo).
+    expect(icon).toHaveProp('name', 'eye');
+    expect(flat(icon.props.style)).toMatchObject({ width: 20, height: 20 });
+    await fireEvent.press(toggle);
+    expect(screen.getByTestId('p.toggle.icon')).toHaveProp('name', 'eye.slash');
+    expect(screen.queryByText('Hide')).toBeNull();
+  });
+
+  it('forwards required and labelAccessory to the field', async () => {
+    await renderWithProviders(
+      <PasswordInput
+        testID="p"
+        label="Password"
+        required
+        labelAccessory={<Text testID="p.forgot">Forgot password?</Text>}
+      />,
+    );
+    expect(screen.getByTestId('p.required')).toBeOnTheScreen();
+    expect(screen.getByTestId('p.forgot')).toBeOnTheScreen();
   });
 });

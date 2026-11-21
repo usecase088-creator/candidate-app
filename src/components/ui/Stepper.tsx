@@ -1,7 +1,10 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import type { SymbolViewProps } from 'expo-symbols';
+import { StyleSheet, View } from 'react-native';
 
-import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
+import { colors, radius, spacing } from '@/theme/tokens';
 
+import { Icon } from './Icon';
+import { PressableScale } from './PressableScale';
 import { AppText } from './Text';
 
 type Props = {
@@ -17,22 +20,33 @@ type Props = {
   onChange: (value: number) => void;
 };
 
-/** − / + control. Used where the website has a slider: sliders are hard to hit on small phones and need a native library. */
+const HEIGHT = 36;
+const BUTTON_WIDTH = 44;
+const ICON_SIZE = 20;
+const MINUS = { ios: 'minus', android: 'remove', web: 'remove' } as const;
+const PLUS = { ios: 'plus', android: 'add', web: 'add' } as const;
+
+/**
+ * D32 compact stepper: a 36-pt surface2 pill with two 44 x 36 icon buttons around a tabular value.
+ * Used where the website has a slider: sliders are hard to hit on small phones and need a native library.
+ */
 export function Stepper({ testID, label, value, min, max, step, display, onChange }: Props) {
   return (
-    <View style={styles.row}>
+    <View testID={testID} style={styles.pill}>
       <StepButton
         testID={`${testID}.minus`}
         label={`Decrease ${label}`}
-        symbol="−"
+        icon={MINUS}
         disabled={value <= min}
         onPress={() => onChange(Math.max(min, value - step))}
       />
       <AppText
         testID={`${testID}.value`}
-        variant="label"
+        variant="body"
         weight="semibold"
+        tabular
         align="center"
+        numberOfLines={1}
         style={styles.value}
         accessibilityLabel={`${label}: ${display}`}
         accessibilityRole="adjustable"
@@ -43,7 +57,7 @@ export function Stepper({ testID, label, value, min, max, step, display, onChang
       <StepButton
         testID={`${testID}.plus`}
         label={`Increase ${label}`}
-        symbol="+"
+        icon={PLUS}
         disabled={value >= max}
         onPress={() => onChange(Math.min(max, value + step))}
       />
@@ -54,45 +68,51 @@ export function Stepper({ testID, label, value, min, max, step, display, onChang
 function StepButton({
   testID,
   label,
-  symbol,
+  icon,
   disabled,
   onPress,
 }: {
   testID: string;
   label: string;
-  symbol: string;
+  icon: SymbolViewProps['name'];
   disabled: boolean;
   onPress: () => void;
 }) {
   return (
-    <Pressable
+    <PressableScale
       testID={testID}
-      accessibilityRole="button"
+      haptic="selection"
       accessibilityLabel={label}
-      accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.button, disabled && styles.disabled]}
+      style={styles.button}
     >
-      <AppText variant="heading" color="primary">
-        {symbol}
-      </AppText>
-    </Pressable>
+      <Icon
+        testID={`${testID}.icon`}
+        name={icon}
+        size={ICON_SIZE}
+        tintColor={disabled ? colors.mutedForeground : colors.foreground}
+      />
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing['3'] },
-  value: { flex: 1 },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    minHeight: HEIGHT,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface2,
+    overflow: 'hidden',
+  },
+  value: { minWidth: 64, paddingHorizontal: spacing['1'] },
   button: {
-    width: MIN_TOUCH,
-    height: MIN_TOUCH,
+    width: BUTTON_WIDTH,
+    height: HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderRadius: radius.full,
   },
-  disabled: { opacity: 0.4 },
 });
