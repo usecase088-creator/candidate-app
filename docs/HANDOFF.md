@@ -9,7 +9,7 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
   pass: announce() for errors/toasts, contrast tokens (placeholder #636D7F, brandText #2A5BC4, controlBorder #8A94A6,
   destructive #C81E2A instead of the website #E23439: AA exception, **needs Raj's OK to record in DECISIONS.md D32**),
   48-pt touch targets, radio groups, keyboard offset under native headers, platform files for ripple/haptics. On the
-  phone (local release APK, dev variant on staging, `C:\devh-builds\d32-dev-staging-arm64.apk`): **all 17 Maestro
+  phone (local release APK, dev variant on staging, `C:\dev\ah-builds\d32-dev-staging-arm64.apk`): **all 17 Maestro
   flows pass**; the device found and we fixed: the empty band under every native header (double top inset), the
   filters sheet footer off screen on Android (now one full detent; iOS keeps 0.7/1), the retry on Delete account
   appending to the rejected password (now cleared after 400/401), flows that pressed Back after the OTP auto-submit,
