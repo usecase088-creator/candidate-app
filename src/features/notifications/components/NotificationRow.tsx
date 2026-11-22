@@ -42,7 +42,7 @@ export function NotificationRow({ item, onPress }: { item: AppNotification; onPr
           <AppText
             testID={`${testID}.title`}
             weight={item.read ? 'medium' : 'semibold'}
-            numberOfLines={1}
+            numberOfLines={2}
             style={styles.title}
           >
             {item.title}

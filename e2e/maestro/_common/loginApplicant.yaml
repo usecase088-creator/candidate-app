@@ -8,6 +8,11 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: login.email
 - inputText: applicant@apronhanger.test
+# At large text the password field can sit under the keyboard: bring it up first.
+- scrollUntilVisible:
+    element:
+      id: login.password
+    timeout: 10000
 - tapOn:
     id: login.password
 - inputText: Test@1234

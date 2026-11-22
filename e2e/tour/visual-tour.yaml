@@ -45,6 +45,12 @@ env:
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}05-gov
 - back
+- scrollUntilVisible:
+    element:
+      id: home.link.intl
+    visibilityPercentage: 50
+    timeout: 15000
+    optional: true
 - tapOn:
     id: home.link.intl
 - extendedWaitUntil:
@@ -54,6 +60,13 @@ env:
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}06-intl
 - back
+- scrollUntilVisible:
+    element:
+      id: home.link.saved
+    direction: UP
+    visibilityPercentage: 50
+    timeout: 15000
+    optional: true
 - tapOn:
     id: home.link.saved
 - extendedWaitUntil:
@@ -67,6 +80,12 @@ env:
     id: tabs.search
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}08-search
+- scrollUntilVisible:
+    element:
+      id: search.filters
+    visibilityPercentage: 50
+    timeout: 15000
+    optional: true
 - tapOn:
     id: search.filters
 - extendedWaitUntil:
@@ -82,6 +101,7 @@ env:
 - scrollUntilVisible:
     element:
       id: 'job\.open\..*'
+    visibilityPercentage: 50
     timeout: 20000
 - tapOn:
     id: 'job\.open\..*'
@@ -94,6 +114,12 @@ env:
 - takeScreenshot: ${OUT}10-job
 - scroll
 - takeScreenshot: ${OUT}10b-job-scrolled
+- scrollUntilVisible:
+    element:
+      id: job.apply
+    visibilityPercentage: 50
+    timeout: 15000
+    optional: true
 - tapOn:
     id: job.apply
 - extendedWaitUntil:
@@ -160,6 +186,12 @@ env:
 - takeScreenshot: ${OUT}16-profile
 - scroll
 - takeScreenshot: ${OUT}16b-profile-scrolled
+- scrollUntilVisible:
+    element:
+      id: profile.photo.change
+    visibilityPercentage: 50
+    timeout: 15000
+    optional: true
 - tapOn:
     id: profile.photo.change
     optional: true
@@ -175,6 +207,12 @@ env:
     id: profile.settings
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}18-settings
+- scrollUntilVisible:
+    element:
+      id: settings.delete
+    visibilityPercentage: 50
+    timeout: 15000
+    optional: true
 - tapOn:
     id: settings.delete
 - waitForAnimationToEnd

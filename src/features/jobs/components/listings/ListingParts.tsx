@@ -46,7 +46,14 @@ export function StatsStrip({ testID, stats }: { testID: string; stats: readonly 
           >
             {String(s.value)}
           </AppText>
-          <AppText variant="caption" color="mutedForeground" numberOfLines={2} align="center">
+          {/* Capped at 1.15: at font scale 2 "Open-ended" / "With Sponsorship" broke mid-word in a third of 320 pt. */}
+          <AppText
+            variant="caption"
+            color="mutedForeground"
+            numberOfLines={2}
+            align="center"
+            maxFontSizeMultiplier={1.15}
+          >
             {s.label}
           </AppText>
         </View>
