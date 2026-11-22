@@ -211,6 +211,11 @@ env:
 - tapOn:
     id: profile.photo.open
     optional: true
+- extendedWaitUntil:
+    visible:
+      id: profile.photo.cancel
+    timeout: 10000
+    optional: true
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}17-photo-sheet
 - tapOn:
