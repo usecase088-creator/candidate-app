@@ -66,7 +66,7 @@ function Disclaimer() {
 
 /**
  * Website gov-jobs.tsx: the table becomes one row per listing (D32). The native stack header carries the title
- * "Government jobs"; the content starts with the website subtitle, the stats strip, the store disclaimer and the search.
+ * "Government jobs & exams"; the content starts with the website subtitle, the stats strip, the store disclaimer and the search.
  */
 export function GovJobsScreen() {
   const query = useGovJobs();

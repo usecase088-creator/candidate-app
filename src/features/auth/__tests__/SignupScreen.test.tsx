@@ -124,6 +124,21 @@ describe('details step', () => {
     expect(screen.getByTestId('signup.error')).toHaveTextContent('Enter a valid email');
   });
 
+  it('website key order (email, password, name, mobile): with a valid email the password error comes first', async () => {
+    await openSignup();
+    await fillDetails({ name: 'A', mobile: '123', email: 'a@b.co', password: 'weak' });
+    await submit();
+    expect(screen.getByTestId('signup.error')).toHaveTextContent('Password must be at least 8 characters');
+  });
+
+  it('website footer: "Already have an account? Sign in here" opens sign-in, and the trust line', async () => {
+    await openSignup();
+    expect(screen.getByText('Already have an account?')).toBeOnTheScreen();
+    expect(screen.getByText('Verified credentials')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('signup.signin'));
+    expect(await screen.findByTestId('login.screen')).toBeOnTheScreen();
+  });
+
   it('needs Terms and Privacy consent (job alerts are optional)', async () => {
     await openSignup();
     await fillDetails();

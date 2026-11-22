@@ -6,8 +6,9 @@
 export const PUSHED_SCREEN_TITLES = {
   'job/[id]': '',
   'saved-jobs': 'Saved jobs',
-  'gov-jobs': 'Government jobs',
-  'intl-jobs': 'International jobs',
+  // Website h1s in sentence case, without the emoji.
+  'gov-jobs': 'Government jobs & exams',
+  'intl-jobs': 'International healthcare jobs',
   notifications: 'Notifications',
   settings: 'Settings',
   'delete-account': 'Delete account',

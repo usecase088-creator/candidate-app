@@ -88,6 +88,8 @@ export function useToggleSave() {
     (job: Job) => {
       // Saving needs an account: a signed-out visitor is sent to sign-in and brought back to this screen.
       if (!signedIn) {
+        // Website SaveJobButton: toast.info("Sign in to save jobs").
+        toast.show('Sign in to save jobs', { variant: 'info' });
         // Already on the sign-in screen (a second tap before it opened): do nothing, or the target would be lost.
         if (isSignInTarget(pathname)) goToSignIn(pathname);
         return;
@@ -104,7 +106,7 @@ export function useToggleSave() {
         client.getQueryData<SavedJob[]>(SAVED_JOBS_KEY)?.some((s) => s.job.id === job.id) ?? false;
       mutation.mutate({ job, save: !saved });
     },
-    [client, mutation, signedIn, pathname],
+    [client, mutation, signedIn, pathname, toast],
   );
 
   return { toggle };

@@ -16,12 +16,15 @@ import { AppText } from '@/components/ui/Text';
 import { TextInput } from '@/components/ui/TextInput';
 import { useToast } from '@/components/ui/Toast';
 import { authApi } from '@/features/auth/authApi';
+import { PasswordRequirements } from '@/features/auth/components/PasswordRequirements';
 import { FORGOT_NETWORK_ERROR } from '@/features/auth/messages';
 import { otpError, resetPasswordError, resetPhoneError } from '@/features/auth/validation';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 type Step = 'phone' | 'otp' | 'reset' | 'success';
 const BACK_TO_LOGIN_MS = 2500;
+const OTP_LENGTH = 6;
+const MIN_PASSWORD = 8;
 
 /** Website: the server's `error`, else the step's fallback; network failures have their own message. */
 function errorText(e: unknown, fallback: string): string {
@@ -111,7 +114,7 @@ export default function ForgotPassword() {
         setStep('success');
         timer.current = setTimeout(() => router.replace('/login'), BACK_TO_LOGIN_MS);
       } catch (e) {
-        error(errorText(e, 'Password reset failed. Please try again.'));
+        error(errorText(e, 'Failed to reset password.'));
       }
     });
   };
@@ -160,7 +163,7 @@ export default function ForgotPassword() {
               />
               <Button
                 testID="forgot.submit"
-                label="Send OTP"
+                label={busy ? 'Sending OTP…' : 'Send OTP'}
                 haptic="medium"
                 loading={busy}
                 onPress={() => void sendOtp()}
@@ -183,9 +186,11 @@ export default function ForgotPassword() {
               />
               <Button
                 testID="forgot.submit"
-                label="Verify OTP"
+                label={busy ? 'Verifying…' : 'Verify OTP'}
                 haptic="medium"
                 loading={busy}
+                // Website: disabled until the 6 digits are in.
+                disabled={otp.length < OTP_LENGTH}
                 onPress={() => void verifyOtp()}
               />
             </View>
@@ -202,16 +207,21 @@ export default function ForgotPassword() {
                 placeholder="Min. 8 chars, 1 upper, 1 lower, 1 special"
                 isNew
                 returnKeyType="done"
-                onSubmitEditing={() => void resetPassword()}
+                onSubmitEditing={() => {
+                  if (password.length >= MIN_PASSWORD) void resetPassword();
+                }}
                 value={password}
                 onChangeText={setPassword}
                 editable={!busy}
               />
+              <PasswordRequirements testIDPrefix="forgot" />
               <Button
                 testID="forgot.submit"
-                label="Reset Password"
+                label={busy ? 'Resetting…' : 'Reset Password'}
                 haptic="medium"
                 loading={busy}
+                // Website: disabled until the new password has 8 characters.
+                disabled={password.length < MIN_PASSWORD}
                 onPress={() => void resetPassword()}
               />
             </View>

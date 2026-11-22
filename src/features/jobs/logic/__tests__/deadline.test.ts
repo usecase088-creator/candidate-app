@@ -19,6 +19,9 @@ describe('deadline (website gov-jobs.tsx / foreign-jobs.tsx)', () => {
     expect(deadlineInfo(null, NOW)).toEqual({ kind: 'none', text: 'No deadline', badge: null });
     expect(deadlineInfo(undefined, NOW).kind).toBe('none');
   });
+  it('no deadline on an international listing: "Open" (website foreign-jobs.tsx)', () => {
+    expect(deadlineInfo(null, NOW, 'Open')).toEqual({ kind: 'none', text: 'Open', badge: null });
+  });
   it('open: plain date', () => {
     expect(deadlineInfo('2026-12-31T00:00:00.000Z', NOW)).toEqual({
       kind: 'open',

@@ -1,7 +1,7 @@
 import { useFonts } from 'expo-font';
 import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
 import * as SecureStore from 'expo-secure-store';
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { StyleSheet } from 'react-native';
 
 import { resetSessionForTests } from '@/features/auth/sessionStore';
@@ -114,6 +114,19 @@ describe('phone step', () => {
     await expectToast(message);
   });
 
+  it('says "Sending OTP…" while the OTP is sent', async () => {
+    server.use(
+      http.post(`${API}/api/auth/forgot-password`, async () => {
+        await delay('infinite');
+        return HttpResponse.json({});
+      }),
+    );
+    await open();
+    await fireEvent.changeText(screen.getByTestId('forgot.mobile'), '9000000001');
+    await submit();
+    expect(await screen.findByRole('button', { name: 'Sending OTP…' })).toBeOnTheScreen();
+  });
+
   it('uses the forgot-password network message', async () => {
     mockPost('/api/auth/forgot-password', () => HttpResponse.error());
     await open();
@@ -132,11 +145,23 @@ describe('phone step', () => {
 });
 
 describe('OTP step', () => {
-  it('needs 6 digits', async () => {
+  it('Verify OTP stays disabled until 6 digits are typed (website)', async () => {
     await toOtpStep();
+    expect(screen.getByRole('button', { name: 'Verify OTP' })).toBeDisabled();
     await fireEvent.changeText(screen.getByTestId('forgot.otp'), '12');
-    await submit();
-    expect(screen.getByTestId('toast')).toHaveTextContent('Please enter a valid 6-digit OTP.');
+    expect(screen.getByRole('button', { name: 'Verify OTP' })).toBeDisabled();
+  });
+
+  it('says "Verifying…" while the code is checked', async () => {
+    await toOtpStep();
+    server.use(
+      http.post(`${API}/api/auth/verify-otp`, async () => {
+        await delay('infinite');
+        return HttpResponse.json({});
+      }),
+    );
+    await fireEvent.changeText(screen.getByTestId('forgot.otp'), '123456');
+    expect(await screen.findByRole('button', { name: 'Verifying…' })).toBeOnTheScreen();
   });
 
   it('shows a wrong OTP with the server message', async () => {
@@ -184,6 +209,49 @@ describe('reset step', () => {
     expect(screen.getByTestId('toast')).toHaveTextContent(
       'Password must contain at least one uppercase letter.',
     );
+  });
+
+  it('shows the password requirements under New Password, like sign-up (website)', async () => {
+    await toResetStep();
+    expect(screen.getByText('Password Requirements:')).toBeOnTheScreen();
+    for (const r of [
+      'At least 8 characters long',
+      'At least one uppercase letter (A-Z)',
+      'At least one lowercase letter (a-z)',
+      'At least one special character (e.g. @, #, $, etc.)',
+    ]) {
+      expect(screen.getByText(r)).toBeOnTheScreen();
+    }
+  });
+
+  it('Reset Password stays disabled until the new password has 8 characters (website)', async () => {
+    await toResetStep();
+    expect(screen.getByRole('button', { name: 'Reset Password' })).toBeDisabled();
+    await fireEvent.changeText(screen.getByTestId('forgot.password'), 'Ab@1234');
+    expect(screen.getByRole('button', { name: 'Reset Password' })).toBeDisabled();
+    await fireEvent.changeText(screen.getByTestId('forgot.password'), 'Ab@12345');
+    expect(screen.getByRole('button', { name: 'Reset Password' })).toBeEnabled();
+  });
+
+  it('a failed reset without a server message says "Failed to reset password." (website)', async () => {
+    await toResetStep();
+    mockPost('/api/auth/reset-password', () => HttpResponse.json({}, { status: 500 }));
+    await fireEvent.changeText(screen.getByTestId('forgot.password'), 'NewSecret@1');
+    await submit();
+    await expectToast('Failed to reset password.');
+  });
+
+  it('says "Resetting…" while the new password is saved', async () => {
+    await toResetStep();
+    server.use(
+      http.post(`${API}/api/auth/reset-password`, async () => {
+        await delay('infinite');
+        return HttpResponse.json({});
+      }),
+    );
+    await fireEvent.changeText(screen.getByTestId('forgot.password'), 'NewSecret@1');
+    await submit();
+    expect(await screen.findByRole('button', { name: 'Resetting…' })).toBeOnTheScreen();
   });
 
   it('"Start Over" goes back to the phone step', async () => {

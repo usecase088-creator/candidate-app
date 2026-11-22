@@ -1,10 +1,12 @@
 import { onlineManager } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import * as Network from 'expo-network';
-import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
 import { Dimensions, StyleSheet } from 'react-native';
 
+import { appRoutes } from '@/test/appRoutes';
+import { candidateMe, formProfile } from '@/test/fixtures/jobs';
 import { API } from '@/test/msw/handlers';
 import { installJobsBackend, makeJob } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
@@ -142,6 +144,61 @@ describe('Home: hero band and tiles (R2)', () => {
     installJobsBackend({ jobs: [nurse] });
     await home();
     expect((await screen.findByTestId('home.count')).props.numberOfLines).toBeUndefined();
+  });
+});
+
+// Website routes/index.tsx: a banner when there is no profile (useProfile() null), dismissed for this visit only.
+describe('Home: build-your-profile banner', () => {
+  it('signed in without a profile: "Build your ApronHanger CV in one go" with "Fill the form", which opens the form', async () => {
+    installJobsBackend({ jobs: [nurse] });
+    await home();
+    const banner = await screen.findByTestId('home.banner');
+    expect(within(banner).getByText('Build your ApronHanger CV in one go')).toBeOnTheScreen();
+    expect(
+      within(banner).getByText(
+        "Fill the detailed form once — we'll generate your CV and unlock Quick Apply on every job.",
+      ),
+    ).toBeOnTheScreen();
+    expect(screen.queryByTestId('home.banner.signup')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Fill the form' }));
+    expect(await screen.findByTestId('builder.screen')).toBeOnTheScreen();
+  });
+
+  it('signed in with a built profile: no banner', async () => {
+    installJobsBackend({ jobs: [nurse], me: { ...candidateMe, cvSource: 'form', profile: formProfile } });
+    await home();
+    await screen.findByTestId('job.card.n1');
+    await waitFor(() => expect(screen.queryByTestId('home.banner')).toBeNull());
+  });
+
+  it('the cross dismisses it', async () => {
+    installJobsBackend({ jobs: [nurse] });
+    await home();
+    await screen.findByTestId('home.banner');
+    await fireEvent.press(screen.getByRole('button', { name: 'Dismiss banner' }));
+    expect(screen.queryByTestId('home.banner')).toBeNull();
+  });
+
+  it('guest: "Join 1.2L+ healthcare professionals on ApronHanger"; Create Account opens sign-up, Build CV sign-in', async () => {
+    installJobsBackend({ jobs: [nurse] });
+    await renderRouter(appRoutes, { initialUrl: '/' });
+    const banner = await screen.findByTestId('home.banner');
+    expect(within(banner).getByText('Join 1.2L+ healthcare professionals on ApronHanger')).toBeOnTheScreen();
+    expect(
+      within(banner).getByText(
+        'Create your candidate profile to get verified, unlock one-click applications, and get discovered by top hospitals.',
+      ),
+    ).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Build CV' }));
+    expect(await screen.findByTestId('login.screen')).toBeOnTheScreen();
+  });
+
+  it('guest: Create Account opens sign-up', async () => {
+    installJobsBackend({ jobs: [nurse] });
+    await renderRouter(appRoutes, { initialUrl: '/' });
+    await screen.findByTestId('home.banner');
+    await fireEvent.press(screen.getByRole('button', { name: 'Create Account' }));
+    expect(await screen.findByTestId('signup.screen')).toBeOnTheScreen();
   });
 });
 

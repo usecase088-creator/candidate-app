@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -11,10 +11,11 @@ import { PressableScale } from '@/components/ui/PressableScale';
 import { Screen } from '@/components/ui/Screen';
 import { SearchField } from '@/components/ui/SearchField';
 import { useIsSignedIn } from '@/features/auth/sessionStore';
-import { goToSignIn } from '@/features/auth/signInGate';
+import { goToSignIn, goToSignUp } from '@/features/auth/signInGate';
 import { AppText } from '@/components/ui/Text';
 import { colors, fontSizes, gradients, radius, shadows, spacing } from '@/theme/tokens';
 
+import { BuildProfileBanner } from '../components/BuildProfileBanner';
 import { CategoryChips } from '../components/CategoryChips';
 import { JobList } from '../components/JobList';
 import { JobListSkeleton } from '../components/JobCardSkeleton';
@@ -91,6 +92,11 @@ export function HomeScreen() {
 
   const profile = profileQuery.data;
   const showPrompt = !profileQuery.isPending && !(profile && profile.completeness >= 20);
+  // Website index.tsx: the banner shows while there is no profile (a guest never has one); the cross hides it for
+  // this visit only (component state, not stored). Signed in, it waits for the answer so it does not flash.
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const noProfile = signedIn ? profileQuery.isSuccess && profile == null : true;
+  const showBanner = noProfile && !bannerDismissed;
 
   const header = (
     <View>
@@ -127,6 +133,25 @@ export function HomeScreen() {
           onPress={() => router.navigate('/search')}
         />
       </View>
+      {showBanner && (
+        <View style={styles.banner}>
+          {signedIn ? (
+            <BuildProfileBanner
+              guest={false}
+              onFillForm={() => router.push('/profile-builder')}
+              onDismiss={() => setBannerDismissed(true)}
+            />
+          ) : (
+            <BuildProfileBanner
+              guest
+              onCreateAccount={() => goToSignUp()}
+              // D30: the form needs an account; after signing in Home offers "Fill the form".
+              onBuildCv={() => goToSignIn()}
+              onDismiss={() => setBannerDismissed(true)}
+            />
+          )}
+        </View>
+      )}
       <View style={styles.hero}>
         {linksAsRows ? (
           <ListGroup testID="home.links">
@@ -265,6 +290,7 @@ const styles = StyleSheet.create({
   },
   searchWrap: { marginTop: -OVERLAP, paddingHorizontal: spacing['4'] },
   hero: { paddingHorizontal: spacing['4'], paddingTop: spacing['3'] },
+  banner: { paddingHorizontal: spacing['4'], paddingTop: spacing['3'] },
   tiles: { flexDirection: 'row', gap: spacing['2'] },
   tile: {
     flex: 1,

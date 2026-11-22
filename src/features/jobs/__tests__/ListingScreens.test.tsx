@@ -99,7 +99,7 @@ describe('Government jobs', () => {
     expect(
       await screen.findByText('Latest notifications — AIIMS, UPSC, State PSC, and more.'),
     ).toBeOnTheScreen();
-    // D32: the native stack header carries "Government jobs"; the dark in-content hero and its title are gone.
+    // D32: the native stack header carries "Government jobs & exams"; the dark in-content hero and its title are gone.
     expect(screen.queryByRole('header', { name: '🏛️ Government Jobs & Exams' })).toBeNull();
     await screen.findByTestId('gov.card.g1');
     const stats = within(screen.getByTestId('gov.stats'));
@@ -291,7 +291,7 @@ describe('International jobs', () => {
     expect(
       await screen.findByText('Verified international listings — salary disclosed, visa status included.'),
     ).toBeOnTheScreen();
-    // D32: the native stack header carries "International jobs"; the dark in-content hero and its title are gone.
+    // D32: the native stack header carries "International healthcare jobs"; the dark in-content hero and its title are gone.
     expect(screen.queryByRole('header', { name: '🌍 International Healthcare Jobs' })).toBeNull();
     await screen.findByTestId('intl.card.i1');
     const stats = within(screen.getByTestId('intl.stats'));
@@ -345,6 +345,21 @@ describe('International jobs', () => {
     const card = within(await screen.findByTestId('intl.card.i1'));
     expect(card.getByText('NMC')).toBeOnTheScreen();
     expect(card.queryByText(/—/)).toBeNull();
+  });
+
+  it('no deadline shows "Open" (website foreign-jobs.tsx), not the gov "No deadline"', async () => {
+    installJobsBackend({ intl: [{ ...uk, lastDate: null }] });
+    await intl();
+    const card = within(await screen.findByTestId('intl.card.i1'));
+    expect(card.getByTestId('intl.deadline.i1')).toHaveTextContent('Open');
+    expect(card.queryByText('No deadline')).toBeNull();
+  });
+
+  it('an empty visa value draws no pill', async () => {
+    installJobsBackend({ intl: [{ ...uk, visaSponsorship: '' }] });
+    await intl();
+    await screen.findByTestId('intl.card.i1');
+    expect(screen.queryByTestId('intl.visa.i1')).toBeNull();
   });
 
   it('a missing pay scale shows a dash', async () => {

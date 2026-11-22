@@ -16,9 +16,10 @@ import { useToast } from '@/components/ui/Toast';
 import { authApi } from '@/features/auth/authApi';
 import { AuthModeTabs } from '@/features/auth/components/AuthModeTabs';
 import { FormMessage } from '@/features/auth/components/FormMessage';
+import { TrustLine } from '@/features/auth/components/TrustLine';
 import { loginErrorMessage, ROLE_MISMATCH_MESSAGE, signOutNotice } from '@/features/auth/messages';
 import { useSession } from '@/features/auth/sessionStore';
-import { takeSignInTarget } from '@/features/auth/signInGate';
+import { hasSignInTarget, takeSignInTarget } from '@/features/auth/signInGate';
 import { firstError, loginSchema, type LoginValues } from '@/features/auth/validation';
 import { spacing } from '@/theme/tokens';
 
@@ -31,6 +32,8 @@ export default function Login() {
   const signIn = useSession((s) => s.signIn);
   const reason = useSession((s) => s.signOutReason);
   const reasonMessage = useSession((s) => s.signOutMessage);
+  // Website: a gated action (redirect set) changes the subtitle. Read once: the target only changes before this opens.
+  const [gated] = useState(hasSignInTarget);
   const [formError, setFormError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -87,7 +90,11 @@ export default function Login() {
         <AuthModeTabs active="signin" />
         <View style={styles.group}>
           <AppText variant="display">Welcome back</AppText>
-          <AppText color="mutedForeground">Sign in to access your saved jobs and applications.</AppText>
+          <AppText color="mutedForeground">
+            {gated
+              ? 'Sign in to continue your application.'
+              : 'Sign in to access your saved jobs and applications.'}
+          </AppText>
         </View>
 
         {formError ? (
@@ -205,6 +212,7 @@ export default function Login() {
           <AppText variant="caption" color="mutedForeground" align="center">
             100% Free • Verified Hospitals • Fast Response
           </AppText>
+          <TrustLine testID="login.trust" />
         </View>
       </View>
     </Screen>

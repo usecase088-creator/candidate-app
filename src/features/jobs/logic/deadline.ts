@@ -17,9 +17,16 @@ export function isExpired(date: string, now = Date.now()): boolean {
 export type DeadlineKind = 'none' | 'open' | 'soon' | 'expired';
 export type DeadlineInfo = { kind: DeadlineKind; text: string; badge: string | null };
 
-/** `soon` = 7 days or fewer (amber, with "{n}d left"); `expired` is red and its link is disabled. */
-export function deadlineInfo(lastDate: string | null | undefined, now = Date.now()): DeadlineInfo {
-  if (!lastDate) return { kind: 'none', text: 'No deadline', badge: null };
+/**
+ * `soon` = 7 days or fewer (amber, with "{n}d left"); `expired` is red and its link is disabled.
+ * `noneText`: gov-jobs.tsx says "No deadline", foreign-jobs.tsx says "Open".
+ */
+export function deadlineInfo(
+  lastDate: string | null | undefined,
+  now = Date.now(),
+  noneText = 'No deadline',
+): DeadlineInfo {
+  if (!lastDate) return { kind: 'none', text: noneText, badge: null };
   if (isExpired(lastDate, now))
     return { kind: 'expired', text: `Expired · ${formatDate(lastDate)}`, badge: null };
   const left = daysLeft(lastDate, now);

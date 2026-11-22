@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { StyleSheet } from 'react-native';
 
 import { resetSessionForTests, TOKEN_KEY, useSession } from '@/features/auth/sessionStore';
+import { rememberSignInTarget, takeSignInTarget } from '@/features/auth/signInGate';
 import { secureStorage } from '@/lib/secureStorage';
 import { appRoutes } from '@/test/appRoutes';
 import { loginResponse, recruiterUser } from '@/test/fixtures/auth';
@@ -48,6 +49,7 @@ const tint = (id: string) => StyleSheet.flatten(screen.getByTestId(id).props.sty
 beforeEach(() => {
   fake.__reset();
   resetSessionForTests();
+  takeSignInTarget();
   jest.mocked(useFonts).mockReturnValue([true, null]);
 });
 
@@ -224,6 +226,22 @@ describe('why the user is here (D18)', () => {
     await act(() => useSession.getState().signOut('user'));
     await openLogin();
     expect(screen.queryByTestId('login.notice')).toBeNull();
+  });
+});
+
+describe('sent here by a gated action (website auth.tsx redirect)', () => {
+  it('says "Sign in to continue your application."', async () => {
+    rememberSignInTarget('/job/j1');
+    await openLogin();
+    expect(screen.getByText('Sign in to continue your application.')).toBeOnTheScreen();
+    expect(screen.queryByText('Sign in to access your saved jobs and applications.')).toBeNull();
+  });
+});
+
+describe('footer', () => {
+  it('shows the website trust line "Verified credentials"', async () => {
+    await openLogin();
+    expect(screen.getByText('Verified credentials')).toBeOnTheScreen();
   });
 });
 

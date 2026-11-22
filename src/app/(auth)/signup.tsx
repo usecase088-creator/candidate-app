@@ -1,5 +1,6 @@
 // Create account — website auth.tsx (mode "signup"), docs/reference/SCREENS.md §1: details → OTP on one screen.
 import { zodResolver } from '@hookform/resolvers/zod';
+import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, type FieldErrors, useForm } from 'react-hook-form';
@@ -8,7 +9,6 @@ import { StyleSheet, View } from 'react-native';
 import { isApiError } from '@/api/errors';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
-import { Icon } from '@/components/ui/Icon';
 import { LottieAnimation } from '@/components/ui/LottieAnimation';
 import { OtpInput } from '@/components/ui/OtpInput';
 import { PasswordInput } from '@/components/ui/PasswordInput';
@@ -21,22 +21,18 @@ import { useToast } from '@/components/ui/Toast';
 import { authApi } from '@/features/auth/authApi';
 import { AuthModeTabs } from '@/features/auth/components/AuthModeTabs';
 import { FormMessage } from '@/features/auth/components/FormMessage';
+import { PasswordRequirements } from '@/features/auth/components/PasswordRequirements';
+import { TrustLine } from '@/features/auth/components/TrustLine';
 import { loginErrorMessage } from '@/features/auth/messages';
 import { useSession } from '@/features/auth/sessionStore';
 import { firstError, otpError, signupSchema, type SignupValues } from '@/features/auth/validation';
 import { PRIVACY_URL, TERMS_URL } from '@/lib/site';
-import { colors, radius, spacing } from '@/theme/tokens';
+import { spacing } from '@/theme/tokens';
 
 const SUCCESS_DELAY_MS = 1200;
-/** The website's red box shows the first error in its schema order. */
-const FIELD_ORDER = ['email', 'name', 'password', 'mobile'] as const;
+/** The website's red box shows the first error in its schema key order (lib/validations.ts authSignUpSchema). */
+const FIELD_ORDER = ['email', 'password', 'name', 'mobile'] as const;
 const CONSENT_ERROR = 'Please accept the Terms & Conditions and Privacy Consent to continue.';
-const REQUIREMENTS = [
-  'At least 8 characters long',
-  'At least one uppercase letter (A-Z)',
-  'At least one lowercase letter (a-z)',
-  'At least one special character (e.g. @, #, $, etc.)',
-];
 
 export default function Signup() {
   const toast = useToast();
@@ -248,24 +244,7 @@ export default function Signup() {
                   />
                 )}
               />
-              <View testID="signup.requirements" style={styles.requirements}>
-                <AppText variant="secondary" weight="semibold">
-                  Password Requirements:
-                </AppText>
-                {REQUIREMENTS.map((r, i) => (
-                  <View key={r} style={styles.requirement}>
-                    <Icon
-                      testID={`signup.requirement.${i}.icon`}
-                      name={DOT}
-                      size={DOT_SIZE}
-                      tintColor={colors.mutedForeground}
-                    />
-                    <AppText variant="secondary" color="mutedForeground" style={styles.flex}>
-                      {r}
-                    </AppText>
-                  </View>
-                ))}
-              </View>
+              <PasswordRequirements testIDPrefix="signup" />
             </View>
 
             <View testID="signup.consent" style={styles.group}>
@@ -382,25 +361,38 @@ export default function Signup() {
             </View>
           </>
         )}
+
+        <View style={styles.footer}>
+          <View style={styles.footerLine}>
+            <AppText color="mutedForeground" align="center">
+              Already have an account?
+            </AppText>
+            <TextButton
+              testID="signup.signin"
+              label="Sign in here"
+              disabled={working}
+              onPress={() => router.replace('/login')}
+            />
+          </View>
+          <TrustLine testID="signup.trust" />
+        </View>
       </View>
     </Screen>
   );
 }
 
-const DOT = { ios: 'circle.fill', android: 'circle', web: 'circle' } as const;
-const DOT_SIZE = 6;
-
 const styles = StyleSheet.create({
   // D32 rhythm: sections 24 apart, items inside a group 8, fields 16.
-  page: { gap: spacing['6'] },
+  page: { flexGrow: 1, gap: spacing['6'] },
   group: { gap: spacing['2'] },
   fields: { gap: spacing['4'] },
-  requirement: { flexDirection: 'row', alignItems: 'center', gap: spacing['2'] },
-  flex: { flex: 1 },
-  requirements: {
-    gap: spacing['1'],
-    padding: spacing['3'],
-    borderRadius: radius.md,
-    backgroundColor: colors.surface2,
+  // Pushed to the bottom of a tall screen; on a short one it follows the form (same as sign-in).
+  footer: { marginTop: 'auto', gap: spacing['2'], alignItems: 'center' },
+  footerLine: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    columnGap: spacing['1'],
   },
 });

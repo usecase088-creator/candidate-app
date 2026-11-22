@@ -35,6 +35,11 @@ export function rememberSignInTarget(heading?: string): void {
   remember(heading);
 }
 
+/** Sign-in was asked for by a gated action (website: a `redirect` is set); the target is kept for takeSignInTarget. */
+export function hasSignInTarget(): boolean {
+  return target !== null;
+}
+
 /** The remembered screen, once. Called by the signed-in switch of the (auth) layout. */
 export function takeSignInTarget(): string | null {
   const t = target;

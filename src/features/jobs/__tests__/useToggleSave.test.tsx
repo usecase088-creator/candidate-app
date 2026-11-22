@@ -271,5 +271,7 @@ describe('useToggleSave signed out', () => {
     await act(async () => hook.result.current.toggle(job));
     expect(goToSignIn).toHaveBeenCalledTimes(1);
     expect(posted).toEqual([]);
+    // Website SaveJobButton: toast.info("Sign in to save jobs").
+    expect(screen.getByTestId('toast')).toHaveTextContent('Sign in to save jobs');
   });
 });

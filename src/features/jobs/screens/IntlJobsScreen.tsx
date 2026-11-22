@@ -31,7 +31,7 @@ const GLOBE_ICON = { ios: 'globe', android: 'public', web: 'public' } as const;
 
 /**
  * Website foreign-jobs.tsx: the 11-column table becomes one 5-line row per listing (D32). The native stack header
- * carries the title "International jobs"; the content starts with the subtitle, the stats strip, search and country chips.
+ * carries the title "International healthcare jobs"; the content starts with the subtitle, the stats strip, search and country chips.
  */
 export function IntlJobsScreen() {
   const query = useIntlJobs();
@@ -159,7 +159,8 @@ const joinParts = (parts: readonly (string | null | undefined)[]) =>
  * (disabled once expired). testIDs `intl.card.{id}`, `intl.payscale.{id}`, `intl.visa.{id}`, `intl.apply.{id}`.
  */
 const IntlRow = memo(function IntlRow({ job, onOpen }: { job: IntlJob; onOpen: (url: string) => void }) {
-  const info = deadlineInfo(job.lastDate);
+  // Website foreign-jobs.tsx: no deadline reads "Open" (gov keeps "No deadline").
+  const info = deadlineInfo(job.lastDate, undefined, 'Open');
   const expired = info.kind === 'expired';
   const where = joinParts([job.specialty, job.city, `${job.countryFlag} ${job.country}`.trim()]);
   const requirements = joinParts([job.experience, job.qualification, job.license]);
@@ -182,11 +183,14 @@ const IntlRow = memo(function IntlRow({ job, onOpen }: { job: IntlJob; onOpen: (
           {job.payscale || '—'}
         </AppText>
         <View style={listingRowStyles.pills}>
-          <Pill
-            testID={`intl.visa.${job.id}`}
-            tone={visaTone(job.visaSponsorship)}
-            label={job.visaSponsorship}
-          />
+          {/* Website: an empty visa value is a dash; the app leaves the pill out. */}
+          {job.visaSponsorship.trim() ? (
+            <Pill
+              testID={`intl.visa.${job.id}`}
+              tone={visaTone(job.visaSponsorship)}
+              label={job.visaSponsorship}
+            />
+          ) : null}
           <DeadlinePill testID={`intl.deadline.${job.id}`} info={info} />
         </View>
         {requirements ? (

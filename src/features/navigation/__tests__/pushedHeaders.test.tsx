@@ -58,6 +58,9 @@ describe('pushed screens: native header', () => {
         'apply/[jobId]/upload',
       ]),
     );
+    // The website h1s in sentence case, without the emoji.
+    expect(PUSHED_SCREEN_TITLES['gov-jobs']).toBe('Government jobs & exams');
+    expect(PUSHED_SCREEN_TITLES['intl-jobs']).toBe('International healthcare jobs');
     for (const [route, title] of Object.entries(PUSHED_SCREEN_TITLES)) {
       if (route === 'job/[id]') continue; // the role becomes the title once the job is loaded
       expect(title).toMatch(/^[A-Z][a-z]/);

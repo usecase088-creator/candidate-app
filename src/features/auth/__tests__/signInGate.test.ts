@@ -2,7 +2,7 @@
 // (website useAuthGate: /auth?mode=signin&redirect=...). The target is kept in memory only and must be one of our own screens.
 import { router } from 'expo-router';
 
-import { goToSignIn, isSignInTarget, takeSignInTarget } from '../signInGate';
+import { goToSignIn, hasSignInTarget, isSignInTarget, takeSignInTarget } from '../signInGate';
 
 jest.mock('expo-router', () => ({ router: { navigate: jest.fn() } }));
 
@@ -53,6 +53,17 @@ describe('takeSignInTarget', () => {
     goToSignIn('/saved-jobs');
     expect(takeSignInTarget()).toBe('/saved-jobs');
     expect(takeSignInTarget()).toBeNull();
+  });
+});
+
+describe('hasSignInTarget', () => {
+  it('says whether sign-in was asked for by a gated action, without using the target up', () => {
+    expect(hasSignInTarget()).toBe(false);
+    goToSignIn('/job/abc');
+    expect(hasSignInTarget()).toBe(true);
+    expect(hasSignInTarget()).toBe(true);
+    expect(takeSignInTarget()).toBe('/job/abc');
+    expect(hasSignInTarget()).toBe(false);
   });
 });
 

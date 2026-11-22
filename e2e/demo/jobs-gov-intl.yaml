@@ -16,7 +16,7 @@ appId: work.apronhanger.candidate.dev
       id: gov.screen
     timeout: 10000
 - runFlow: _demo/pause-500.yaml
-- assertVisible: Government jobs
+- assertVisible: Government jobs & exams
 - runFlow: _demo/pause-1200.yaml
 - assertVisible: Total Listings
 - runFlow: _demo/pause-1200.yaml
@@ -115,7 +115,7 @@ appId: work.apronhanger.candidate.dev
       id: intl.screen
     timeout: 10000
 - runFlow: _demo/pause-500.yaml
-- assertVisible: International jobs
+- assertVisible: International healthcare jobs
 - runFlow: _demo/pause-1200.yaml
 - assertVisible: Countries
 - runFlow: _demo/pause-1200.yaml
