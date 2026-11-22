@@ -149,9 +149,9 @@ env:
 - takeScreenshot: ${OUT}12-applications
 - scrollUntilVisible:
     element:
-      id: application.row.5eed0000-0000-4000-8000-00000000a101
+      id: application.row.5eed0000-0000-4000-8000-00000000a102
 - tapOn:
-    id: application.row.5eed0000-0000-4000-8000-00000000a101
+    id: application.row.5eed0000-0000-4000-8000-00000000a102
 - extendedWaitUntil:
     visible:
       id: application.screen
@@ -176,6 +176,7 @@ env:
 - scrollUntilVisible:
     element:
       id: application.row.5eed0000-0000-4000-8000-00000000a104
+    direction: UP
     optional: true
 - tapOn:
     id: application.row.5eed0000-0000-4000-8000-00000000a104
@@ -196,6 +197,7 @@ env:
 - scrollUntilVisible:
     element:
       id: profile.photo.change
+    direction: UP
     visibilityPercentage: 50
     timeout: 15000
     optional: true
