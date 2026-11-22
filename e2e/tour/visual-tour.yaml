@@ -1,6 +1,7 @@
 # Visual tour (D32): one screenshot per screen, for pixel review on Android and the iPhone simulator.
 #   maestro test e2e/tour/visual-tour.yaml -e OUT=<path prefix>   (the iOS workflow keeps output/)
 # Needs the staging seed (demo applicant). Read-only apart from signing in: it changes no data.
+# Leaving a pushed screen goes through _common/goBack.yaml (Back on Android, edge swipe on iOS).
 appId: work.apronhanger.candidate.dev
 env:
   OUT: output/tour-
@@ -21,6 +22,7 @@ env:
     optional: true
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}03-signup
+# Android only (Maestro's back does nothing on iOS); the login helper relaunches the app anyway.
 - back
 - runFlow: ../maestro/_common/loginApplicant.yaml
 - extendedWaitUntil:
@@ -49,7 +51,7 @@ env:
     timeout: 30000
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}05-gov
-- back
+- runFlow: ../maestro/_common/goBack.yaml
 - scrollUntilVisible:
     element:
       id: home.link.intl
@@ -64,7 +66,7 @@ env:
     timeout: 30000
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}06-intl
-- back
+- runFlow: ../maestro/_common/goBack.yaml
 - scrollUntilVisible:
     element:
       id: home.link.saved
@@ -80,7 +82,7 @@ env:
     timeout: 30000
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}07-saved
-- back
+- runFlow: ../maestro/_common/goBack.yaml
 - tapOn:
     id: tabs.search
 - waitForAnimationToEnd
@@ -135,8 +137,8 @@ env:
 - takeScreenshot: ${OUT}11-apply
 - scroll
 - takeScreenshot: ${OUT}11b-apply-scrolled
-- back
-- back
+- runFlow: ../maestro/_common/goBack.yaml
+- runFlow: ../maestro/_common/goBack.yaml
 - tapOn:
     id: tabs.applications
 - extendedWaitUntil:
@@ -158,7 +160,7 @@ env:
 - takeScreenshot: ${OUT}13-app-interview
 - scroll
 - takeScreenshot: ${OUT}13b-app-interview-scrolled
-- back
+- runFlow: ../maestro/_common/goBack.yaml
 - scrollUntilVisible:
     element:
       id: application.row.5eed0000-0000-4000-8000-00000000a106
@@ -170,7 +172,7 @@ env:
     timeout: 30000
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}14-app-offer
-- back
+- runFlow: ../maestro/_common/goBack.yaml
 - scrollUntilVisible:
     element:
       id: application.row.5eed0000-0000-4000-8000-00000000a104
@@ -180,7 +182,7 @@ env:
     optional: true
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}15-app-documents
-- back
+- runFlow: ../maestro/_common/goBack.yaml
 - tapOn:
     id: tabs.profile
 - extendedWaitUntil:
@@ -222,8 +224,8 @@ env:
     id: settings.delete
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}19-delete
-- back
-- back
+- runFlow: ../maestro/_common/goBack.yaml
+- runFlow: ../maestro/_common/goBack.yaml
 - scrollUntilVisible:
     element:
       id: profile.edit
@@ -236,7 +238,7 @@ env:
     timeout: 30000
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}20-builder
-- back
+- runFlow: ../maestro/_common/goBack.yaml
 - tapOn:
     id: topbar.notifications
 - waitForAnimationToEnd

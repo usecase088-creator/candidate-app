@@ -16,8 +16,10 @@ appId: work.apronhanger.candidate.dev
       id: gov.screen
     timeout: 10000
 - assertVisible: Government jobs
+# Each stats cell is one accessible element read as "4 Total Listings": iOS exposes only that label, Android also the
+# inner text. The pattern matches both.
 - extendedWaitUntil:
-    visible: Total Listings
+    visible: '(\d+ )?Total Listings'
     timeout: 20000
 # The cards, top to bottom (on a small iPhone they do not all fit): each scroll only moves forward.
 - scrollUntilVisible:
@@ -106,7 +108,8 @@ appId: work.apronhanger.candidate.dev
       id: intl.screen
     timeout: 10000
 - assertVisible: International jobs
-- assertVisible: Countries
+# A stats cell, like Total Listings above.
+- assertVisible: '(\d+ )?Countries'
 - scrollUntilVisible:
     element:
       id: intl.country.UAE

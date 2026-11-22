@@ -97,12 +97,19 @@ describe('pushed screens: native header', () => {
 });
 
 describe('filters sheet options', () => {
-  it('one full-height detent on every platform so the pinned footer is on screen', () => {
+  it('Android/web: a form sheet with one full-height detent so the pinned footer is on screen', () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const base = require('../filterSheetOptions.ts').filterSheetOptions;
+    expect(base).toMatchObject({ presentation: 'formSheet', sheetAllowedDetents: [1] });
+  });
+
+  it('iOS: the page sheet, not a form sheet (react-native-screens resizes a form sheet ScrollView to the whole sheet)', () => {
+    // iPhone SE simulator, ios-e2e runs 1 and 2 (2026-11-22): in the form sheet the filter list covered the header
+    // (run 1) or was blank (run 2), because the native form sheet forces its first ScrollView to the sheet's frame.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const ios = require('../filterSheetOptions.ios').filterSheetOptions;
-    expect(base).toMatchObject({ presentation: 'formSheet', sheetAllowedDetents: [1] });
-    expect(ios).toMatchObject({ presentation: 'formSheet', sheetAllowedDetents: [1] });
+    expect(ios).toMatchObject({ headerShown: false, presentation: 'modal' });
+    expect(ios.presentation).not.toBe('formSheet');
+    expect(ios).not.toHaveProperty('sheetAllowedDetents');
   });
 });

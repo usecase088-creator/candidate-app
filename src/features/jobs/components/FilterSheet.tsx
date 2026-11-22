@@ -28,7 +28,8 @@ import {
 const SORTS: SortKey[] = ['latest', 'salary', 'relevance'];
 
 /**
- * Website FilterSidebar as a bottom sheet (D32): the `/filters` route is presented as a form sheet over the Search tab.
+ * Website FilterSidebar as a bottom sheet (D32): the `/filters` route is presented as a sheet over the Search tab
+ * (Android/web: form sheet; iOS: page sheet, see filterSheetOptions.ios).
  * Sort, location, experience, salary, job type, reset. Changes apply at once (the website has no apply button); the
  * primary button only closes the sheet and says how many roles match. testIDs: `filters.*`.
  */
@@ -214,9 +215,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['3'],
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
-    // Opaque and on top: on the iPhone sheet the scrolled content showed through the header (2026-11-22).
+    // No zIndex: it reorders the native subviews, and the sheet's layout depends on the header staying first.
     backgroundColor: colors.surface,
-    zIndex: 1,
   },
   close: { width: ICON_BUTTON, height: ICON_BUTTON, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: spacing['4'], paddingTop: spacing['3'], paddingBottom: spacing['6'] },

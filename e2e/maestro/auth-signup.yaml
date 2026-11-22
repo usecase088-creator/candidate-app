@@ -65,23 +65,30 @@ appId: work.apronhanger.candidate.dev
     id: signup.terms
 - tapOn:
     id: signup.privacy
-# iPhone: the number pad is still open and swallows the tap on Send OTP. Its "Next" key closes it.
+# Android: Send OTP sits under the consent boxes. Close the keyboard first, then scroll to it.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - runFlow: _common/hideKeyboard.yaml
+      - scrollUntilVisible:
+          element:
+            id: signup.submit
+          direction: DOWN
+      - tapOn:
+          id: signup.submit
+# iPhone: the keyboard cannot be closed here (Return on a field with "next" moves to the next field), and Send OTP sits
+# behind it, where Maestro still counts it as visible and taps the keyboard instead (ios-e2e runs 1 and 2: two spaces
+# typed into the password, no OTP step). So send the form the way a person does with the keyboard: the number pad's
+# "Next" goes to Email, Return to Password, and Return ("done") on the password sends the form and closes the keyboard.
 - runFlow:
     when:
       platform: iOS
     commands:
       - tapOn:
           text: Next
-          optional: true
-# D32: Send OTP sits under the consent boxes. Close the keyboard first: on the iPhone SE a scroll that starts on the
-# keyboard does nothing.
-- runFlow: _common/hideKeyboard.yaml
-- scrollUntilVisible:
-    element:
-      id: signup.submit
-    direction: DOWN
-- tapOn:
-    id: signup.submit
+      - pressKey: Enter
+      - pressKey: Enter
 # Android: Google Password Manager may ask to save the new password right after the form is sent. It covers the app
 # until it is answered. Close it with Back, like the login helper does: never "Continue" (it would save the test password
 # to the owner's Google account) and never "Never" (it turns the prompt off for good).
@@ -95,9 +102,11 @@ appId: work.apronhanger.candidate.dev
       visible: 'Save password.*'
     commands:
       - back
-# iPhone: with the number pad still open the first tap can be swallowed; tap again if the OTP step has not appeared.
+# Android: tap Send OTP again if the OTP step has not appeared (a first tap can be swallowed). Not on the iPhone: there
+# the OTP keyboard opens over the Verify button and a second tap would type a digit into the code.
 - runFlow:
     when:
+      platform: Android
       notVisible: 'Enter the OTP sent to 9000000002.'
     commands:
       - tapOn:

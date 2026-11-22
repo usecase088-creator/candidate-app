@@ -68,12 +68,42 @@ appId: work.apronhanger.candidate.dev
     element:
       id: apply.questions.q_scans
     timeout: 15000
-- tapOn:
-    id: apply.questions.q_scans
-# Let the screen settle (it scrolls the field above the keyboard) before typing.
+    centerElement: true
+# iPhone (ios-e2e runs 1 and 2): the page was still gliding after the scroll, the tap landed where the field had been,
+# so the field never took focus and the typed '12' went nowhere. Wait for the page to stop, and check the answer is in
+# the field (tap and type again if not).
 - waitForAnimationToEnd
-- inputText: '12'
-- runFlow: _common/hideKeyboard.yaml
+- retry:
+    maxRetries: 2
+    commands:
+      - tapOn:
+          id: apply.questions.q_scans
+      # Let the screen settle (it scrolls the field above the keyboard) before typing.
+      - waitForAnimationToEnd
+      - eraseText: 5
+      - inputText: '12'
+      - assertVisible:
+          id: apply.questions.q_scans
+          text: '12'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+# iPhone: the number pad has no Return key, so Enter would leave it open over the choices below (Maestro would then tap
+# the keyboard). Tap the question's label instead: a tap that no control takes closes the keyboard.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: apply.questions.q_scans.labelRow
+          direction: UP
+          timeout: 10000
+      - tapOn:
+          id: apply.questions.q_scans.labelRow
+      - waitForAnimationToEnd
 - scrollUntilVisible:
     element:
       id: apply.questions.q_shift.option.1

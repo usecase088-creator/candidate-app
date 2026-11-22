@@ -1,0 +1,17 @@
+# Leaves a pushed screen. Android: the system Back. iPhone: Maestro's `back` does nothing there (the visual tour stayed
+# on the Government jobs screen, ios-e2e run 2), so swipe from the left edge as a person would. Used with `runFlow`.
+appId: work.apronhanger.candidate.dev
+---
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 1%, 50%
+          end: 70%, 50%
+      - waitForAnimationToEnd

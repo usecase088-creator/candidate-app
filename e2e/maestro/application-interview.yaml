@@ -106,17 +106,27 @@ appId: work.apronhanger.candidate.dev
 - tapOn:
     id: action.interview.note
 - inputText: Free on Friday after 3 pm
-- runFlow: _common/hideKeyboard.yaml
-# iPhone: Return adds a line in this multi-line field and does not close the keyboard, which then covers the Send button
-# (the app pads the page by the keyboard height, so a person scrolls it up). Maestro counts the covered button as visible
-# and would tap the keyboard: drag the page up in the part above the keyboard first.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+# iPhone: Return only adds a line in this multi-line field and the keyboard stays over the Send button, which Maestro
+# still counts as visible (it would tap the keyboard). A fixed drag of the page overshot to the bottom, past the button
+# (ios-e2e run 2). Instead tap the field's own label, as a person taps outside a field: the page closes the keyboard on
+# a tap that no control takes (keyboardShouldPersistTaps="handled").
 - runFlow:
     when:
       platform: iOS
     commands:
-      - swipe:
-          start: 50%, 55%
-          end: 50%, 15%
+      - scrollUntilVisible:
+          element:
+            id: action.interview.note.labelRow
+          direction: UP
+          timeout: 10000
+      - tapOn:
+          id: action.interview.note.labelRow
+      - waitForAnimationToEnd
 - scrollUntilVisible:
     element:
       id: action.interview.reschedule.submit
