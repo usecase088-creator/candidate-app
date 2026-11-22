@@ -120,6 +120,30 @@ describe('useQuickApply', () => {
     expect(screen.queryByText('Prisma exploded')).toBeNull();
   });
 
+  // Website wording (lib/applications.ts postApplication).
+  it.each([
+    ['a 409 with no server text', 409, {}, 'You have already applied to this job'],
+    [
+      'a 413',
+      413,
+      { error: 'request entity too large' },
+      'CV file is too large for upload. Try a smaller PDF (under 4MB) or use the form application.',
+    ],
+    [
+      '"entity too large" from the server',
+      500,
+      { error: 'PayloadTooLargeError: request entity too large' },
+      'CV upload failed — file may be too large. Try a PDF under 4MB or use the form instead.',
+    ],
+  ])('%s shows the website sentence', async (_name, status, body, text) => {
+    server.use(http.post(`${API}/api/applications`, () => HttpResponse.json(body, { status })));
+    const { result } = await renderHookWithProviders(() => useQuickApply());
+    await act(async () => {
+      await result.current.mutateAsync({ jobId: 'job-1', me }).catch(() => undefined);
+    });
+    expect(await screen.findByText(text)).toBeTruthy();
+  });
+
   it('a job-question refusal (400) shows the question named by the server', async () => {
     server.use(
       http.post(`${API}/api/applications`, () =>
@@ -274,6 +298,30 @@ describe('useApplyWithCv', () => {
       state: 'error',
       message: 'You have already applied to this job',
     });
+  });
+
+  it.each([
+    ['a 409 with no server text', 409, {}, 'You have already applied to this job'],
+    [
+      'a 413',
+      413,
+      { error: 'request entity too large' },
+      'CV file is too large for upload. Try a smaller PDF (under 4MB) or use the form application.',
+    ],
+    [
+      '"entity too large" from the server',
+      500,
+      { error: 'PayloadTooLargeError: request entity too large' },
+      'CV upload failed — file may be too large. Try a PDF under 4MB or use the form instead.',
+    ],
+  ])('applying: %s shows the website sentence', async (_name, status, body, message) => {
+    installApplicationsBackend({ apps: [] });
+    server.use(http.post(`${API}/api/applications`, () => HttpResponse.json(body, { status })));
+    const { result } = await renderHookWithProviders(() => useApplyWithCv());
+    await act(async () => {
+      await result.current.submit({ jobId: 'job-2', file: pdf, contact });
+    });
+    expect(result.current.status).toMatchObject({ state: 'error', message });
   });
 
   it('cancel while uploading stops it, applies nothing and leaves no error', async () => {

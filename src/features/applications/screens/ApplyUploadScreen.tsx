@@ -188,6 +188,7 @@ function UploadForm({ job, me }: ApplyReady) {
           <TextInput
             testID="apply.upload.name"
             label="Full name"
+            required
             value={name}
             onChangeText={setName}
             error={fieldErrors.name}
@@ -204,6 +205,7 @@ function UploadForm({ job, me }: ApplyReady) {
             ref={emailRef}
             testID="apply.upload.email"
             label="Email"
+            required
             value={email}
             onChangeText={setEmail}
             error={fieldErrors.email}
@@ -222,6 +224,7 @@ function UploadForm({ job, me }: ApplyReady) {
             ref={phoneRef}
             testID="apply.upload.phone"
             label="Phone"
+            required
             value={phone}
             onChangeText={setPhone}
             error={fieldErrors.phone}
@@ -236,7 +239,7 @@ function UploadForm({ job, me }: ApplyReady) {
       <View testID="apply.upload.file.block" onLayout={onLayoutOf('file')}>
         <FilePickerField
           testID="apply.upload.file"
-          title="Choose your CV"
+          title="Tap to upload your CV"
           hint="PDF or Word (.pdf, .doc, .docx), up to 5MB"
           files={file ? [file] : []}
           sources={['files']}

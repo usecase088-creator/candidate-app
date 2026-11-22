@@ -61,7 +61,7 @@ export function NotificationsScreen() {
           testID="notifications.empty"
           icon={EMPTY_ICON}
           title="No notifications yet"
-          message="Updates about your applications will show here."
+          message="Updates on applications and saved roles will appear here."
         />
       )}
       {view === 'ready' && items.length > 0 && (

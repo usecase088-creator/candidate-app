@@ -43,10 +43,24 @@ export function InterviewCard({ application: a }: { application: Application }) 
       <View style={styles.body}>
         <View style={styles.when}>
           {/* A date, not a section: no header role (R3 a11y P3-4). */}
-          <AppText variant="heading" accessibilityRole="text" tabular>
-            {formatIstDateTime(a.interviewDate)}
-          </AppText>
-          {a.interviewType ? <AppText variant="label">{a.interviewType}</AppText> : null}
+          <View style={styles.dateFact}>
+            <AppText variant="label" color="mutedForeground">
+              Date:
+            </AppText>
+            <AppText variant="heading" accessibilityRole="text" tabular style={styles.factValue}>
+              {formatIstDateTime(a.interviewDate)}
+            </AppText>
+          </View>
+          {a.interviewType ? (
+            <View style={styles.fact}>
+              <AppText variant="label" color="mutedForeground">
+                Type:
+              </AppText>
+              <AppText variant="label" style={styles.factValue}>
+                {a.interviewType}
+              </AppText>
+            </View>
+          ) : null}
           {a.interviewerName ? (
             <View style={styles.fact}>
               <AppText variant="label" color="mutedForeground">
@@ -147,6 +161,7 @@ const styles = StyleSheet.create({
   body: { gap: spacing['3'] },
   when: { gap: spacing['0.5'] },
   fact: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['1'] },
+  dateFact: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: spacing['1'] },
   factValue: { flexShrink: 1 },
   where: { gap: spacing['0.5'] },
   actions: { gap: spacing['2'] },

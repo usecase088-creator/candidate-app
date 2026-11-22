@@ -85,6 +85,9 @@ function Chooser({ job, me, hasFormCv }: ApplyReady) {
         <View style={styles.quick}>
           <View testID="apply.quick.text" style={styles.quickText}>
             <AppText variant="label" numberOfLines={1}>
+              Quick Apply
+            </AppText>
+            <AppText variant="caption" weight="regular" numberOfLines={1}>
               {me.name}
             </AppText>
             <AppText

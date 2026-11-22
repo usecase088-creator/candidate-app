@@ -20,3 +20,17 @@ export function failureText(
 
 export const isConflict = (error: unknown) =>
   isApiError(error) && error.kind === 'http' && error.status === 409;
+
+/** Website sentences for an application the server refused (lib/applications.ts postApplication), or undefined. */
+export function applyRefusalText(error: unknown): string | undefined {
+  if (!isApiError(error) || error.kind !== 'http') return undefined;
+  if (error.status === 409 && !error.serverMessage) return 'You have already applied to this job';
+  if (error.status === 413) {
+    return 'CV file is too large for upload. Try a smaller PDF (under 4MB) or use the form application.';
+  }
+  const reason = (error.serverMessage ?? '').toLowerCase();
+  if (reason.includes('entity too large') || reason.includes('payload')) {
+    return 'CV upload failed — file may be too large. Try a PDF under 4MB or use the form instead.';
+  }
+  return undefined;
+}

@@ -114,6 +114,9 @@ describe('interview', () => {
     // R3 a11y P3-4: the date is big, but it is a value, not a section header.
     expect(screen.getByText('30 Oct 2026, 7:30 pm').props.accessibilityRole).toBe('text');
     expect(screen.getByText('Virtual')).toBeOnTheScreen();
+    // Website labels (CandidateActionCard.tsx), styled like "Interviewer:".
+    expect(screen.getByText('Date:')).toBeOnTheScreen();
+    expect(screen.getByText('Type:')).toBeOnTheScreen();
     expect(screen.getByText('Dr. Seed Interviewer')).toBeOnTheScreen();
     // D32: no "Link:" label and no white row inside the panel; Join Meeting is a full-width secondary button.
     expect(screen.queryByText('Link:')).not.toBeOnTheScreen();

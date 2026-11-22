@@ -132,9 +132,15 @@ describe('the form', () => {
     setup();
     await open();
     await screen.findByText('Upload CV · Radiology Technician');
-    expect(screen.getByLabelText('Full name')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Email')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Phone')).toBeOnTheScreen();
+    // Required on the website (FieldRow required): the red asterisk shows and screen readers hear "required".
+    for (const [id, label] of [
+      ['name', 'Full name'],
+      ['email', 'Email'],
+      ['phone', 'Phone'],
+    ] as const) {
+      expect(screen.getByTestId(`apply.upload.${id}`).props.accessibilityLabel).toBe(`${label}, required`);
+      expect(screen.getByTestId(`apply.upload.${id}.required`)).toHaveTextContent('*');
+    }
     expect(screen.getByLabelText('Submit application')).toBeOnTheScreen();
   });
 });
@@ -176,7 +182,8 @@ describe('choosing the CV', () => {
     pick.mockResolvedValueOnce({ canceled: true, assets: null } as never);
     await choose();
     expect(screen.queryByTestId('apply.upload.file.error')).not.toBeOnTheScreen();
-    expect(screen.getByText('Choose your CV')).toBeOnTheScreen();
+    // Website: "Click to upload your CV"; a phone is tapped.
+    expect(screen.getByText('Tap to upload your CV')).toBeOnTheScreen();
   });
 
   it('a picker that fails says so in plain words', async () => {

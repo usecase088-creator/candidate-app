@@ -12,7 +12,7 @@ import { useUploadTask } from '@/features/uploads/hooks/useUploadTask';
 import { uploadCv, type PickedAsset } from '@/features/uploads/uploadsApi';
 
 import { applicationsApi, type ApplyContact } from '../applicationsApi';
-import { failureText, isConflict } from '../messages';
+import { applyRefusalText, failureText, isConflict } from '../messages';
 import { APPLICATIONS_KEY } from './queryKeys';
 
 const QUICK_KEY = ['apply', 'quick'] as const;
@@ -33,7 +33,8 @@ export function useQuickApply() {
       void askPushAfterApply();
     },
     onError: (error) => {
-      toast.show(failureText(error, 'Failed to submit application', { reasonOnly: true }), {
+      const text = applyRefusalText(error) ?? failureText(error, 'Failed to submit application', { reasonOnly: true });
+      toast.show(text, {
         variant: 'error',
       });
       // 409: the list must now show the application, so the screen can say "Already applied".
@@ -87,6 +88,12 @@ export function useApplyWithCv() {
             mime: input.file.mime ?? undefined,
           });
         } catch (error) {
+          const refusal = applyRefusalText(error);
+          if (refusal) {
+            // The website sentence replaces the error, so refresh here for a 409 (the screen then says "Already applied").
+            if (isConflict(error)) void client.invalidateQueries({ queryKey: APPLICATIONS_KEY });
+            throw new Error(refusal);
+          }
           if (isApiError(error) && error.kind === 'http' && (error.status ?? 0) >= 500) {
             throw new Error('Failed to submit application');
           }

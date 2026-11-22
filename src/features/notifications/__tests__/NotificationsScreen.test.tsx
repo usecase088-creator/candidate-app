@@ -79,6 +79,8 @@ describe('Notifications', () => {
     setup([]);
     await open();
     expect(await screen.findByText('No notifications yet')).toBeOnTheScreen();
+    // Website wording (NotificationsMenu.tsx).
+    expect(screen.getByText('Updates on applications and saved roles will appear here.')).toBeOnTheScreen();
     // D32 R2 (issue 18): its own icon (bell with a slash), not the generic tray.
     expect(screen.getByTestId('notifications.empty.icon')).toHaveProp('name', 'bell.slash');
   });

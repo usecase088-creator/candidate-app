@@ -176,7 +176,7 @@ describe('Apply chooser: content (website wording)', () => {
     expect(within(screen.getByTestId('apply.choice.upload')).getByText('Upload & apply')).toBeOnTheScreen();
   });
 
-  it('the Quick Apply bar: name on line 1, the 12-pt subtitle in a text column that takes the free width', async () => {
+  it('the Quick Apply bar: "Quick Apply" title (website), the name below it, the 12-pt subtitle in a text column that takes the free width', async () => {
     setup();
     await open();
     const text = await screen.findByTestId('apply.quick.text');
@@ -184,7 +184,10 @@ describe('Apply chooser: content (website wording)', () => {
     const subtitle = within(text).getByText('One tap with your saved form CV');
     expect(subtitle.props.numberOfLines).toBe(2);
     expect(StyleSheet.flatten(subtitle.props.style).fontSize).toBe(12);
-    expect(within(text).getByText(applicantMe.name)).toBeOnTheScreen();
+    // Website card title is "Quick Apply" (routes/apply.$jobId.index.tsx); the name is the secondary line.
+    const lines = within(text).getAllByText(/./).map((t) => t.props.children);
+    expect(lines.slice(0, 2)).toEqual(['Quick Apply', applicantMe.name]);
+    expect(within(text).getByText(applicantMe.name).props.numberOfLines).toBe(1);
     // The button keeps its width; the text, not the button, gives way.
     expect(StyleSheet.flatten(screen.getByTestId('apply.quick.button').props.style).flexShrink).toBe(0);
   });
