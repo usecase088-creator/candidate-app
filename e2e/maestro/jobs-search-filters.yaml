@@ -123,6 +123,8 @@ appId: work.apronhanger.candidate.dev
 - scrollUntilVisible:
     element:
       id: filters.salary.plus
+    # Centre it: on a 375x667 iPhone the sticky footer covers its lower half.
+    centerElement: true
     timeout: 10000
 - tapOn:
     id: filters.salary.plus
