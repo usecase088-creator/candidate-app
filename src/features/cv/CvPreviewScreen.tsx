@@ -97,16 +97,14 @@ export function CvPreviewScreen() {
           <Button testID="cv.build" label="Build my CV" onPress={build} />
         </Centered>
       );
-  } else if (
-    me?.cvSource === 'upload' &&
-    !Array.isArray(profile.experience) &&
-    !Array.isArray(profile.qualifications)
-  ) {
+  } else if (me?.cvSource === 'upload' && isEmptyList(profile.experience) && isEmptyList(profile.qualifications)) {
+    // Website: an uploaded CV with no experience and no education is shown as the uploaded document.
     body = (
       <Centered
         title="You've uploaded a CV"
-        note={`Your CV document ${me.uploadedCvName ?? ''} has been uploaded.`}
+        note={`Your CV document ${me.uploadedCvName ?? ''} has been uploaded and will be sent with your applications.`}
       >
+        {me.cvUrl ? <Button testID="cv.document" label="Download Document" onPress={openDocument} /> : null}
         <Button testID="cv.build" label="Switch to Form CV" variant="secondary" onPress={build} />
       </Centered>
     );
@@ -152,6 +150,11 @@ export function CvPreviewScreen() {
 
         <View style={styles.card}>
           <View style={styles.header}>
+            <View style={styles.badge}>
+              <AppText variant="caption" color="primaryForeground">
+                Doctor CV
+              </AppText>
+            </View>
             <AppText testID="cv.name" variant="title" color="primaryForeground" numberOfLines={2}>
               {cv.name}
             </AppText>
@@ -172,6 +175,20 @@ export function CvPreviewScreen() {
                 </AppText>
               ))}
             </View>
+            {cv.credentials.length > 0 ? (
+              <View style={styles.creds}>
+                {cv.credentials.map(([k, v]) => (
+                  <View key={k} testID={`cv.credential.${k}`} style={styles.row}>
+                    <AppText variant="caption" color="primaryForegroundMuted">
+                      {k}
+                    </AppText>
+                    <AppText variant="caption" color="primaryForeground" style={styles.credValue}>
+                      {v}
+                    </AppText>
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </View>
           {cv.metrics.length > 0 ? (
             <View style={styles.metrics}>
@@ -193,11 +210,30 @@ export function CvPreviewScreen() {
               <AppText variant="heading" style={styles.sectionTitle}>
                 {s.title}
               </AppText>
+              {s.stats ? (
+                <View style={styles.stats}>
+                  {s.stats.map(([k, v]) => (
+                    <View key={k} testID={`cv.stat.${k}`} style={styles.stat}>
+                      <AppText variant="heading" color="brandText" tabular>
+                        {v}
+                      </AppText>
+                      <AppText variant="caption" color="mutedForeground" numberOfLines={1}>
+                        {k}
+                      </AppText>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
               {s.items.map((item, i) => (
                 <Fragment key={`${s.title}.${i}`}>
                   {i > 0 ? <Separator /> : null}
                   <Item item={item} />
                 </Fragment>
+              ))}
+              {s.notes?.map((n) => (
+                <AppText key={n} variant="caption" color="mutedForeground">
+                  {n}
+                </AppText>
               ))}
             </View>
           ))}
@@ -258,6 +294,13 @@ function Item({ item }: { item: CvItem }) {
           ))}
         </View>
       ) : null}
+      {item.keyChips && item.keyChips.length > 0 ? (
+        <View style={styles.chips}>
+          {item.keyChips.map((c) => (
+            <Pill key={c} testID={`cv.key.${c}`} label={c} tone="brand" />
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -277,6 +320,25 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   header: { gap: spacing['1'], padding: spacing['5'], backgroundColor: colors.primary },
+  badge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing['2'],
+    paddingVertical: spacing['0.5'],
+    marginBottom: spacing['1'],
+    borderRadius: radius.full,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.primaryForegroundMuted,
+  },
+  creds: { marginTop: spacing['3'], gap: spacing['1'] },
+  credValue: { flexShrink: 1, textAlign: 'right' },
+  stats: { flexDirection: 'row', gap: spacing['2'], paddingBottom: spacing['2'] },
+  stat: {
+    flex: 1,
+    gap: spacing['0.5'],
+    padding: spacing['2'],
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface2,
+  },
   summary: { paddingTop: spacing['2'] },
   contacts: { paddingTop: spacing['2'], gap: spacing['0.5'] },
   metrics: {
@@ -293,3 +355,8 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['1'], paddingTop: spacing['1'] },
   bottom: { height: spacing['8'] },
 });
+
+/** Website: `!c.experience?.length` — missing or empty. */
+function isEmptyList(v: unknown): boolean {
+  return !Array.isArray(v) || v.length === 0;
+}

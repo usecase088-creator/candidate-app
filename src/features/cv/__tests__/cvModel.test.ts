@@ -138,3 +138,68 @@ describe('buildCvHtml', () => {
     expect(html).toContain('a &amp; b &quot;c&quot;');
   });
 });
+
+describe('website layout (CvDocument): the PDF matches the website card', () => {
+  const cv = buildCv({ ...profile, specialistRegisterStatus: 'On register', hIndex: '6', orcid: '0000-0001' });
+
+  it('has the credentials box of the header: registration, council, license, specialist', () => {
+    expect(cv.credentials).toEqual([
+      ['Registration', 'WBMC/2017/45821'],
+      ['Council', 'West Bengal Medical Council'],
+      ['License', 'Active'],
+      ['Specialist', 'On register'],
+    ]);
+  });
+
+  it('puts experience, publications, procedures and highlights in the main column, the rest in the sidebar', () => {
+    const col = Object.fromEntries(cv.sections.map((s) => [s.title, s.column]));
+    expect(col).toMatchObject({
+      'Clinical Experience': 'main',
+      'Publications & Citations': 'main',
+      'Procedure Exposure': 'main',
+      'Audit, Teaching & Leadership': 'main',
+      Registration: 'side',
+      Education: 'side',
+      'Clinical Skills': 'side',
+      Certifications: 'side',
+      Systems: 'side',
+      Languages: 'side',
+      Availability: 'side',
+    });
+  });
+
+  it('shows the key procedures of a job as their own (dark) chips, after the details', () => {
+    const job = cv.sections.find((s) => s.title === 'Clinical Experience')!.items[0]!;
+    expect(job.chips).toEqual(['Interventional Cardiology']);
+    expect(job.keyChips).toEqual(['PTCA']);
+  });
+
+  it('has the three research figures as boxes and Scholar/ORCID under the list', () => {
+    const pubs = cv.sections.find((s) => s.title === 'Publications & Citations')!;
+    expect(pubs.stats).toEqual([
+      ['Total citations', '18'],
+      ['h-index', '6'],
+      ['i10-index', '—'],
+    ]);
+    expect(pubs.notes).toEqual(['ORCID: 0000-0001']);
+    expect(pubs.items[0]!.body).toBe('DOI/PMID: 10.1/x');
+  });
+
+  it('orders Availability like the website: availability, expected salary, then role types', () => {
+    const a = cv.sections.find((s) => s.title === 'Availability')!;
+    expect(a.items.map((i) => i.heading)).toEqual(['30 days notice', 'Expected: ₹32–48 LPA', '']);
+    expect(a.items[2]!.chips).toEqual(['Full-time']);
+  });
+
+  it('the page has the "Doctor CV" badge, the credentials box, two columns and the research boxes', () => {
+    const html = buildCvHtml(cv);
+    expect(html).toContain('Doctor CV');
+    expect(html).toContain('class="creds"');
+    expect(html).toContain('class="main"');
+    expect(html).toContain('class="side"');
+    expect(html).toContain('class="stats"');
+    expect(html).toContain('class="key"');
+    // The navy-to-blue gradient of the website header (oklch converted to hex).
+    expect(html).toMatch(/linear-gradient\(135deg/);
+  });
+});

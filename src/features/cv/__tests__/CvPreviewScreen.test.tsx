@@ -128,6 +128,53 @@ describe('CV preview', () => {
     expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith('https://res.example/my-cv.pdf');
   });
 
+  it('shows what the website CV shows: the Doctor CV badge, credentials, key procedures and research figures', async () => {
+    installJobsBackend({
+      me: {
+        ...full,
+        profile: {
+          ...full.profile,
+          registrationNumber: 'WBMC/2017/45821',
+          registrationCouncil: 'West Bengal Medical Council',
+          experience: [
+            {
+              role: 'Consultant',
+              hospital: 'AMRI',
+              start: '2021-08-01',
+              current: true,
+              keyProcedures: ['PTCA'],
+            },
+          ],
+          publicationDetails: [{ title: 'Primary PCI outcomes', citations: 18 }],
+          hIndex: '6',
+        },
+      },
+    });
+    await open();
+    expect(await screen.findByText('Doctor CV')).toBeOnTheScreen();
+    expect(screen.getByTestId('cv.credential.Registration')).toHaveTextContent(/WBMC\/2017\/45821/);
+    expect(screen.getByTestId('cv.key.PTCA')).toBeOnTheScreen();
+    expect(screen.getByTestId('cv.stat.h-index')).toHaveTextContent(/^6h-index$/);
+  });
+
+  it('a profile from an uploaded CV with no experience or education shows the uploaded CV, like the website', async () => {
+    installJobsBackend({
+      me: {
+        ...full,
+        cvSource: 'upload',
+        uploadedCvName: 'my-cv.pdf',
+        cvUrl: 'https://res.example/my-cv.pdf',
+        profile: { ...full.profile, experience: [], qualifications: [] },
+      },
+    });
+    await open();
+    expect(await screen.findByText("You've uploaded a CV")).toBeOnTheScreen();
+    expect(
+      screen.getByText('Your CV document my-cv.pdf has been uploaded and will be sent with your applications.'),
+    ).toBeOnTheScreen();
+    expect(screen.getByTestId('cv.document')).toHaveTextContent('Download Document');
+  });
+
   it('is reached from the Profile tab', async () => {
     installJobsBackend({ me: full });
     await startSignedIn('/profile', 'profile.screen');

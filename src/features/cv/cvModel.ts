@@ -7,13 +7,26 @@ export type CvItem = {
   tag?: string;
   body?: string;
   chips?: string[];
+  /** Key procedures of a job: the website draws them as dark chips after the details. */
+  keyChips?: string[];
 };
-export type CvSection = { title: string; items: CvItem[] };
+export type CvSection = {
+  title: string;
+  items: CvItem[];
+  /** Website layout: the wide main column or the sidebar. */
+  column: 'main' | 'side';
+  /** Figures drawn as boxes above the items (publications: citations, h-index, i10-index). */
+  stats?: [string, string][];
+  /** Small lines under the items (Scholar, ORCID). */
+  notes?: string[];
+};
 export type Cv = {
   name: string;
   titleLine: string;
   summary: string;
   contact: string[];
+  /** The box on the right of the website header. */
+  credentials: [string, string][];
   metrics: [string, string][];
   sections: CvSection[];
 };
@@ -114,48 +127,50 @@ export function buildCv(profile: Row): Cv {
   if (experience.length > 0) {
     sections.push({
       title: 'Clinical Experience',
+      column: 'main',
       items: experience.map((e) => ({
         heading: text(e.role),
         sub: join([e.hospital, e.city], ' · '),
         tag: formatPeriod(e.start, e.end, e.current),
         body: text(e.summary) || undefined,
-        chips: [
-          ...[e.specialty, e.hospitalType, e.department, e.patientLoad, e.rota].map(text).filter(Boolean),
-          ...strings(e.keyProcedures),
-        ],
+        chips: [e.specialty, e.hospitalType, e.department, e.patientLoad, e.rota].map(text).filter(Boolean),
+        keyChips: strings(e.keyProcedures),
       })),
     });
   }
   if (publications.length > 0) {
-    const stats = join(
-      [
-        `Total citations ${citations || '0'}`,
-        text(p.hIndex) && `h-index ${text(p.hIndex)}`,
-        text(p.i10Index) && `i10-index ${text(p.i10Index)}`,
-        text(p.scholarUrl) && `Scholar: ${text(p.scholarUrl)}`,
-        text(p.orcid) && `ORCID: ${text(p.orcid)}`,
-      ],
-      ' · ',
-    );
+    const notes = [
+      text(p.scholarUrl) && `Scholar: ${text(p.scholarUrl)}`,
+      text(p.orcid) && `ORCID: ${text(p.orcid)}`,
+    ].filter((x): x is string => Boolean(x));
     sections.push({
       title: 'Publications & Citations',
-      items: publications.map((x, i) => ({
+      column: 'main',
+      stats: [
+        ['Total citations', citations || '0'],
+        ['h-index', text(p.hIndex) || '—'],
+        ['i10-index', text(p.i10Index) || '—'],
+      ],
+      notes: notes.length > 0 ? notes : undefined,
+      items: publications.map((x) => ({
         heading: x.title,
         sub: x.meta,
         tag: `${x.citations} cites`,
-        body: join([i === 0 && stats, x.doi && `DOI/PMID: ${x.doi}`], '\n') || undefined,
+        body: x.doi ? `DOI/PMID: ${x.doi}` : undefined,
       })),
     });
   }
   if (procedures.length > 0) {
     sections.push({
       title: 'Procedure Exposure',
+      column: 'main',
       items: procedures.map((x) => ({ heading: text(x.name), tag: text(x.count) })),
     });
   }
   if (highlights.length > 0) {
     sections.push({
       title: 'Audit, Teaching & Leadership',
+      column: 'main',
       items: highlights.map((h) => ({
         heading: text(h.title),
         sub: text(h.category),
@@ -167,6 +182,7 @@ export function buildCv(profile: Row): Cv {
   if (p.verified || text(p.registrationNumber) || text(p.registrationCouncil)) {
     sections.push({
       title: 'Registration',
+      column: 'side',
       items: (
         [
           ['Number', text(p.registrationNumber)],
@@ -184,6 +200,7 @@ export function buildCv(profile: Row): Cv {
   if (qualifications.length > 0) {
     sections.push({
       title: 'Education',
+      column: 'side',
       items: qualifications.map((q) => ({
         heading: text(q.degree),
         sub: text(q.institution),
@@ -192,26 +209,30 @@ export function buildCv(profile: Row): Cv {
     });
   }
   if (clinicalSkills.length > 0) {
-    sections.push({ title: 'Clinical Skills', items: [{ heading: '', chips: clinicalSkills }] });
+    sections.push({ title: 'Clinical Skills', column: 'side', items: [{ heading: '', chips: clinicalSkills }] });
   }
   if (certifications.length > 0) {
     sections.push({
       title: 'Certifications',
+      column: 'side',
       items: certifications.map((c) => ({ heading: text(c.name), sub: text(c.issuer), tag: text(c.year) })),
     });
   }
   if (technicalSkills.length > 0) {
-    sections.push({ title: 'Systems', items: [{ heading: '', chips: technicalSkills }] });
+    sections.push({ title: 'Systems', column: 'side', items: [{ heading: '', chips: technicalSkills }] });
   }
   if (languages.length > 0) {
-    sections.push({ title: 'Languages', items: [{ heading: '', chips: languages }] });
+    sections.push({ title: 'Languages', column: 'side', items: [{ heading: '', chips: languages }] });
   }
   const preferred = strings(p.preferredRoleTypes);
   sections.push({
     title: 'Availability',
+    column: 'side',
+    // Website order: the availability, the expected salary, then the preferred role types.
     items: [
-      { heading: text(p.availability), chips: preferred.length > 0 ? preferred : undefined },
+      { heading: text(p.availability) } as CvItem,
       ...(expMin > 0 || expMax > 0 ? [{ heading: `Expected: ${formatLPA(expMin, expMax)}` }] : []),
+      ...(preferred.length > 0 ? [{ heading: '', chips: preferred }] : []),
     ].filter((i) => i.heading || i.chips),
   });
 
@@ -220,6 +241,14 @@ export function buildCv(profile: Row): Cv {
     titleLine: join([p.grade, text(p.specialty) || text(p.role)], ' · ') || text(p.headline),
     summary: text(p.summary),
     contact: [text(p.email), text(p.phone), text(p.state) || text(p.city)].filter(Boolean),
+    credentials: (
+      [
+        ['Registration', text(p.registrationNumber)],
+        ['Council', text(p.registrationCouncil)],
+        ['License', text(p.licenseStatus)],
+        ['Specialist', text(p.specialistRegisterStatus)],
+      ] as [string, string][]
+    ).filter(([, v]) => v),
     metrics: [
       ['Experience', `${years || 0}+ yrs`],
       ['Procedure volume', procedureVolume ? `${procedureVolume}+` : `${procedures.length}`],
