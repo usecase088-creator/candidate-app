@@ -18,7 +18,11 @@ export async function openOfferLetter(url: string): Promise<OfferLetterResult> {
   }
 }
 
-/** Download to the cache, share, and always delete the copy: an offer letter is a personal document. */
+/**
+ * Download into its own cache folder and share. An offer letter is a personal document, so the folder is emptied before
+ * each download; the copy is NOT deleted when the share sheet returns: on Android that happens as soon as an app is
+ * chosen, and that app reads the file after (deleting it gave an empty PDF). The system clears the cache folder too.
+ */
 export async function shareOfferLetter(url: string): Promise<OfferLetterResult> {
   if (!isOpenableLink(url)) return { ok: false, reason: 'invalid-link' };
   try {
@@ -28,7 +32,10 @@ export async function shareOfferLetter(url: string): Promise<OfferLetterResult> 
   }
   let file: File | undefined;
   try {
-    file = await File.downloadFileAsync(url, new Directory(Paths.cache));
+    const dir = new Directory(Paths.cache, 'offer-letter');
+    if (dir.exists) dir.delete();
+    dir.create();
+    file = await File.downloadFileAsync(url, dir);
     await Sharing.shareAsync(file.uri, {
       mimeType: 'application/pdf',
       UTI: 'com.adobe.pdf',
@@ -36,12 +43,11 @@ export async function shareOfferLetter(url: string): Promise<OfferLetterResult> 
     });
     return { ok: true };
   } catch {
-    return { ok: false, reason: 'failed' };
-  } finally {
     try {
       file?.delete();
     } catch {
       // The system clears the cache folder anyway.
     }
+    return { ok: false, reason: 'failed' };
   }
 }

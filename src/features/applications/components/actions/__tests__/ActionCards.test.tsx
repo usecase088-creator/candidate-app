@@ -35,7 +35,12 @@ jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn() }));
 jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }));
 jest.mock('expo-file-system', () => ({
   File: { downloadFileAsync: jest.fn() },
-  Directory: class {},
+  // The offer letter gets its own cache folder, emptied before each download.
+  Directory: class {
+    exists = false;
+    delete() {}
+    create() {}
+  },
   Paths: { cache: 'file:///cache/' },
 }));
 

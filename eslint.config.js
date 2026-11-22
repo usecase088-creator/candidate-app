@@ -34,6 +34,17 @@ module.exports = defineConfig([
     },
   },
   {
+    // An async call nobody waits for: the CV PDF bug (2026-11-23) was an unawaited File.move (async since SDK 58), so the
+    // share sheet got a path the file was being moved away from and the receiving app opened an empty PDF.
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    ignores: ['src/**/__tests__/**', 'src/test/**'],
+    languageOptions: { parserOptions: { projectService: true } },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/await-thenable': 'error',
+    },
+  },
+  {
     // The client itself, and tests that check the network mock or call the backend directly.
     files: ['src/api/createApiClient.ts', 'src/test/**', 'tests/contract/**', 'e2e/**', 'scripts/**'],
     rules: { 'no-restricted-globals': 'off' },

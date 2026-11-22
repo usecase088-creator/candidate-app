@@ -1,5 +1,5 @@
 // CV → PDF on the phone (expo-print) → share sheet (expo-sharing). The website prints the page through the browser.
-// The PDF holds personal data, so the copy in the cache is always deleted afterwards.
+// The PDF holds personal data: it stays only in the app's private cache, and the next share replaces it.
 import { File, Paths } from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -28,14 +28,17 @@ export async function shareCvPdf(profile: Record<string, unknown>): Promise<CvPd
     const cv = buildCv(profile);
     const printed = await Print.printToFileAsync({ html: buildCvHtml(cv), width: 595, height: 842 });
     file = new File(printed.uri);
+    const named = new File(Paths.cache, cvFileName(cv.name));
     try {
-      const named = new File(Paths.cache, cvFileName(cv.name));
-      try {
-        named.delete();
-      } catch {
-        // Nothing from an earlier share to remove.
-      }
-      file.move(named);
+      // The copy from an earlier share: it was kept for the app that received it, and is replaced now.
+      named.delete();
+    } catch {
+      // Nothing from an earlier share to remove.
+    }
+    try {
+      // SDK 58: move is asynchronous and updates file.uri when it is done. Not waiting for it shared the old path of
+      // a file that was being moved away (the receiving app opened an empty PDF).
+      await file.move(named);
     } catch {
       // Keep the printed name: sharing matters more than the file name.
     }
@@ -44,14 +47,15 @@ export async function shareCvPdf(profile: Record<string, unknown>): Promise<CvPd
       UTI: 'com.adobe.pdf',
       dialogTitle: 'Your CV',
     });
+    // Not deleted here: on Android the share sheet returns as soon as an app is chosen, and that app reads the file
+    // after. It stays in the app's private cache (the system clears it) until the next share replaces it.
     return { ok: true };
   } catch {
-    return { ok: false, reason: 'failed' };
-  } finally {
     try {
       file?.delete();
     } catch {
       // The system clears the cache folder anyway.
     }
+    return { ok: false, reason: 'failed' };
   }
 }

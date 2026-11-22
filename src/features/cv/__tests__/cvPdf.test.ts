@@ -12,8 +12,10 @@ jest.mock('expo-file-system', () => ({
     constructor(...parts: (string | { uri: string })[]) {
       this.uri = parts.map((p) => (typeof p === 'string' ? p : p.uri)).join('/');
     }
-    move = (dest: { uri: string }) => {
+    // SDK 58: move is asynchronous and updates `uri` only once the file is in its new place.
+    move = async (dest: { uri: string }) => {
       mockMove(this.uri, dest.uri);
+      await new Promise((resolve) => setTimeout(resolve, 0));
       this.uri = dest.uri;
     };
     delete = mockDelete;
@@ -43,16 +45,35 @@ describe('cvFileName', () => {
 });
 
 describe('shareCvPdf', () => {
-  it('prints the page, names the file, shares it and removes the copy', async () => {
+  it('prints the page, waits for the rename, then shares the named file', async () => {
     const result = await shareCvPdf({ name: 'Dr. A', summary: 'Hello' });
     expect(result).toEqual({ ok: true });
     expect(print.mock.calls[0]?.[0]?.html).toContain('Dr. A');
     expect(mockMove).toHaveBeenCalledWith('file:///cache/Print-123.pdf', 'file:///cache/Dr.-A-CV.pdf');
+    // Bug (phone, 2026-11-23): the move was not awaited, so the sheet got the old path of a file being moved away
+    // and the receiving app opened an empty PDF named after the print job.
     expect(share).toHaveBeenCalledWith(
       'file:///cache/Dr.-A-CV.pdf',
       expect.objectContaining({ mimeType: 'application/pdf' }),
     );
-    expect(mockDelete).toHaveBeenCalled();
+  });
+
+  it('keeps the shared file after the sheet returns: on Android the chosen app reads it later', async () => {
+    const shared: string[] = [];
+    share.mockImplementation(async (uri) => {
+      shared.push(uri);
+    });
+    await shareCvPdf({ name: 'Dr. A' });
+    expect(shared).toEqual(['file:///cache/Dr.-A-CV.pdf']);
+    // Only the copy left from an earlier share (same name) is removed, before the new one is moved in.
+    expect(mockDelete).toHaveBeenCalledTimes(1);
+    expect(mockDelete.mock.invocationCallOrder[0]).toBeLessThan(mockMove.mock.invocationCallOrder[0] ?? 0);
+  });
+
+  it('removes the printed file when sharing fails', async () => {
+    share.mockRejectedValue(new Error('no app'));
+    await expect(shareCvPdf({ name: 'A' })).resolves.toEqual({ ok: false, reason: 'failed' });
+    expect(mockDelete).toHaveBeenCalledTimes(2);
   });
 
   it('says so when the phone cannot share', async () => {

@@ -5,13 +5,21 @@ import * as WebBrowser from 'expo-web-browser';
 
 import { openOfferLetter, shareOfferLetter } from '../offerLetter';
 
+const mockDirDelete = jest.fn();
+const mockDirCreate = jest.fn();
+let mockDirExists = false;
 jest.mock('expo-file-system', () => {
   const downloadFileAsync = jest.fn();
   class Directory {
     uri: string;
-    constructor(uri: string) {
-      this.uri = uri;
+    constructor(...parts: (string | { uri: string })[]) {
+      this.uri = parts.map((p) => (typeof p === 'string' ? p : p.uri)).join('');
     }
+    get exists() {
+      return mockDirExists;
+    }
+    delete = () => mockDirDelete(this.uri);
+    create = () => mockDirCreate(this.uri);
   }
   return { File: { downloadFileAsync }, Directory, Paths: { cache: 'file:///cache/' } };
 });
@@ -27,6 +35,7 @@ const URL = 'https://res.example.test/offers/letter.pdf';
 const deleteFile = jest.fn();
 beforeEach(() => {
   jest.resetAllMocks();
+  mockDirExists = false;
   download.mockResolvedValue({ uri: 'file:///cache/letter.pdf', delete: deleteFile } as never);
   available.mockResolvedValue(true);
   share.mockResolvedValue(undefined);
@@ -55,16 +64,24 @@ describe('openOfferLetter', () => {
 describe("shareOfferLetter (download, then the phone's share sheet)", () => {
   it('downloads into the cache and shares the PDF', async () => {
     await expect(shareOfferLetter(URL)).resolves.toEqual({ ok: true });
-    expect(download).toHaveBeenCalledWith(URL, expect.objectContaining({ uri: 'file:///cache/' }));
+    expect(download).toHaveBeenCalledWith(URL, expect.objectContaining({ uri: 'file:///cache/offer-letter' }));
     expect(share).toHaveBeenCalledWith(
       'file:///cache/letter.pdf',
       expect.objectContaining({ mimeType: 'application/pdf', dialogTitle: 'Offer letter' }),
     );
   });
 
-  it('removes the downloaded copy afterwards (it is a personal document)', async () => {
+  it('keeps the copy after the sheet returns: on Android the chosen app reads it later (it opened an empty PDF)', async () => {
     await shareOfferLetter(URL);
-    expect(deleteFile).toHaveBeenCalledTimes(1);
+    expect(deleteFile).not.toHaveBeenCalled();
+  });
+
+  it('clears the copy from an earlier share before downloading again (it is a personal document)', async () => {
+    mockDirExists = true;
+    await shareOfferLetter(URL);
+    expect(mockDirDelete).toHaveBeenCalledWith('file:///cache/offer-letter');
+    expect(mockDirDelete.mock.invocationCallOrder[0]).toBeLessThan(download.mock.invocationCallOrder[0] ?? 0);
+    expect(mockDirCreate).toHaveBeenCalledWith('file:///cache/offer-letter');
   });
 
   it('still removes the copy when sharing fails', async () => {
