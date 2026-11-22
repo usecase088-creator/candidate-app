@@ -144,6 +144,30 @@ env:
 - takeScreenshot: ${OUT}11-apply
 - scroll
 - takeScreenshot: ${OUT}11b-apply-scrolled
+# Website parity (2026-11-23): the structured form applies to the job.
+- scrollUntilVisible:
+    element:
+      id: apply.choice.form
+    direction: UP
+    visibilityPercentage: 50
+    timeout: 15000
+    optional: true
+- tapOn:
+    id: apply.choice.form
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: builder.applyingTo
+    timeout: 30000
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}11c-apply-form
+- runFlow:
+    when:
+      visible:
+        id: builder.applyingTo
+    commands:
+      - runFlow: ../maestro/_common/goBack.yaml
 - runFlow: ../maestro/_common/goBack.yaml
 - runFlow: ../maestro/_common/goBack.yaml
 - tapOn:
@@ -201,6 +225,10 @@ env:
 - takeScreenshot: ${OUT}16-profile
 - scroll
 - takeScreenshot: ${OUT}16b-profile-scrolled
+- scroll
+- takeScreenshot: ${OUT}16c-profile-sections
+- scroll
+- takeScreenshot: ${OUT}16d-profile-sections-2
 - scrollUntilVisible:
     element:
       id: profile.photo.open
