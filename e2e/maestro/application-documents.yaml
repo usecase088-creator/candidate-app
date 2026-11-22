@@ -30,7 +30,7 @@ appId: work.apronhanger.candidate.dev
       id: application.screen
     timeout: 15000
 - assertVisible: Document Request
-- assertVisible: '• Medical registration certificate'
+- assertVisible: 'Medical registration certificate'
 - scrollUntilVisible:
     element: No files selected
     timeout: 15000

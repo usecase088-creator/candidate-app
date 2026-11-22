@@ -203,13 +203,13 @@ env:
 - takeScreenshot: ${OUT}16b-profile-scrolled
 - scrollUntilVisible:
     element:
-      id: profile.photo.change
+      id: profile.photo.open
     direction: UP
     visibilityPercentage: 50
     timeout: 15000
     optional: true
 - tapOn:
-    id: profile.photo.change
+    id: profile.photo.open
     optional: true
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}17-photo-sheet

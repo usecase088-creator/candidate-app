@@ -253,7 +253,9 @@ describe('Profile builder: D32 chrome', () => {
   it('R3 #4: the sticky bar owns the bottom inset and the native header the top one (no double insets)', async () => {
     setup();
     await open();
-    expect((await screen.findByTestId('builder.screen')).props.edges).toMatchObject({
+    // Wait for the form: while the profile loads, the loading screen (no sticky bar) keeps its bottom inset.
+    expect(await screen.findByTestId('builder.bar')).toBeOnTheScreen();
+    expect(screen.getByTestId('builder.screen').props.edges).toMatchObject({
       top: 'off',
       bottom: 'off',
     });

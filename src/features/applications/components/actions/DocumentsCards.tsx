@@ -85,7 +85,7 @@ export function DocumentsRequestCard({ application: a }: { application: Applicat
             <View key={d} style={styles.checkRow}>
               <Icon name={DOC} size={18} tintColor={colors.amberText} />
               <AppText variant="label" style={styles.checkText}>
-                {`• ${d}`}
+                {d}
               </AppText>
             </View>
           ))}

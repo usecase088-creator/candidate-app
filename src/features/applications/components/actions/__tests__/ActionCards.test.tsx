@@ -233,9 +233,11 @@ describe('documents requested', () => {
         'The hospital has requested the following documents to proceed with your application:',
       ),
     ).toBeOnTheScreen();
-    expect(screen.getByText('• Medical registration certificate')).toBeOnTheScreen();
-    expect(screen.getByText('• Experience letter')).toBeOnTheScreen();
-    expect(screen.getByText('• Identity proof')).toBeOnTheScreen();
+    expect(screen.getByText('Medical registration certificate')).toBeOnTheScreen();
+    expect(screen.getByText('Experience letter')).toBeOnTheScreen();
+    expect(screen.getByText('Identity proof')).toBeOnTheScreen();
+    // The document icon is the list marker; a text bullet next to it would mark each item twice.
+    expect(screen.queryByText(/•/)).not.toBeOnTheScreen();
     expect(
       screen.getByText('Note: Please upload clear scans. PDF or photo, up to 5 MB each.'),
     ).toBeOnTheScreen();

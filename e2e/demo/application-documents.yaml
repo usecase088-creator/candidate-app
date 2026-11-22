@@ -35,7 +35,7 @@ appId: work.apronhanger.candidate.dev
 - runFlow: _demo/cap-application-documents-3.yaml
 - assertVisible: Document Request
 - runFlow: _demo/pause-1200.yaml
-- assertVisible: • Medical registration certificate
+- assertVisible: Medical registration certificate
 - runFlow: _demo/pause-1200.yaml
 - scrollUntilVisible:
     element: No files selected

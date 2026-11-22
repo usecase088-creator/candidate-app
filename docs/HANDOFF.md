@@ -1,8 +1,20 @@
-# Handoff (updated 2026-11-22 midday: D32 verified on the Android phone; all 17 flows pass; iPhone run on GitHub)
+# Handoff (updated 2026-11-22 evening: D32 verified on iPhone (all 17 flows + tour) and on the Android phone)
 
 Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
+
+- **2026-11-22 evening (iPhone verification):** EAS e2e-test build `621de877` (commit dab1632) on the GitHub `ios-e2e`
+  simulator (375x667): **all 17 Maestro flows and the visual tour pass** (run 45009995636 + rerun 45015924872 for
+  jobs-search-filters). Fixed on the way: iOS filters are now the system page sheet (`presentation: 'modal'`; the
+  react-native-screens formSheet broke the header + scroll + footer layout), iPhone flows close the keyboard with Enter
+  and go back with the edge swipe (`_common/goBack.yaml`), the salary stepper is centred before tapping (the sticky
+  footer covered it on the small screen), the tour opened the wrong applications and tapped the photo badge (hidden from accessibility; it now taps the avatar). The
+  requested-documents list showed an icon and a text bullet per item (the bullet is gone; the website uses an `<li>`). The workflow now keeps the tour
+  screenshots (`output/tour/`); the 26 iPhone screens were reviewed by eye, no layout bug found. **Not re-run on Android
+  since dab1632** (phone disconnected): rebuild the APK and run jobs-search-filters, jobs-gov-intl, apply-quick,
+  application-interview, auth-signup, account-delete and the tour. **Raj to decide:** iOS filters as a page sheet;
+  destructive red #C81E2A in DECISIONS.md D32; a new EAS preview build for the client.
 
 - **2026-11-22 day (D32 verification, Raj asked for review agents + pixel checks + an iPhone build):** a code review
   (R3, 15 findings) and an accessibility/large-text audit (P1: errors and toasts were never spoken) were fixed in one
