@@ -56,7 +56,14 @@ appId: work.apronhanger.candidate.dev
       visible: 'Save Password.*'
     commands:
       - tapOn: Not Now
+# The sheet can open later than the wait above on a slow runner and hide Home: wait, close it if it came, wait again.
 - extendedWaitUntil:
     visible:
       id: home.screen
     timeout: 60000
+    optional: true
+- runFlow: iosPasswordSheet.yaml
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 30000
