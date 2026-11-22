@@ -1,8 +1,21 @@
-# Handoff (updated 2026-11-22 morning: D32 premium UI redesign built on every screen; 1,864 tests green; phone check pending)
+# Handoff (updated 2026-11-22 midday: D32 verified on the Android phone; all 17 flows pass; iPhone run on GitHub)
 
 Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
+
+- **2026-11-22 day (D32 verification, Raj asked for review agents + pixel checks + an iPhone build):** a code review
+  (R3, 15 findings) and an accessibility/large-text audit (P1: errors and toasts were never spoken) were fixed in one
+  pass: announce() for errors/toasts, contrast tokens (placeholder #636D7F, brandText #2A5BC4, controlBorder #8A94A6,
+  destructive #C81E2A instead of the website #E23439: AA exception, **needs Raj's OK to record in DECISIONS.md D32**),
+  48-pt touch targets, radio groups, keyboard offset under native headers, platform files for ripple/haptics. On the
+  phone (local release APK, dev variant on staging, `C:\devh-builds\d32-dev-staging-arm64.apk`): **all 17 Maestro
+  flows pass**; the device found and we fixed: the empty band under every native header (double top inset), the
+  filters sheet footer off screen on Android (now one full detent; iOS keeps 0.7/1), the retry on Delete account
+  appending to the rejected password (now cleared after 400/401), flows that pressed Back after the OTP auto-submit,
+  sign-in tab labels shrinking at font scale 2, stats labels breaking mid-word. The visual tour (`e2e/tour/visual-tour.yaml`)
+  passes at normal size and at 320 dp / font scale 2 (26 screens each). `npm run check`: 133 suites / 1,950 tests.
+  iPhone: EAS e2e-test build `4215e931` (commit 784e191) and an `ios-e2e` run with the tour + all flows dispatched.
 
 - **2026-11-22 overnight (D32 continued, Raj asleep, asked to finish without waiting):** every screen is redesigned
   (job details + apply, applications, profile/settings/notifications, auth), then an independent review scored the result
