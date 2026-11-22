@@ -1,0 +1,59 @@
+# Apply with the structured form (website apply-mode wizard): the 15 steps open for the job, Continue to Review,
+# "Submit application" sends it without saving the profile. Demo applicant (filled profile); the Consultant
+# Cardiologist job has no job questions and no seeded application. Needs the staging server reseeded first.
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- scrollUntilVisible:
+    element:
+      id: job.open.5eed0000-0000-4000-8000-00000000b002
+    timeout: 30000
+- tapOn:
+    id: job.open.5eed0000-0000-4000-8000-00000000b002
+- extendedWaitUntil:
+    visible:
+      id: job.screen
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: job.apply
+    timeout: 15000
+- tapOn:
+    id: job.apply
+- extendedWaitUntil:
+    visible:
+      id: apply.screen
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: apply.choice.form
+    visibilityPercentage: 50
+    timeout: 15000
+- tapOn:
+    id: apply.choice.form
+- extendedWaitUntil:
+    visible:
+      id: builder.applyingTo
+    timeout: 30000
+- assertVisible: Consultant Cardiologist.*
+# Through the steps to Review (every step is already valid for the demo applicant).
+- repeat:
+    times: 20
+    while:
+      notVisible:
+        id: builder.submit
+    commands:
+      - tapOn:
+          id: builder.next
+- tapOn:
+    id: builder.submit
+- extendedWaitUntil:
+    visible: Application submitted!
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: applications.screen
+    timeout: 20000
+- extendedWaitUntil:
+    visible: 'Consultant Cardiologist.*'
+    timeout: 90000
