@@ -10,10 +10,12 @@ import { Screen } from '@/components/ui/Screen';
 import { AppText } from '@/components/ui/Text';
 import { PushSettings } from '@/features/push/PushSettings';
 import { useSession } from '@/features/auth/sessionStore';
-import { PRIVACY_URL, TERMS_URL } from '@/lib/site';
+import { ABOUT_URL, CODE_OF_CONDUCT_URL, PRIVACY_URL, TERMS_URL } from '@/lib/site';
 import { colors, spacing } from '@/theme/tokens';
 
 const ICONS = {
+  about: { ios: 'info.circle', android: 'info', web: 'info' },
+  conduct: { ios: 'checkmark.seal', android: 'verified', web: 'verified' },
   privacy: { ios: 'lock.shield', android: 'shield', web: 'shield' },
   terms: { ios: 'doc.text', android: 'description', web: 'description' },
   external: { ios: 'arrow.up.right', android: 'open_in_new', web: 'open_in_new' },
@@ -33,8 +35,8 @@ const lead = (testID: string, name: (typeof ICONS)[keyof typeof ICONS], tint: st
 );
 
 /**
- * Settings (D32): grouped lists. Notifications (push), About (Privacy Policy, Terms and Conditions open in the
- * in-app browser) and Account (Sign out, then Delete account as the last, red-text row with its note as the footer).
+ * Settings (D32): grouped lists. Notifications (push), Legal & Policies (the website footer's About, Code of Conduct,
+ * Privacy Policy and Terms & Conditions, opened in the in-app browser) and Account (Sign out, then Delete account as the last, red-text row with its note as the footer).
  */
 export function SettingsScreen() {
   const router = useRouter();
@@ -42,7 +44,21 @@ export function SettingsScreen() {
   return (
     <Screen testID="settings.screen" scroll padded={false}>
       <PushSettings />
-      <ListGroup testID="settings.group.about" header="About" separatorInset={ROW_INSET}>
+      <ListGroup testID="settings.group.about" header="Legal & Policies" separatorInset={ROW_INSET}>
+        <ListRow
+          testID="settings.aboutPdf"
+          title="About"
+          leading={lead('settings.aboutPdf', ICONS.about)}
+          trailing={external('settings.aboutPdf')}
+          onPress={() => void WebBrowser.openBrowserAsync(ABOUT_URL)}
+        />
+        <ListRow
+          testID="settings.conduct"
+          title="Code of Conduct"
+          leading={lead('settings.conduct', ICONS.conduct)}
+          trailing={external('settings.conduct')}
+          onPress={() => void WebBrowser.openBrowserAsync(CODE_OF_CONDUCT_URL)}
+        />
         <ListRow
           testID="settings.privacy"
           title="Privacy Policy"
@@ -52,7 +68,7 @@ export function SettingsScreen() {
         />
         <ListRow
           testID="settings.terms"
-          title="Terms and Conditions"
+          title="Terms & Conditions"
           leading={lead('settings.terms', ICONS.terms)}
           trailing={external('settings.terms')}
           onPress={() => void WebBrowser.openBrowserAsync(TERMS_URL)}

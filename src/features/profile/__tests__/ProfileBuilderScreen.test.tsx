@@ -1,6 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { useFonts } from 'expo-font';
 import { fireEvent, screen, waitFor } from 'expo-router/testing-library';
+import * as WebBrowser from 'expo-web-browser';
 import { http, HttpResponse } from 'msw';
 import { AccessibilityInfo, StyleSheet } from 'react-native';
 
@@ -27,6 +28,9 @@ jest.mock('expo-splash-screen', () => ({
 }));
 
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(() => Promise.resolve({ type: 'cancel' })),
+}));
 jest.mock('expo-file-system', () => jest.requireActual('@/test/fakeFileSystem').fakeFileSystemModule);
 jest.mock('@react-native-community/datetimepicker', () => jest.requireActual('@/test/fakeDateTimePicker'));
 
@@ -336,7 +340,7 @@ describe('Profile builder: dates with the phone date picker', () => {
 });
 
 describe('Profile builder: review', () => {
-  it('shows a summary and saves the whole profile once, then returns to the Profile tab and forgets the draft', async () => {
+  it('shows a summary and saves the whole profile once, then opens the CV preview (website) and forgets the draft', async () => {
     const me = meWith({ ...fullProfile, phone: '9222222222', email: 'other@x.test' });
     setup(me);
     await atStep(15, me, { draft: { ...draftFromMe(me as CandidateMe), fullName: 'Dr. New Name' } });
@@ -351,7 +355,7 @@ describe('Profile builder: review', () => {
     expect(sent.phone).toBe('9876500088');
     expect(sent.email).toBe('applicant@apronhanger.test');
     expect(sent.someOtherKey).toBe('keep me');
-    expect(await screen.findByTestId('profile.screen')).toBeOnTheScreen();
+    expect(await screen.findByTestId('cv.screen')).toBeOnTheScreen();
     expect(await onPhone()).toBeNull();
   });
 
@@ -478,7 +482,7 @@ describe('Profile builder: document vault', () => {
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(uploads).toBe(1);
     expect(puts[0]!.supportingDocuments).toEqual([existing, uploadedNew]);
-    expect(await screen.findByTestId('profile.screen')).toBeOnTheScreen();
+    expect(await screen.findByTestId('cv.screen')).toBeOnTheScreen();
     expect(draftFiles()).toEqual([]);
   });
 
@@ -517,8 +521,8 @@ describe('Profile builder: document vault', () => {
     expect(puts[0]!.supportingDocuments).toEqual([existing, uploadedNew]);
   });
 
-  it('a failed upload keeps the files waiting and saves nothing', async () => {
-    setup();
+  it('a failed upload is not fatal (website): it warns and still saves the profile without the attachments', async () => {
+    setup(meWith(fullProfile, { supportingDocuments: [existing] }));
     server.use(
       http.post(`${API}/api/upload/documents`, () => HttpResponse.json({ error: 'x' }, { status: 500 })),
     );
@@ -526,12 +530,65 @@ describe('Profile builder: document vault', () => {
     await atStep(VAULT);
     await open();
     await fireEvent.press(await screen.findByTestId('builder.vault.add'));
-    await screen.findByTestId('builder.vault.0');
+    await screen.findByTestId('builder.vault.1');
     await next();
     await fireEvent.press(await screen.findByTestId('builder.submit'));
-    expect(await screen.findByTestId('builder.error')).toBeOnTheScreen();
-    expect(puts).toHaveLength(0);
-    expect((await onPhone())?.pending).toHaveLength(1);
+    expect(
+      await screen.findByText(
+        'Could not upload documents to cloud — profile will be saved without the attachments.',
+      ),
+    ).toBeOnTheScreen();
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts[0]!.supportingDocuments).toEqual([existing]);
+    expect(await screen.findByTestId('cv.screen')).toBeOnTheScreen();
+    expect(await onPhone()).toBeNull();
+  });
+
+  it('M12: the website title and the "Browse files" button', async () => {
+    setup();
+    await atStep(VAULT);
+    await open();
+    expect(
+      await screen.findByText('Optional: keep supporting files ready for applications'),
+    ).toBeOnTheScreen();
+    expect(screen.getByTestId('builder.vault.add')).toHaveTextContent('Browse files');
+  });
+
+  it('a saved file opens in the in-app browser (website "Open")', async () => {
+    setup(meWith(fullProfile, { supportingDocuments: [existing] }));
+    await atStep(VAULT);
+    await open();
+    await fireEvent.press(await screen.findByTestId('builder.vault.0.open'));
+    expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith('https://res.example/licence.pdf');
+  });
+
+  it('a picked file can be removed before the save (website FileUploadZone)', async () => {
+    setup(meWith(fullProfile, { supportingDocuments: [existing] }));
+    withUpload();
+    pickPdf('new.pdf');
+    await atStep(VAULT);
+    await open();
+    await fireEvent.press(await screen.findByTestId('builder.vault.add'));
+    await screen.findByTestId('builder.vault.1');
+    // A file waiting for the save has nothing to open yet.
+    expect(screen.queryByTestId('builder.vault.1.open')).toBeNull();
+    expect(screen.getByTestId('builder.vault.1.remove')).toHaveProp('accessibilityLabel', 'Remove new.pdf');
+    await fireEvent.press(screen.getByTestId('builder.vault.1.remove'));
+    expect(screen.queryByTestId('builder.vault.1')).toBeNull();
+    await waitFor(async () => expect((await onPhone())?.pending).toEqual([]));
+    await next();
+    await fireEvent.press(await screen.findByTestId('builder.submit'));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(uploads).toBe(0);
+    expect(puts[0]!.supportingDocuments).toEqual([existing]);
+  });
+
+  it('a saved file can be opened but not removed (website: Remove is for files picked now; the server keeps saved ones)', async () => {
+    setup(meWith(fullProfile, { supportingDocuments: [existing] }));
+    await atStep(VAULT);
+    await open();
+    expect(await screen.findByTestId('builder.vault.0.open')).toBeOnTheScreen();
+    expect(screen.queryByTestId('builder.vault.0.remove')).toBeNull();
   });
 
   it('refuses a file over 5 MB when it is picked', async () => {
@@ -542,5 +599,113 @@ describe('Profile builder: document vault', () => {
     await fireEvent.press(await screen.findByTestId('builder.vault.add'));
     expect(await screen.findByTestId('builder.vault.error')).toHaveTextContent('File must be under 5MB');
     expect(screen.queryByTestId('builder.vault.0')).toBeNull();
+  });
+});
+
+describe('Profile builder: website details', () => {
+  it('opens at the step a Profile section asks for', async () => {
+    setup();
+    await startSignedIn('/profile-builder?step=9', 'builder.screen');
+    expect(await screen.findByTestId('builder.progress')).toHaveTextContent('Step 10 of 16');
+  });
+
+  it('M6: an optional step shows the "Optional Section" badge and the skip note; a required one does not', async () => {
+    setup();
+    await atStep(6);
+    await open();
+    expect(await screen.findByTestId('builder.optional')).toHaveTextContent('Optional Section');
+    expect(screen.getByTestId('builder.optionalNote')).toHaveTextContent(
+      'You can skip this step and continue if not applicable.',
+    );
+    await fireEvent.press(screen.getByTestId('builder.back'));
+    await screen.findByText('Step 6 of 16');
+    expect(screen.queryByTestId('builder.optional')).toBeNull();
+    expect(screen.queryByTestId('builder.optionalNote')).toBeNull();
+  });
+
+  it('M9: a comma is taken out of the degree with the website message (one degree per row)', async () => {
+    setup();
+    await atStep(3);
+    await open();
+    await fireEvent.changeText(await screen.findByTestId('builder.qualifications.0.degree'), 'MBBS, MD');
+    expect(screen.getByTestId('builder.qualifications.0.degree')).toHaveProp('value', 'MBBS MD');
+    expect(
+      await screen.findByText("Please add one degree per row using the 'Add qualification' button"),
+    ).toBeOnTheScreen();
+  });
+
+  it('step 5: "Add clinical experience" adds a row with the primary specialty filled in (website)', async () => {
+    setup();
+    await atStep(4);
+    await open();
+    expect(await screen.findByTestId('builder.experience.add')).toHaveTextContent('Add clinical experience');
+    await fireEvent.press(screen.getByTestId('builder.experience.add'));
+    expect(screen.getByTestId('builder.experience.1.specialty')).toHaveProp('value', 'Cardiology');
+  });
+
+  it('step 7: the procedure placeholder follows the role, like the website', async () => {
+    setup();
+    await atStep(6);
+    await open();
+    await fireEvent.press(await screen.findByTestId('builder.procedures.add'));
+    expect(screen.getByTestId('builder.procedures.0.name')).toHaveProp(
+      'placeholder',
+      'e.g. Coronary Angiography',
+    );
+  });
+
+  it('M11: step 12 shows the live expected range with a required mark and caps the salary at 120 LPA', async () => {
+    const me = meWith({ ...fullProfile, expectedSalaryMin: 10, expectedSalaryMax: 20 });
+    setup(me);
+    await atStep(11, me);
+    await open();
+    const label = await screen.findByTestId('builder.field.expectedSalary.label');
+    expect(label).toHaveTextContent(/^Expected salary range: ₹10-20 LPA/);
+    expect(screen.getByTestId('builder.field.expectedSalary.label.required')).toBeOnTheScreen();
+    expect(screen.getByTestId('builder.field.currentSalary.label')).toHaveTextContent(
+      /^Current salary range: ₹0-0 LPA$/,
+    );
+    await fireEvent.changeText(screen.getByTestId('builder.field.expectedSalaryMax'), '500');
+    expect(screen.getByTestId('builder.field.expectedSalaryMax')).toHaveProp('value', '120');
+    expect(screen.getByTestId('builder.field.expectedSalary.label')).toHaveTextContent(
+      /^Expected salary range: ₹10-120 LPA/,
+    );
+  });
+
+  it('M10: the review lines read like the website', async () => {
+    const me = meWith({
+      ...fullProfile,
+      grade: 'Consultant',
+      yearsExperience: 7,
+      procedures: [
+        { name: 'PCI', count: 120 },
+        { name: 'Echo', count: 300 },
+      ],
+      publications: ['Old note'],
+      publicationDetails: [
+        { title: 'Trial', authors: 'Sen A', journal: 'JAPI', year: '2020', doi: '', citations: 3 },
+      ],
+      totalCitations: '42',
+    });
+    setup(me);
+    await atStep(15, me);
+    await open();
+    expect(await screen.findByTestId('builder.review.role')).toHaveTextContent(
+      'Consultant · Cardiology · 7 yrs',
+    );
+    expect(screen.getByTestId('builder.review.registration')).toHaveTextContent('WB/1 (NMC) · Active');
+    expect(screen.getByTestId('builder.review.procedures')).toHaveTextContent('PCI (120), Echo (300)');
+    // draftFromMe keeps the saved citation strings and the details separately, as the website's form does.
+    expect(screen.getByTestId('builder.review.research')).toHaveTextContent('2 publications · 42 citations');
+  });
+
+  it('M10: a registration without a council says "Council not set"', async () => {
+    const me = meWith({ ...fullProfile, registrationCouncil: '' });
+    setup(me);
+    await atStep(15, me);
+    await open();
+    expect(await screen.findByTestId('builder.review.registration')).toHaveTextContent(
+      'WB/1 (Council not set) · Active',
+    );
   });
 });

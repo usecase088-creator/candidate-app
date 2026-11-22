@@ -22,15 +22,7 @@ import {
 } from './options';
 
 export type FieldKind =
-  | 'text'
-  | 'multiline'
-  | 'number'
-  | 'date'
-  | 'select'
-  | 'multi'
-  | 'chips'
-  | 'readonly'
-  | 'bool';
+  'text' | 'multiline' | 'number' | 'date' | 'select' | 'multi' | 'chips' | 'readonly' | 'bool';
 
 export type FieldSpec = {
   kind: FieldKind;
@@ -45,7 +37,14 @@ export type FieldSpec = {
   /** A chips field that holds one string, not a list (primary specialty). */
   single?: boolean;
   keyboard?: 'default' | 'numeric' | 'email-address' | 'phone-pad' | 'url';
+  /** Commas are taken out as they are typed, and this message is shown (website: one degree per row). */
+  noCommas?: string;
 };
+
+/** Website ProfileFormWizard step 4: a comma in the degree is removed with this toast. */
+export const ONE_DEGREE_PER_ROW = "Please add one degree per row using the 'Add qualification' button";
+/** Website salary sliders: 0-120 LPA (D28.4). */
+export const SALARY_CAP_LPA = 120;
 
 export type ListKey =
   | 'qualifications'
@@ -57,6 +56,18 @@ export type ListKey =
 
 export type Block =
   | { type: 'fields'; fields: FieldSpec[] }
+  | {
+      type: 'range';
+      key: 'expectedSalary' | 'currentSalary';
+      /** Live label with the typed range (website). */
+      label: string;
+      /** Spoken before "minimum" / "maximum". */
+      name: string;
+      required?: boolean;
+      minKey: 'expectedSalaryMin' | 'currentSalaryMin';
+      maxKey: 'expectedSalaryMax' | 'currentSalaryMax';
+      cap: number;
+    }
   | {
       type: 'list';
       key: ListKey;
@@ -223,6 +234,7 @@ export function stepBlocks(step: number, s: Draft): Block[] {
               label: 'Degree / training',
               required: true,
               placeholder: 'MBBS, MD, DM, DNB, Fellowship',
+              noCommas: ONE_DEGREE_PER_ROW,
             },
             { kind: 'text', key: 'institution', label: 'Institution', required: true },
             {
@@ -242,8 +254,9 @@ export function stepBlocks(step: number, s: Draft): Block[] {
           type: 'list',
           key: 'experience',
           itemLabel: 'Experience',
-          addLabel: 'Add experience',
-          empty: () => ({ ...emptyExperience() }),
+          addLabel: 'Add clinical experience',
+          // Website: a new position starts with the primary specialty.
+          empty: () => ({ ...emptyExperience(), specialty: s.specialty }),
           fields: (item) => [
             { kind: 'text', key: 'role', label: 'Role / designation', required: true },
             { kind: 'text', key: 'hospital', label: 'Hospital / employer', required: true },
@@ -336,7 +349,16 @@ export function stepBlocks(step: number, s: Draft): Block[] {
           addLabel: 'Add procedure',
           empty: () => ({ name: '', count: 0 }),
           fields: () => [
-            { kind: 'text', key: 'name', label: 'Procedure' },
+            {
+              kind: 'text',
+              key: 'name',
+              label: 'Procedure',
+              placeholder: dentist
+                ? 'e.g. Root Canal Therapy'
+                : nurse
+                  ? 'e.g. Catheterization'
+                  : 'e.g. Coronary Angiography',
+            },
             { kind: 'number', key: 'count', label: 'Count' },
           ],
         },
@@ -458,12 +480,27 @@ export function stepBlocks(step: number, s: Draft): Block[] {
     case 11:
       return [
         {
+          type: 'range',
+          key: 'expectedSalary',
+          label: `Expected salary range: ₹${s.expectedSalaryMin}-${s.expectedSalaryMax} LPA`,
+          name: 'Expected salary',
+          required: true,
+          minKey: 'expectedSalaryMin',
+          maxKey: 'expectedSalaryMax',
+          cap: SALARY_CAP_LPA,
+        },
+        {
+          type: 'range',
+          key: 'currentSalary',
+          label: `Current salary range: ₹${s.currentSalaryMin}-${s.currentSalaryMax} LPA`,
+          name: 'Current salary',
+          minKey: 'currentSalaryMin',
+          maxKey: 'currentSalaryMax',
+          cap: SALARY_CAP_LPA,
+        },
+        {
           type: 'fields',
           fields: [
-            { kind: 'number', key: 'expectedSalaryMin', label: 'Expected salary, minimum (LPA)' },
-            { kind: 'number', key: 'expectedSalaryMax', label: 'Expected salary, maximum (LPA)' },
-            { kind: 'number', key: 'currentSalaryMin', label: 'Current salary, minimum (LPA)' },
-            { kind: 'number', key: 'currentSalaryMax', label: 'Current salary, maximum (LPA)' },
             {
               kind: 'chips',
               key: 'preferredLocations',

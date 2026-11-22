@@ -7,6 +7,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Icon } from '@/components/ui/Icon';
 import { ListGroup } from '@/components/ui/ListGroup';
 import { ListRow } from '@/components/ui/ListRow';
+import { Pill } from '@/components/ui/Pill';
 import { Screen } from '@/components/ui/Screen';
 import { Separator } from '@/components/ui/Separator';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -18,6 +19,8 @@ import { colors, radius, shadows, spacing } from '@/theme/tokens';
 import { nextBestFixes, type ProfileJson } from '../builder/model';
 import { AvatarSection } from '../components/AvatarSection';
 import { CompletenessRing } from '../components/CompletenessRing';
+import { ProfileSections, ProfileStats } from '../components/ProfileSections';
+import { profileView, SECTION_STEP, type SectionKey } from '../logic/profileView';
 import { useCandidateMe } from '../hooks/useCandidateMe';
 
 const ICONS = {
@@ -26,14 +29,17 @@ const ICONS = {
   settings: { ios: 'gearshape', android: 'settings', web: 'settings' },
   signOut: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout', web: 'logout' },
   fix: { ios: 'plus.circle', android: 'add_circle', web: 'add_circle' },
+  verified: { ios: 'checkmark.shield', android: 'verified_user', web: 'verified_user' },
 } as const;
 const ICON_SIZE = 24;
 /** Separator inset on rows with a 24-pt leading icon: padding 16 + icon 24 + gap 12. */
 const ROW_INSET = spacing['4'] + ICON_SIZE + spacing['3'];
 
 /**
- * Profile tab (D32): hero (avatar, name, headline, email), a strength card with the completeness ring and the next
- * best fixes, then two grouped lists: Profile (Edit profile, My CV) and Account (Settings, Sign out). The lists stay
+ * Profile tab (D32): hero (avatar, name, headline, the website's verified badge, location, email, phone), the website
+ * stats strip, a strength card with the completeness ring and the next best fixes, the website profile sections
+ * (About ... Languages, each with Edit), then two grouped lists: Profile (Edit profile, My CV) and Account (Settings,
+ * Sign out). With no profile yet the website empty state replaces the strength card and the sections. The lists stay
  * on screen while the profile loads or fails, so Sign out is always one tap away.
  */
 export function ProfileScreen() {
@@ -48,8 +54,11 @@ export function ProfileScreen() {
   const completeness = Math.round(Number(profile?.completeness ?? 0));
   const fixes = profile ? nextBestFixes(profile) : [];
   const openBuilder = () => router.push('/profile-builder');
-  // First time (nothing filled yet): the one filled CTA lives in the strength card instead of a row.
-  const heroCta = view === 'ready' && completeness === 0;
+  const editSection = (key: SectionKey) =>
+    router.push({ pathname: '/profile-builder', params: { step: String(SECTION_STEP[key]) } });
+  // M4: no profile yet (website "Your CV hasn't been built yet"): the one filled CTA lives in the empty card.
+  const heroCta = view === 'ready' && !profile;
+  const details = me && profile ? profileView(me) : null;
 
   return (
     <Screen testID="profile.screen" edges={[]} scroll padded={false}>
@@ -76,6 +85,16 @@ export function ProfileScreen() {
               <AppText testID="profile.name" variant="title" align="center" numberOfLines={2}>
                 {name}
               </AppText>
+              {details?.verified ? (
+                <View style={styles.badge}>
+                  <Pill
+                    testID="profile.verified"
+                    label={details.verified}
+                    tone="brand"
+                    icon={ICONS.verified}
+                  />
+                </View>
+              ) : null}
               {headline ? (
                 <AppText
                   testID="profile.headline"
@@ -96,42 +115,82 @@ export function ProfileScreen() {
               >
                 {me.email ?? ''}
               </AppText>
+              {details?.location ? (
+                <AppText
+                  testID="profile.location"
+                  variant="secondary"
+                  color="mutedForeground"
+                  align="center"
+                  numberOfLines={1}
+                >
+                  {details.location}
+                </AppText>
+              ) : null}
+              {details?.phone ? (
+                <AppText
+                  testID="profile.phone"
+                  variant="secondary"
+                  color="mutedForeground"
+                  align="center"
+                  numberOfLines={1}
+                  tabular
+                >
+                  {details.phone}
+                </AppText>
+              ) : null}
             </View>
           </View>
 
-          <View testID="profile.strength" style={styles.strength}>
-            <View style={styles.strengthRow}>
-              <CompletenessRing testID="profile.completeness" percent={completeness} />
-              <View style={styles.strengthText}>
-                <AppText variant="rowTitle">Profile strength</AppText>
-                <AppText variant="secondary" color="mutedForeground">
-                  {completeness >= 100
-                    ? 'Your profile is complete.'
-                    : completeness === 0
-                      ? 'Hospitals see your profile first. Build it once, apply everywhere.'
-                      : 'Add the items below to reach 100%.'}
+          {details ? (
+            <View style={styles.statsWrap}>
+              <ProfileStats stats={details.stats} />
+            </View>
+          ) : null}
+
+          {heroCta ? (
+            <View testID="profile.strength" style={styles.strength}>
+              <View testID="profile.empty" style={styles.empty}>
+                <AppText variant="heading" align="center" accessibilityRole="header">
+                  Your CV hasn&apos;t been built yet
+                </AppText>
+                <AppText variant="secondary" color="mutedForeground" align="center">
+                  ApronHanger builds your professional CV from a single structured form. Once it&apos;s done,
+                  you can Quick Apply to any verified role with one tap.
                 </AppText>
               </View>
+              <Button testID="profile.edit" label="Build my CV" onPress={openBuilder} />
             </View>
-            {heroCta ? <Button testID="profile.edit" label="Build my profile" onPress={openBuilder} /> : null}
-            {!heroCta && fixes.length > 0 ? (
-              <View testID="profile.fixes" style={styles.fixes}>
-                <Separator />
-                {fixes.map((fix, i) => (
-                  <Fragment key={fix}>
-                    {i > 0 ? <Separator inset={ROW_INSET} /> : null}
-                    <ListRow
-                      testID={`profile.fixes.${i}`}
-                      title={fix}
-                      titleNumberOfLines={2}
-                      leading={<Icon name={ICONS.fix} size={ICON_SIZE} tintColor={colors.brand} />}
-                      onPress={openBuilder}
-                    />
-                  </Fragment>
-                ))}
+          ) : (
+            <View testID="profile.strength" style={styles.strength}>
+              <View style={styles.strengthRow}>
+                <CompletenessRing testID="profile.completeness" percent={completeness} />
+                <View style={styles.strengthText}>
+                  <AppText variant="rowTitle">Profile strength</AppText>
+                  <AppText variant="secondary" color="mutedForeground">
+                    {completeness >= 100 ? 'Your profile is complete.' : 'Add the items below to reach 100%.'}
+                  </AppText>
+                </View>
               </View>
-            ) : null}
-          </View>
+              {fixes.length > 0 ? (
+                <View testID="profile.fixes" style={styles.fixes}>
+                  <Separator />
+                  {fixes.map((fix, i) => (
+                    <Fragment key={fix}>
+                      {i > 0 ? <Separator inset={ROW_INSET} /> : null}
+                      <ListRow
+                        testID={`profile.fixes.${i}`}
+                        title={fix}
+                        titleNumberOfLines={2}
+                        leading={<Icon name={ICONS.fix} size={ICON_SIZE} tintColor={colors.brand} />}
+                        onPress={openBuilder}
+                      />
+                    </Fragment>
+                  ))}
+                </View>
+              ) : null}
+            </View>
+          )}
+          {details ? <ProfileSections view={details} onEdit={editSection} /> : null}
         </>
       )}
 
@@ -139,7 +198,7 @@ export function ProfileScreen() {
         {!heroCta ? (
           <ListRow
             testID="profile.edit"
-            title={completeness > 0 ? 'Edit profile' : 'Build my profile'}
+            title="Edit profile"
             leading={<Icon name={ICONS.edit} size={ICON_SIZE} tintColor={colors.brand} />}
             onPress={openBuilder}
           />
@@ -179,6 +238,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing['5'],
   },
   identity: { alignSelf: 'stretch', alignItems: 'center', gap: spacing['1'] },
+  badge: { maxWidth: '100%' },
+  statsWrap: { marginTop: spacing['4'], marginBottom: -spacing['2'] },
+  empty: { gap: spacing['2'] },
   strength: {
     marginTop: spacing['6'],
     marginHorizontal: spacing['4'],

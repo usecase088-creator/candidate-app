@@ -121,7 +121,9 @@ describe('step 4: experience', () => {
   });
   it('accepts the shorter dates the website accepts (YYYY-MM, YYYY), as profiles saved there may hold them', () => {
     expect(validateStep(4, draft({ experience: [{ ...ex, start: '2018-01', end: '2019' }] }))).toBeNull();
-    expect(validateStep(4, draft({ experience: [{ ...ex, start: '2018-01', end: '', current: true }] }))).toBeNull();
+    expect(
+      validateStep(4, draft({ experience: [{ ...ex, start: '2018-01', end: '', current: true }] })),
+    ).toBeNull();
   });
   it('checks the dates', () => {
     expect(validateStep(4, draft({ experience: [{ ...ex, start: '' }] }))).toBe(

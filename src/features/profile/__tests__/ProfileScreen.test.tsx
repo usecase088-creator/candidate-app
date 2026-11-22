@@ -95,12 +95,19 @@ describe('Profile tab', () => {
     expect(screen.getByTestId('profile.signout')).toHaveTextContent('Sign out');
   });
 
-  it('D32: with no profile yet the hero holds one filled "Build my profile" button and no fixes list', async () => {
+  it('M4: with no profile yet it shows the website empty state with one "Build my CV" button and no fixes list', async () => {
     installJobsBackend({ me: { ...applicantMe, profile: null } });
-    await openProfile();
-    expect(await screen.findByTestId('profile.edit')).toHaveTextContent('Build my profile');
-    expect(screen.getByTestId('profile.completeness')).toHaveTextContent(/0%/);
+    await startSignedIn('/profile', 'profile.screen');
+    expect(await screen.findByTestId('profile.empty')).toBeOnTheScreen();
+    expect(screen.getByText("Your CV hasn't been built yet")).toBeOnTheScreen();
+    expect(
+      screen.getByText(
+        "ApronHanger builds your professional CV from a single structured form. Once it's done, you can Quick Apply to any verified role with one tap.",
+      ),
+    ).toBeOnTheScreen();
+    expect(screen.getByTestId('profile.edit')).toHaveTextContent('Build my CV');
     expect(screen.queryByTestId('profile.fixes')).toBeNull();
+    expect(screen.queryByTestId('profile.sections')).toBeNull();
     await fireEvent.press(screen.getByTestId('profile.edit'));
     expect(await screen.findByTestId('builder.screen')).toBeOnTheScreen();
   });
@@ -116,6 +123,177 @@ describe('Profile tab', () => {
   });
 });
 
+const DOCTOR =
+  'Clinical Practitioners & Super Specialists (MBBS/ MD Physician/ MD/MS / DM / MCh / DNB-SS etc)';
+const richMe = {
+  ...applicantMe,
+  supportingDocuments: [
+    {
+      name: 'licence.pdf',
+      url: 'https://res.example.test/licence.pdf',
+      publicId: 'docs/1',
+      mime: 'application/pdf',
+    },
+    { name: '', url: 'javascript:alert(1)', publicId: 'docs/2', mime: null },
+  ],
+  profile: {
+    ...applicantMe.profile,
+    verified: true,
+    role: DOCTOR,
+    summary: 'Consultant physician with six years of tertiary-care experience.',
+    experience: [
+      {
+        role: 'Consultant',
+        hospital: 'AMRI',
+        city: 'Kolkata',
+        start: '2020-01-01',
+        end: '',
+        current: true,
+        summary: 'Ran the OPD.',
+      },
+    ],
+    qualifications: [{ degree: 'MBBS', institution: 'CMC Vellore', year: '2012' }],
+    procedures: [
+      { name: 'Central line', count: 1200 },
+      { name: 'Intubation', count: 40 },
+    ],
+    certifications: [{ name: 'ACLS', issuer: 'AHA', year: '2021' }],
+    publications: ['Sen A. Sepsis bundles. JAPI 2020'],
+    registrationCouncil: 'West Bengal Medical Council',
+    registrationNumber: 'WB/12345',
+    availability: '30 days notice',
+    availabilityStatus: 'Serving Notice Period',
+    expectedSalaryMin: 20,
+    expectedSalaryMax: 30,
+    currentSalaryMin: 15,
+    currentSalaryMax: 15,
+  },
+};
+
+describe('Profile tab: website profile content', () => {
+  it('shows every section the website shows, with its title', async () => {
+    installJobsBackend({ me: richMe });
+    await openProfile();
+    const sections = within(await screen.findByTestId('profile.sections'));
+    const titles: [string, string][] = [
+      ['about', 'About'],
+      ['experience', 'Experience'],
+      ['education', 'Education'],
+      ['procedures', 'Procedures & volume'],
+      ['certifications', 'Licenses & certifications'],
+      ['publications', 'Publications & research'],
+      ['documents', 'Supporting Documents'],
+      ['registration', 'Professional registration'],
+      ['availability', 'Availability'],
+      ['clinicalSkills', 'Clinical skills'],
+      ['technicalSkills', 'Technical skills'],
+      ['languages', 'Languages'],
+    ];
+    for (const [key, title] of titles) {
+      expect(
+        within(sections.getByTestId(`profile.section.${key}.header`)).getByText(title),
+      ).toBeOnTheScreen();
+    }
+    expect(sections.getByTestId('profile.section.about')).toHaveTextContent(/six years of tertiary-care/);
+    const job = sections.getByTestId('profile.section.experience.0');
+    expect(job).toHaveTextContent(/Consultant/);
+    expect(job).toHaveTextContent(/2020-01-01 — Present/);
+    expect(job).toHaveTextContent(/AMRI · Kolkata/);
+    expect(sections.getByTestId('profile.section.education.0')).toHaveTextContent(/MBBS.*CMC Vellore.*2012/);
+    expect(sections.getByTestId('profile.section.procedures.0')).toHaveTextContent(/Central line.*1200/);
+    expect(sections.getByTestId('profile.section.certifications.0')).toHaveTextContent(/ACLS.*AHA.*2021/);
+    expect(sections.getByTestId('profile.section.publications.0')).toHaveTextContent(
+      'Sen A. Sepsis bundles. JAPI 2020',
+    );
+    const registration = sections.getByTestId('profile.section.registration');
+    expect(registration).toHaveTextContent(/Council.*West Bengal Medical Council/);
+    expect(registration).toHaveTextContent(/Reg\. number.*WB\/12345/);
+    const availability = sections.getByTestId('profile.section.availability');
+    expect(availability).toHaveTextContent(/30 days notice/);
+    expect(availability).toHaveTextContent(/Availability Status.*Serving Notice Period/);
+    expect(availability).toHaveTextContent(/Expected CTC.*₹20–30 LPA/);
+    expect(availability).toHaveTextContent(/Current CTC.*₹15 LPA/);
+    expect(availability).toHaveTextContent(/Preferred Locations.*Kolkata.*Bengaluru/);
+    expect(sections.getByTestId('profile.section.clinicalSkills')).toHaveTextContent(/Emergency Care/);
+    expect(sections.getByTestId('profile.section.technicalSkills')).toHaveTextContent(/ECG interpretation/);
+    expect(sections.getByTestId('profile.section.languages')).toHaveTextContent(/Bengali/);
+    // The website names a nameless file "Document {n}".
+    expect(sections.getByTestId('profile.section.documents.1')).toHaveTextContent(/Document 2/);
+  });
+
+  it('hides a section that has no data, like the website', async () => {
+    installJobsBackend({ me: applicantMe });
+    await openProfile();
+    expect(await screen.findByTestId('profile.sections')).toBeOnTheScreen();
+    for (const key of [
+      'about',
+      'experience',
+      'education',
+      'procedures',
+      'certifications',
+      'publications',
+      'documents',
+      'registration',
+    ]) {
+      expect(screen.queryByTestId(`profile.section.${key}`)).toBeNull();
+    }
+    // Only the preferred locations are set: Availability shows them and no empty rows.
+    const availability = screen.getByTestId('profile.section.availability');
+    expect(availability).toHaveTextContent(/^AvailabilityEditPreferred LocationsKolkataBengaluru$/);
+    expect(screen.getByTestId('profile.section.clinicalSkills')).toBeOnTheScreen();
+    expect(screen.getByTestId('profile.section.languages')).toBeOnTheScreen();
+  });
+
+  it("a section's Edit opens the builder at that section's step", async () => {
+    installJobsBackend({ me: richMe });
+    await openProfile();
+    await fireEvent.press(await screen.findByTestId('profile.section.experience.edit'));
+    expect(await screen.findByTestId('builder.progress')).toHaveTextContent('Step 5 of 16');
+  });
+
+  it('a supporting document opens in the in-app browser (website "Open"); a link that is not http(s) is refused', async () => {
+    installJobsBackend({ me: richMe });
+    await openProfile();
+    await fireEvent.press(await screen.findByTestId('profile.section.documents.0'));
+    expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith('https://res.example.test/licence.pdf');
+    jest.mocked(WebBrowser.openBrowserAsync).mockClear();
+    await fireEvent.press(screen.getByTestId('profile.section.documents.1'));
+    expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
+    expect(await screen.findByText("This link can't be opened.")).toBeOnTheScreen();
+  });
+
+  it('M1: the hero shows the location, the phone and "Verified {role}" when verified', async () => {
+    installJobsBackend({ me: richMe });
+    await openProfile();
+    expect(await screen.findByTestId('profile.location')).toHaveTextContent('Kolkata, West Bengal');
+    expect(screen.getByTestId('profile.phone')).toHaveTextContent('9876500088');
+    expect(screen.getByTestId('profile.verified')).toHaveTextContent(`Verified ${DOCTOR}`);
+  });
+
+  it('M1: no verified badge when the profile is not verified', async () => {
+    installJobsBackend({ me: applicantMe });
+    await openProfile();
+    expect(await screen.findByTestId('profile.location')).toBeOnTheScreen();
+    expect(screen.queryByTestId('profile.verified')).toBeNull();
+  });
+
+  it('M2: the stats strip shows Experience, Procedures, Certifications, Expected CTC and Current CTC', async () => {
+    installJobsBackend({ me: richMe });
+    await openProfile();
+    expect(await screen.findByTestId('profile.stat.experience')).toHaveTextContent(/Experience.*6 yrs/);
+    expect(screen.getByTestId('profile.stat.procedures')).toHaveTextContent(/Procedures.*1,240/);
+    expect(screen.getByTestId('profile.stat.certifications')).toHaveTextContent(/Certifications.*1/);
+    expect(screen.getByTestId('profile.stat.expectedCtc')).toHaveTextContent(/Expected CTC.*₹20–30 LPA/);
+    expect(screen.getByTestId('profile.stat.currentCtc')).toHaveTextContent(/Current CTC.*₹15 LPA/);
+  });
+
+  it('M2: a salary that is not set shows a dash', async () => {
+    installJobsBackend({ me: applicantMe });
+    await openProfile();
+    expect(await screen.findByTestId('profile.stat.expectedCtc')).toHaveTextContent(/Expected CTC.*—/);
+  });
+});
+
 describe('Settings', () => {
   it('shows the app version and opens the privacy policy in the in-app browser', async () => {
     installJobsBackend({ me: applicantMe });
@@ -125,6 +303,26 @@ describe('Settings', () => {
     expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
       expect.stringMatching(/^https:\/\/apronhanger\.work\//),
     );
+  });
+
+  it("M14: the website footer's Legal & Policies links: About, Code of Conduct, Privacy Policy, Terms & Conditions", async () => {
+    installJobsBackend({ me: applicantMe });
+    await startSignedIn('/settings', 'settings.screen');
+    expect(screen.getByTestId('settings.group.about.header')).toHaveTextContent('Legal & Policies');
+    const group = within(screen.getByTestId('settings.group.about'));
+    expect(group.getByTestId('settings.aboutPdf')).toHaveTextContent('About');
+    expect(group.getByTestId('settings.conduct')).toHaveTextContent('Code of Conduct');
+    await fireEvent.press(group.getByTestId('settings.aboutPdf'));
+    expect(WebBrowser.openBrowserAsync).toHaveBeenLastCalledWith(
+      'https://apronhanger.work/APRONHANGER_About.pdf',
+    );
+    await fireEvent.press(group.getByTestId('settings.conduct'));
+    expect(WebBrowser.openBrowserAsync).toHaveBeenLastCalledWith(
+      'https://apronhanger.work/APRONHANGER_Code_of_Conduct.pdf',
+    );
+    for (const id of ['settings.aboutPdf', 'settings.conduct']) {
+      expect(screen.getByTestId(`${id}.icon`)).toHaveProp('tintColor', colors.brand);
+    }
   });
 
   it('signs out', async () => {
@@ -138,7 +336,8 @@ describe('Settings', () => {
     installJobsBackend({ me: applicantMe });
     await startSignedIn('/settings', 'settings.screen');
     expect(screen.getByTestId('settings.group.about')).toBeOnTheScreen();
-    expect(screen.getByTestId('settings.terms')).toHaveTextContent('Terms and Conditions');
+    // M14: the website footer's label.
+    expect(screen.getByTestId('settings.terms')).toHaveTextContent('Terms & Conditions');
     await fireEvent.press(screen.getByTestId('settings.terms'));
     expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(expect.stringMatching(/terms/i));
     // D32 R2 (issue 19): Delete account is the last row of the Account group instead of a group of its own.
@@ -257,6 +456,15 @@ describe('Profile photo', () => {
     await fireEvent.press(screen.getByTestId('profile.photo.gallery'));
     await waitFor(() => expect(calls).toEqual(['POST avatar']));
     expect(screen.queryByTestId('profile.photo.sheet')).toBeNull();
+    expect(await screen.findByText('Profile picture updated successfully!')).toBeOnTheScreen();
+  });
+
+  it('shows the website hint for the picture rules', async () => {
+    setup();
+    await openProfile();
+    expect(await screen.findByTestId('profile.photo.hint')).toHaveTextContent(
+      'Max file size: 5MB • JPG, PNG, or WEBP',
+    );
   });
 
   it('takes a photo with the camera', async () => {
@@ -292,6 +500,7 @@ describe('Profile photo', () => {
     expect(screen.getByTestId('profile.photo.remove')).toHaveTextContent('Remove photo');
     await fireEvent.press(screen.getByTestId('profile.photo.remove'));
     await waitFor(() => expect(calls).toEqual(['DELETE avatar']));
+    expect(await screen.findByText('Profile picture removed.')).toBeOnTheScreen();
     alert.mockRestore();
   });
 

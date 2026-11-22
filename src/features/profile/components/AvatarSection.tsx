@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
+import { useToast } from '@/components/ui/Toast';
 import { useAnnounce } from '@/components/ui/useAnnounce';
 import { confirmAction } from '@/lib/confirm';
 import { openAppSettings, type PickResult, pickGalleryPhotos, takePhoto } from '@/features/uploads/pickers';
@@ -22,10 +23,11 @@ const CAMERA = { ios: 'camera', android: 'photo_camera', web: 'photo_camera' } a
 /**
  * Profile picture (D32 hero): 88-pt avatar with a brand ring and a camera badge. D32 R2 (issue 12): one control;
  * the avatar and the badge both open the photo sheet (Take photo / Choose from gallery / Remove photo / Cancel).
- * Same type and size rules as the website (5 MB).
+ * Same type and size rules as the website (5 MB), its hint under the avatar and its success toasts.
  */
 export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; name: string }) {
   const { set, remove } = useAvatar();
+  const toast = useToast();
   const [sheet, setSheet] = useState(false);
   const [message, setMessage] = useState<string>();
   useAnnounce(message);
@@ -41,7 +43,10 @@ export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; 
       setMessage('Camera access is needed to take a photo.');
     } else if (res.kind === 'error') setMessage(res.message);
     else if (res.kind === 'picked' && res.files[0]) {
-      set.mutate(res.files[0], { onError: (e) => setMessage(e.message) });
+      set.mutate(res.files[0], {
+        onSuccess: () => toast.show('Profile picture updated successfully!', { variant: 'success' }),
+        onError: (e) => setMessage(e.message),
+      });
     }
   }
 
@@ -51,7 +56,11 @@ export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; 
       message: 'Your picture will be deleted.',
       confirmLabel: 'Remove',
     });
-    if (ok) remove.mutate(undefined, { onError: (e) => setMessage(e.message) });
+    if (ok)
+      remove.mutate(undefined, {
+        onSuccess: () => toast.show('Profile picture removed.', { variant: 'success' }),
+        onError: (e) => setMessage(e.message),
+      });
   }
 
   function onPick(action: PhotoAction) {
@@ -94,6 +103,9 @@ export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; 
           <Icon name={CAMERA} size={16} tintColor={colors.brandForeground} />
         </PressableScale>
       </View>
+      <AppText testID="profile.photo.hint" variant="caption" color="mutedForeground" align="center">
+        Max file size: 5MB • JPG, PNG, or WEBP
+      </AppText>
       <PhotoSheet
         visible={sheet}
         canRemove={Boolean(avatarUrl)}

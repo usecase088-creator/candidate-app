@@ -2,9 +2,10 @@
 // last step: until then the draft (and picked vault files) stay on the phone, per user, so the candidate can stop and
 // come back, and becomes eligible for Quick Apply at the same point as on the website. The final save is safe to retry:
 // files uploaded by a save that failed later are remembered and not uploaded again.
-// The sign-in phone and email are shown, never edited (B8).
+// The sign-in phone and email are shown, never edited (B8). A Profile tab section can open the form at its step
+// (`?step=<index>`). After the save the CV preview opens, like the website (redirectTo "/cv-preview").
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { type ComponentRef, Fragment, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -12,11 +13,13 @@ import type { CandidateMe, SupportingDocument } from '@/api/schemas/candidate';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { FormErrorBox } from '@/components/ui/FormErrorBox';
+import { Pill } from '@/components/ui/Pill';
 import { Screen } from '@/components/ui/Screen';
 import { Separator } from '@/components/ui/Separator';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { AppText } from '@/components/ui/Text';
+import { useToast } from '@/components/ui/Toast';
 import { useKeyboardScroll } from '@/components/ui/useKeyboardScroll';
 import { failureText } from '@/features/applications/messages';
 import { useSession } from '@/features/auth/sessionStore';
@@ -28,6 +31,7 @@ import { colors, radius, spacing } from '@/theme/tokens';
 
 import { VaultSection } from '../components/VaultSection';
 import { FormField } from '../builder/components/FormField';
+import { SalaryRange } from '../builder/components/SalaryRange';
 import { type BuilderDraft, clearDraft, loadDraft, type PendingFile, saveDraft } from '../builder/draftStore';
 import { type Block, type FieldSpec, stepBlocks } from '../builder/formSpec';
 import { type Draft, draftFromMe, type ProfileJson, profileFromDraft } from '../builder/model';
@@ -62,10 +66,12 @@ export function ProfileBuilderScreen() {
   const stored = useStoredDraft(userId);
   const view = queryView(query);
   const ready = view === 'ready' && query.data && stored !== undefined;
+  const params = useLocalSearchParams<{ step?: string }>();
+  const startStep = params.step === undefined ? undefined : clampStep(Number(params.step));
   return (
     <>
       {ready ? (
-        <Builder me={query.data} stored={stored} userId={userId} />
+        <Builder me={query.data} stored={stored} userId={userId} startStep={startStep} />
       ) : (
         <Screen testID="builder.screen" scroll>
           {view === 'error' || view === 'offline' ? (
@@ -97,19 +103,24 @@ function Builder({
   me,
   stored,
   userId,
+  startStep,
 }: {
   me: CandidateMe;
   stored: BuilderDraft | null;
   userId: string | undefined;
+  /** Step asked for by a Profile tab section; otherwise the stored step. */
+  startStep?: number;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [draft, setDraft] = useState<Draft>(() => stored?.draft ?? draftFromMe(me));
-  const [step, setStep] = useState(() => clampStep(stored?.step ?? 0));
+  const [step, setStep] = useState(() => startStep ?? clampStep(stored?.step ?? 0));
   const [pending, setPending] = useState<PendingFile[]>(() => stored?.pending ?? []);
   const [uploaded, setUploaded] = useState<SupportingDocument[]>(() => stored?.uploaded ?? []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
+  // Files already on the server: kept with every save (only files picked now can be removed, as on the website).
   const saved = me.supportingDocuments ?? [];
   // The picture lives on the account record. The profile JSON can hold an old copy, and the server writes whatever
   // the profile says, so the current picture is put into every save.
@@ -161,13 +172,21 @@ function Builder({
     goTo(step + 1);
   }
 
-  /** Uploads what is still waiting, in groups the server accepts, remembering each group as soon as it is up. */
-  async function uploadWaiting(): Promise<SupportingDocument[]> {
+  /**
+   * Uploads what is still waiting, in groups the server accepts, remembering each group as soon as it is up.
+   * `failed`: a group did not go up; what went up before it is in `done`.
+   */
+  async function uploadWaiting(): Promise<{ done: SupportingDocument[]; failed: boolean }> {
     let done = uploaded;
     let waiting = pending;
     while (waiting.length > 0) {
       const group = waiting.slice(0, MAX_VAULT_FILES);
-      const result = await uploadSupportingDocuments(group);
+      let result;
+      try {
+        result = await uploadSupportingDocuments(group);
+      } catch {
+        return { done, failed: true };
+      }
       done = [
         ...done,
         ...result.map((u) => ({
@@ -182,7 +201,7 @@ function Builder({
       setPending(waiting);
       await keep({ pending: waiting, uploaded: done });
     }
-    return done;
+    return { done, failed: false };
   }
 
   async function onSubmit() {
@@ -197,20 +216,18 @@ function Builder({
     setError(undefined);
     setSaving(true);
     try {
-      let done: SupportingDocument[];
-      try {
-        done = await uploadWaiting();
-      } catch (e) {
-        showError(
-          e instanceof Error && !('kind' in e) ? e.message : failureText(e, 'Could not upload documents'),
-        );
-        return;
+      const { done, failed } = await uploadWaiting();
+      // Website: a failed upload is not fatal; the profile is saved without the attachments.
+      if (failed) {
+        toast.show('Could not upload documents to cloud — profile will be saved without the attachments.', {
+          variant: 'error',
+        });
       }
       // The server replaces the stored list as a whole, so the files already there go with the new ones.
       const updated = await profileApi.save(profileFromDraft(draft, base), [...saved, ...done]);
       queryClient.setQueryData(CANDIDATE_ME_KEY, updated);
       if (userId) await clearDraft(userId);
-      router.replace('/profile');
+      router.replace('/cv-preview');
     } catch (e) {
       showError(failureText(e, 'Failed to save profile'));
     } finally {
@@ -234,9 +251,14 @@ function Builder({
         contentContainerStyle={styles.content}
       >
         <View style={styles.header}>
-          <AppText testID="builder.progress" variant="secondary" color="mutedForeground" tabular>
-            {`Step ${step + 1} of ${STEPS.length}`}
-          </AppText>
+          <View style={styles.progressRow}>
+            <AppText testID="builder.progress" variant="secondary" color="mutedForeground" tabular>
+              {`Step ${step + 1} of ${STEPS.length}`}
+            </AppText>
+            {meta.optional ? (
+              <Pill testID="builder.optional" label="Optional Section" tone="neutral" />
+            ) : null}
+          </View>
           <View
             style={styles.bar}
             accessible
@@ -252,6 +274,11 @@ function Builder({
           <AppText variant="secondary" color="mutedForeground">
             {meta.description}
           </AppText>
+          {meta.optional ? (
+            <AppText testID="builder.optionalNote" variant="secondary" weight="medium">
+              You can skip this step and continue if not applicable.
+            </AppText>
+          ) : null}
         </View>
 
         {step === LAST_STEP ? (
@@ -269,6 +296,11 @@ function Builder({
             userId={userId}
             onPicked={(files) => {
               const next = [...pending, ...files];
+              setPending(next);
+              void keep({ pending: next });
+            }}
+            onRemoveWaiting={(i) => {
+              const next = pending.filter((_, n) => n !== i);
               setPending(next);
               void keep({ pending: next });
             }}
@@ -316,7 +348,27 @@ function BlockView({
   draft: Draft;
   set: (key: string, value: unknown) => void;
 }) {
+  const toast = useToast();
   const values = draft as unknown as Row;
+  if (block.type === 'range') {
+    return (
+      <SalaryRange
+        testID={`builder.field.${block.key}`}
+        minTestID={`builder.field.${block.minKey}`}
+        maxTestID={`builder.field.${block.maxKey}`}
+        label={block.label}
+        name={block.name}
+        required={block.required}
+        min={draft[block.minKey]}
+        max={draft[block.maxKey]}
+        cap={block.cap}
+        onChange={(min, max) => {
+          set(block.minKey, min);
+          set(block.maxKey, max);
+        }}
+      />
+    );
+  }
   if (block.type === 'fields') {
     return (
       <View style={styles.fields}>
@@ -333,11 +385,19 @@ function BlockView({
     );
   }
   const items = (values[block.key] as Row[]) ?? [];
-  const update = (i: number, key: string, value: unknown) =>
+  const update = (i: number, spec: FieldSpec, raw: unknown) => {
+    let value = raw;
+    // Website step 4: one degree per row; a typed comma is taken out with a message.
+    if (spec.noCommas && typeof raw === 'string' && raw.includes(',')) {
+      toast.show(spec.noCommas, { variant: 'error' });
+      value = raw.replace(/,/g, '');
+    }
+    const key = spec.key;
     set(
       block.key,
       items.map((item, n) => (n === i ? { ...item, [key]: value } : item)),
     );
+  };
   return (
     <View style={styles.fields}>
       {items.map((item, i) => (
@@ -366,7 +426,7 @@ function BlockView({
               testID={`builder.${block.key}.${i}.${f.key}`}
               spec={f}
               value={item[f.key]}
-              onChange={(v) => update(i, f.key, v)}
+              onChange={(v) => update(i, f, v)}
             />
           ))}
         </View>
@@ -386,16 +446,26 @@ function BlockView({
 function Review({ draft }: { draft: Draft }) {
   const rows: [string, string, string][] = [
     ['name', 'Name', draft.fullName],
-    ['role', 'Role', [draft.role, draft.grade, draft.specialty].filter(Boolean).join(' · ')],
+    [
+      'role',
+      'Role',
+      [draft.grade, draft.specialty, `${draft.yearsExperience} yrs`].filter(Boolean).join(' · '),
+    ],
     [
       'registration',
       'Registration',
-      [draft.registrationCouncil, draft.registrationNumber].filter(Boolean).join(' · '),
+      draft.registrationNumber
+        ? `${draft.registrationNumber} (${draft.registrationCouncil || 'Council not set'}) · ${draft.licenseStatus}`
+        : '',
     ],
     ['qualifications', 'Qualifications', `${draft.qualifications.length} entries`],
     ['experience', 'Experience', `${draft.experience.length} positions`],
-    ['procedures', 'Procedures', `${draft.procedures.length} entries`],
-    ['research', 'Research', `${draft.publicationDetails.length} publications`],
+    ['procedures', 'Procedures', draft.procedures.map((p) => `${p.name} (${p.count})`).join(', ')],
+    [
+      'research',
+      'Research',
+      `${draft.publicationDetails.length + draft.publications.length} publications · ${draft.totalCitations || 0} citations`,
+    ],
     ['highlights', 'Highlights', `${draft.professionalHighlights.length} entries`],
     ['salary', 'Salary expectation', `₹${draft.expectedSalaryMin}-${draft.expectedSalaryMax} LPA`],
     ['documents', 'Documents', draft.documentChecklist.join(', ')],
@@ -422,6 +492,7 @@ const styles = StyleSheet.create({
   loading: { gap: spacing['4'] },
   content: { padding: spacing['4'], paddingBottom: spacing['6'], gap: spacing['6'] },
   header: { gap: spacing['2'] },
+  progressRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing['2'] },
   fields: { gap: spacing['4'] },
   bar: { height: 4, borderRadius: radius.full, backgroundColor: colors.brandSoft, overflow: 'hidden' },
   barFill: { height: 4, backgroundColor: colors.brand },
