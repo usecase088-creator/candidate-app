@@ -6,7 +6,7 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 - **2026-11-22 night (client build):** Raj approved the iOS filters page sheet, the destructive red #C81E2A (both in
   DECISIONS D32) and a new preview build. EAS preview APK `77a60c50` (commit 430dd14, staging backend):
-  https://expo.dev/artifacts/eas/YqaT-LkM3DOySHAZGcnDNCAQHZuWpRKtqmaAyJpREMA.apk (copy `C:\devh-builds\preview-d32.apk`).
+  https://expo.dev/artifacts/eas/YqaT-LkM3DOySHAZGcnDNCAQHZuWpRKtqmaAyJpREMA.apk (copy `C:\dev\ah-builds\preview-d32.apk`).
   The first try failed in "Configure expo-updates": the build command needs `GOOGLE_SERVICES_JSON` set locally
   (docs/SETUP.md). Installed on Raj's phone, the process starts (phone was locked, UI not seen). The client must uninstall
   the old preview app first.
