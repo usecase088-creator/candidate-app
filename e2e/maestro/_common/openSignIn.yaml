@@ -6,6 +6,19 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: topbar.signin
     timeout: 120000
+    optional: true
+# Android: a Google "Save password" sheet left by the previous flow can still cover the app. Close it with Back (never
+# "Continue", never "Never"), then wait again.
+- runFlow:
+    when:
+      platform: Android
+      visible: 'Save password.*'
+    commands:
+      - back
+- extendedWaitUntil:
+    visible:
+      id: topbar.signin
+    timeout: 30000
 - tapOn:
     id: topbar.signin
 - extendedWaitUntil:

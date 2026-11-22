@@ -65,12 +65,12 @@ appId: work.apronhanger.candidate.dev
     id: signup.terms
 - tapOn:
     id: signup.privacy
-# Android: Send OTP sits under the consent boxes. Close the keyboard first, then scroll to it.
+# Android: Send OTP sits under the consent boxes; scroll to it. No hideKeyboard here: the keyboard is already closed
+# after the checkbox taps, and Maestro's hideKeyboard then presses Back, which leaves the form.
 - runFlow:
     when:
       platform: Android
     commands:
-      - runFlow: _common/hideKeyboard.yaml
       - scrollUntilVisible:
           element:
             id: signup.submit
