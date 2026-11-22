@@ -22,6 +22,11 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
   step list and mini preview; chip suggestions; profile strength 8-item list; filters insight tiles and active-filter
   chips. The GitHub credential in Git Credential Manager expired overnight: pushes used the repo token from `.env.local`
   for the command only; Raj should sign in to GCM again.
+  **iPhone (EAS sim build f1c00b62, commit d6e6b7a): all 20 flows + the tour pass** (first run 15/20: Profile rows below
+  the new sections, a seeded experience without the now-required specialty, a late "Save Password?" sheet; flows fixed
+  in 226faa0, re-run green). **New preview APK `b4ca7229` (commit 1d48856, staging backend, all fixes above):**
+  https://expo.dev/artifacts/eas/kBrbDFFPUvOS_tojNKdJfGLF0JX4YOUhd7D5-uBxsrc.apk (uninstall the old preview app first).
+  Not yet run on the Android phone (not connected): install, reseed, run `e2e/maestro` + the tour.
 
 - **2026-11-22 night (client build):** Raj approved the iOS filters page sheet, the destructive red #C81E2A (both in
   DECISIONS D32) and a new preview build. EAS preview APK `77a60c50` (commit 430dd14, staging backend):
