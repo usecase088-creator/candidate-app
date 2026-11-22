@@ -235,6 +235,7 @@ Raj approved the Phase 3 plan on 2026-10-27; these are the deliberate difference
    status: Cannot move from ..."). Server errors never show raw server text.
 9. **"Start form" and "Edit & apply" open a page that says the 15-step form arrives with the profile builder (Phase 4).** CV upload and Quick Apply
    work for candidates whose form profile exists (Raj's answer 1: PLAN.md order).
+   **Superseded 2026-11-23** (Raj: "make the necessary things as website"): "Start form" / "Edit & apply" now open the 15-step form in apply mode, like the website wizard: the job questions on Review, "Submit application" sends the application with the form profile and the first attached file as this job's CV, without saving the profile.
 10. **The apply chooser waits for the candidate row.** If it cannot be loaded the screen shows Try Again instead of locking Quick Apply by mistake.
 
 ## D28 — Phase 4: profile builder and settings (2026-10-28, decided by Claude overnight, Raj to confirm)

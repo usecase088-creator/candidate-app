@@ -29,18 +29,31 @@ type Props = {
   appliedMessage?: (job: Job) => string;
   /** The ready screen: render an `ApplyBody` with the same prefix. */
   children: (ready: ApplyReady) => ReactNode;
+  /**
+   * The ready screen brings its own `Screen` (the profile form in apply mode): it is rendered in a plain full-size
+   * view with `{prefix}.screen`, so safe areas, keyboard handling and the offline banner are not doubled.
+   */
+  bare?: boolean;
 };
 
-export function ApplyFrame({ prefix, jobId, appliedMessage, children }: Props) {
+export function ApplyFrame({ prefix, jobId, appliedMessage, children, bare }: Props) {
   const router = useRouter();
   const ctx = useApplyContext(jobId);
   const notFound = isApiError(ctx.jobError) && ctx.jobError.status === 404;
   const failure = ctx.view === 'error' ? (ctx.jobError ?? ctx.meError) : undefined;
 
   if (ctx.view === 'ready' && ctx.job && !ctx.alreadyApplied) {
+    const ready = children({ job: ctx.job, me: ctx.me, hasFormCv: ctx.hasFormCv });
+    if (bare) {
+      return (
+        <View testID={`${prefix}.screen`} style={styles.bare}>
+          {ready}
+        </View>
+      );
+    }
     return (
       <Screen testID={`${prefix}.screen`} edges={['top']} padded={false}>
-        {children({ job: ctx.job, me: ctx.me, hasFormCv: ctx.hasFormCv })}
+        {ready}
       </Screen>
     );
   }
@@ -166,6 +179,7 @@ function ApplySkeleton({ testID }: { testID: string }) {
 }
 
 const styles = StyleSheet.create({
+  bare: { flex: 1 },
   // D32: screen margin 16, section gap 24, room at the end so the last field clears the bar.
   content: { flexGrow: 1, gap: spacing['6'], padding: spacing['4'], paddingBottom: spacing['8'] },
   center: { alignItems: 'center', gap: spacing['3'], paddingVertical: spacing['6'] },

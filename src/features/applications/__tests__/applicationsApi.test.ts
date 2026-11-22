@@ -191,6 +191,37 @@ describe('applyWithCv', () => {
   });
 });
 
+describe('applyWithForm', () => {
+  const profile = { name: 'Demo Applicant', someOtherKey: 'keep me' };
+
+  it('POST /api/applications { jobId, cvSource: "form", profile } with nothing else when there is no file or answer (website submitApplication)', async () => {
+    const seen = record('post', '/api/applications', interviewVirtual, 201);
+    await applicationsApi.applyWithForm('job-2', profile, {});
+    expect(seen[0]?.body).toEqual({ jobId: 'job-2', cvSource: 'form', profile });
+  });
+
+  it('adds the job attachment as the CV and the answers', async () => {
+    const seen = record('post', '/api/applications', interviewVirtual, 201);
+    await applicationsApi.applyWithForm(
+      'job-2',
+      profile,
+      { q_modality: 'CT' },
+      { url: 'https://res.example.test/cv.pdf', publicId: 'cv/abc' },
+      { name: 'picked.pdf', mime: 'application/pdf' },
+    );
+    expect(seen[0]?.body).toEqual({
+      jobId: 'job-2',
+      cvSource: 'form',
+      profile,
+      cvUrl: 'https://res.example.test/cv.pdf',
+      cvCloudinaryId: 'cv/abc',
+      cvName: 'picked.pdf',
+      cvMime: 'application/pdf',
+      customFieldResponses: { q_modality: 'CT' },
+    });
+  });
+});
+
 describe('respond', () => {
   it('PATCH /api/applications/:id { status }', async () => {
     const seen = record('patch', '/api/applications/app-1', {

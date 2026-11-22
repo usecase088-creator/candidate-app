@@ -15,6 +15,8 @@ import { pickVaultFiles } from '@/features/uploads/pickers';
 import { colors, ICON_BUTTON, radius, shadows, spacing } from '@/theme/tokens';
 
 type Props = {
+  /** The heading; the website's apply form says the file goes with this job. */
+  title?: string;
   /** Files already on the server (and any uploaded by an unfinished save), minus the ones removed here. */
   saved: SupportingDocument[];
   /** Picked files waiting for the final save. */
@@ -37,7 +39,9 @@ const ROW_INSET = spacing['4'] + 24 + spacing['3'];
  * as on the website. Picked files are uploaded with the final save; until then they are kept next to the draft. A saved
  * file opens in the in-app browser (website "Open"); a file picked now can be removed before the save (saved ones stay: the server keeps them).
  */
-export function VaultSection({ saved, waiting, userId, onPicked, onRemoveWaiting }: Props) {
+export function VaultSection({
+  title = 'Optional: keep supporting files ready for applications',
+  saved, waiting, userId, onPicked, onRemoveWaiting }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   useAnnounce(error);
@@ -74,7 +78,7 @@ export function VaultSection({ saved, waiting, userId, onPicked, onRemoveWaiting
   return (
     <View style={styles.stack}>
       <View style={styles.heading}>
-        <AppText variant="label">Optional: keep supporting files ready for applications</AppText>
+        <AppText variant="label">{title}</AppText>
         <AppText variant="caption" color="mutedForeground">
           PDF or Word (.pdf, .doc, .docx), up to 5MB each
         </AppText>

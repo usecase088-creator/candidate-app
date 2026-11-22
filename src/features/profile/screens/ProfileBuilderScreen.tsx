@@ -4,12 +4,16 @@
 // files uploaded by a save that failed later are remembered and not uploaded again.
 // The sign-in phone and email are shown, never edited (B8). A Profile tab section can open the form at its step
 // (`?step=<index>`). After the save the CV preview opens, like the website (redirectTo "/cv-preview").
+// Apply mode (website ProfileFormWizard applyMode, route apply/[jobId]/form): the same steps for one job, its questions
+// on the Review step and "Submit application", which sends the application instead of saving the profile.
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { type ComponentRef, Fragment, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import type { CustomFieldResponses, UploadedFile } from '@/api/schemas/applications';
 import type { CandidateMe, SupportingDocument } from '@/api/schemas/candidate';
+import type { Job } from '@/api/schemas/jobs';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { FormErrorBox } from '@/components/ui/FormErrorBox';
@@ -21,12 +25,23 @@ import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { AppText } from '@/components/ui/Text';
 import { useToast } from '@/components/ui/Toast';
 import { useKeyboardScroll } from '@/components/ui/useKeyboardScroll';
-import { failureText } from '@/features/applications/messages';
+import { applicationsApi } from '@/features/applications/applicationsApi';
+import { JobQuestionsForm } from '@/features/applications/components/JobQuestionsForm';
+import { APPLICATIONS_KEY } from '@/features/applications/hooks/queryKeys';
+import {
+  type AnswerProblem,
+  answersForSubmit,
+  firstProblem,
+} from '@/features/applications/logic/customFields';
+import { applyRefusalText, failureText, isConflict } from '@/features/applications/messages';
 import { useSession } from '@/features/auth/sessionStore';
+import { MATCH_PROFILE_KEY } from '@/features/jobs/hooks/queryKeys';
 import { queryView } from '@/features/jobs/hooks/queryView';
-import { MAX_VAULT_FILES } from '@/features/uploads/logic/files';
-import { uploadSupportingDocuments } from '@/features/uploads/uploadsApi';
+import { askPushAfterApply } from '@/features/push/pushService';
+import { MAX_VAULT_FILES, validateCvFile } from '@/features/uploads/logic/files';
+import { uploadCv, uploadSupportingDocuments } from '@/features/uploads/uploadsApi';
 import { announce } from '@/lib/announce';
+import { haptic } from '@/lib/haptics';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import { VaultSection } from '../components/VaultSection';
@@ -96,24 +111,51 @@ export function ProfileBuilderScreen() {
   );
 }
 
+/**
+ * The form in apply mode for `job` (route apply/[jobId]/form; the screen around it handles loading and "Already
+ * applied"). No draft is read or written: like the website's apply form, what is typed lives on this screen only, so
+ * the candidate's own profile draft (D29.3) is never replaced or cleared by an application, and picked files are not
+ * copied next to that draft either.
+ */
+export function ApplyProfileForm({ me, job }: { me: CandidateMe; job: Job }) {
+  const userId = useSession((s) => s.user?.id);
+  return <Builder me={me} stored={null} userId={userId} startStep={0} applyJob={job} />;
+}
+
 const VAULT_STEP = 14;
 const clampStep = (n: number) => (Number.isInteger(n) ? Math.min(Math.max(n, 0), LAST_STEP) : 0);
+
+/** Website formatResponseValue, with an empty answer shown as unanswered. */
+function formatAnswer(value: unknown): string {
+  if (value === undefined || value === null || value === '') return '—';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  return String(value);
+}
 
 function Builder({
   me,
   stored,
   userId,
   startStep,
+  applyJob,
 }: {
   me: CandidateMe;
   stored: BuilderDraft | null;
   userId: string | undefined;
   /** Step asked for by a Profile tab section; otherwise the stored step. */
   startStep?: number;
+  /** Apply mode: the job this form applies to. */
+  applyJob?: Job;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const fields = applyJob?.customApplicationFields ?? [];
+  const [answers, setAnswers] = useState<CustomFieldResponses>({});
+  const [problem, setProblem] = useState<AnswerProblem>();
+  const questionsY = useRef(0);
+  // The job attachment that went up for a refused application: a retry applies again without a second upload.
+  const uploadedCv = useRef<{ uri: string; cv: UploadedFile } | null>(null);
   const [draft, setDraft] = useState<Draft>(() => stored?.draft ?? draftFromMe(me));
   const [step, setStep] = useState(() => startStep ?? clampStep(stored?.step ?? 0));
   const [pending, setPending] = useState<PendingFile[]>(() => stored?.pending ?? []);
@@ -150,7 +192,7 @@ function Builder({
 
   /** Writes the draft to the phone. A failed write must not stop the form: the draft is still on screen. */
   const keep = (patch: Partial<BuilderDraft>) =>
-    userId
+    userId && !applyJob
       ? saveDraft(userId, { step, draft, pending, uploaded, ...patch }).catch(() => undefined)
       : Promise.resolve();
 
@@ -204,6 +246,63 @@ function Builder({
     return { done, failed: false };
   }
 
+  /** Website applyMode submit: the questions, the first picked file as this job's CV, then the application. */
+  async function submitApplication(job: Job) {
+    const found = firstProblem(fields, answers);
+    if (found) {
+      // As on the apply chooser: buzz, bring the question into view, the message sits under it (spoken again if same).
+      haptic('error');
+      if (problem?.fieldId === found.fieldId && problem.message === found.message) announce(found.message);
+      setProblem(found);
+      scrollRef.current?.scrollTo({ y: questionsY.current, animated: true });
+      return;
+    }
+    setProblem(undefined);
+    const attachment = pending[0];
+    const fileProblem = attachment ? validateCvFile(attachment) : undefined;
+    if (fileProblem) return showError(fileProblem);
+    haptic('medium');
+    setSaving(true);
+    try {
+      let cv: UploadedFile | undefined;
+      if (attachment) {
+        cv = uploadedCv.current?.uri === attachment.uri ? uploadedCv.current.cv : undefined;
+        if (!cv) {
+          try {
+            cv = await uploadCv(attachment);
+          } catch (e) {
+            toast.show(failureText(e, 'Failed to upload CV file'), { variant: 'error' });
+            return;
+          }
+          uploadedCv.current = { uri: attachment.uri, cv };
+        }
+      }
+      await applicationsApi.applyWithForm(
+        job.id,
+        profileFromDraft(draft, base),
+        answersForSubmit(fields, answers),
+        cv,
+        attachment ? { name: attachment.name, mime: attachment.mime ?? undefined } : undefined,
+      );
+      toast.show('Application submitted!', { variant: 'success' });
+      // The server stores the form profile on the candidate (syncFormProfile): the cached rows are out of date.
+      void queryClient.invalidateQueries({ queryKey: APPLICATIONS_KEY });
+      void queryClient.invalidateQueries({ queryKey: CANDIDATE_ME_KEY });
+      void queryClient.invalidateQueries({ queryKey: MATCH_PROFILE_KEY });
+      void askPushAfterApply();
+      // Same as Quick Apply and the website (redirectTo "/applications").
+      router.replace('/applications');
+    } catch (e) {
+      // D27 item 8: the website sentence for a refusal, else the server's reason (4xx) or the website headline.
+      const text = applyRefusalText(e) ?? failureText(e, 'Failed to submit application', { reasonOnly: true });
+      toast.show(text, { variant: 'error' });
+      // 409: the list now holds the application, so the screen says "Already applied".
+      if (isConflict(e)) void queryClient.invalidateQueries({ queryKey: APPLICATIONS_KEY });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function onSubmit() {
     for (let i = 0; i < LAST_STEP; i++) {
       const problem = validateStep(i, draft);
@@ -214,6 +313,7 @@ function Builder({
       }
     }
     setError(undefined);
+    if (applyJob) return submitApplication(applyJob);
     setSaving(true);
     try {
       const { done, failed } = await uploadWaiting();
@@ -259,6 +359,17 @@ function Builder({
               <Pill testID="builder.optional" label="Optional Section" tone="neutral" />
             ) : null}
           </View>
+          {applyJob ? (
+            // Website apply bar: "Applying to" with role · hospital.
+            <View testID="builder.applyingTo">
+              <AppText variant="caption" color="mutedForeground">
+                Applying to
+              </AppText>
+              <AppText variant="secondary" weight="semibold" numberOfLines={2}>
+                {`${applyJob.role} · ${applyJob.hospital}`}
+              </AppText>
+            </View>
+          ) : null}
           <View
             style={styles.bar}
             accessible
@@ -279,10 +390,49 @@ function Builder({
               You can skip this step and continue if not applicable.
             </AppText>
           ) : null}
+          {applyJob && step === VAULT_STEP ? (
+            <AppText testID="builder.applyNote" variant="caption" color="mutedForeground">
+              Documents uploaded here are attached only to this job application. Your saved CV profile keeps the
+              document readiness checklist.
+            </AppText>
+          ) : null}
         </View>
 
+        {step === LAST_STEP && applyJob && fields.length > 0 ? (
+          // Website: the job's questions open the Review step in apply mode.
+          <View
+            onLayout={(e) => {
+              questionsY.current = e.nativeEvent.layout.y;
+            }}
+          >
+            <JobQuestionsForm
+              testID="builder.questions"
+              title="Answer these job-specific questions"
+              fields={fields}
+              values={answers}
+              onChange={(next) => {
+                setAnswers(next);
+                setProblem(undefined);
+              }}
+              disabled={saving}
+              problem={problem}
+            />
+          </View>
+        ) : null}
+
         {step === LAST_STEP ? (
-          <Review draft={draft} />
+          <Review
+            draft={draft}
+            apply={
+              applyJob
+                ? {
+                    // Website: the form's documents (saved ones until a pick replaces them).
+                    attachment: pending[0]?.name ?? saved.map((d) => d.name).join(', '),
+                    answers: fields.map((f) => [f.id, f.label, formatAnswer(answers[f.id])] as const),
+                  }
+                : undefined
+            }
+          />
         ) : (
           stepBlocks(step, draft).map((block, i) => (
             <BlockView key={`${step}.${i}`} block={block} draft={draft} set={set} />
@@ -291,11 +441,13 @@ function Builder({
 
         {step === VAULT_STEP ? (
           <VaultSection
-            saved={[...saved, ...uploaded]}
+            // Apply mode (website FileUploadZone multiple={false}): one file, and a pick replaces the list.
+            title={applyJob ? 'Attach a CV or supporting document for this job' : undefined}
+            saved={applyJob && pending.length > 0 ? [] : [...saved, ...uploaded]}
             waiting={pending}
-            userId={userId}
+            userId={applyJob ? undefined : userId}
             onPicked={(files) => {
-              const next = [...pending, ...files];
+              const next = applyJob ? files.slice(0, 1) : [...pending, ...files];
               setPending(next);
               void keep({ pending: next });
             }}
@@ -328,8 +480,10 @@ function Builder({
         ) : (
           <Button
             testID="builder.submit"
-            label="Save profile"
-            haptic="medium"
+            label={applyJob ? (saving ? 'Submitting...' : 'Submit application') : 'Save profile'}
+            accessibilityLabel={applyJob ? 'Submit application' : undefined}
+            // Apply mode buzzes itself, only once the answers are accepted (an error buzzes "error").
+            haptic={applyJob ? undefined : 'medium'}
             loading={saving}
             onPress={() => void onSubmit()}
           />
@@ -443,7 +597,14 @@ function BlockView({
   );
 }
 
-function Review({ draft }: { draft: Draft }) {
+type ApplyReview = {
+  /** The job attachment's name(s), or '' for none. */
+  attachment: string;
+  /** Each question: id, label, the answer as shown. */
+  answers: (readonly [string, string, string])[];
+};
+
+function Review({ draft, apply }: { draft: Draft; apply?: ApplyReview }) {
   const rows: [string, string, string][] = [
     ['name', 'Name', draft.fullName],
     [
@@ -470,6 +631,10 @@ function Review({ draft }: { draft: Draft }) {
     ['salary', 'Salary expectation', `₹${draft.expectedSalaryMin}-${draft.expectedSalaryMax} LPA`],
     ['documents', 'Documents', draft.documentChecklist.join(', ')],
   ];
+  if (apply) {
+    rows.push(['attachment', 'Job attachment', apply.attachment || 'None']);
+    for (const [id, label, value] of apply.answers) rows.push([`answer.${id}`, label, value]);
+  }
   return (
     <View style={styles.review}>
       {rows.map(([key, label, value], i) => (

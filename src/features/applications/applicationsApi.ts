@@ -55,6 +55,37 @@ export const applicationsApi = {
       ApplicationSchema,
     ),
 
+  /**
+   * Apply through the structured form (website submitApplication): the profile as the form built it, the job
+   * attachment (already sent with `uploadCv`) as this application's CV, and the answers. The server stores the profile
+   * on the candidate itself (syncFormProfile), so the app does not save it first.
+   */
+  applyWithForm: (
+    jobId: string,
+    profile: Record<string, unknown>,
+    answers?: CustomFieldResponses,
+    cv?: UploadedFile,
+    picked?: { name?: string; mime?: string },
+  ) =>
+    api.post(
+      '/api/applications',
+      {
+        jobId,
+        cvSource: 'form',
+        profile,
+        ...(cv
+          ? {
+              cvUrl: cv.url,
+              cvCloudinaryId: cv.publicId,
+              cvName: cv.name || picked?.name,
+              cvMime: cv.mime || picked?.mime,
+            }
+          : {}),
+        ...withAnswers(answers),
+      },
+      ApplicationSchema,
+    ),
+
   /** Candidate answers: accept / decline / reschedule an interview, upload done, accept / reject an offer. */
   respond: (id: string, status: string, note?: string) =>
     api.patch(

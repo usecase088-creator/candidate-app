@@ -476,15 +476,13 @@ describe('Job questions on the chooser', () => {
 });
 
 describe('Structured form card', () => {
-  it('opens the form page, which leads to the profile form and back', async () => {
+  it('opens the profile form for this job (website: the wizard in apply mode)', async () => {
     setup();
     await open();
     await fireEvent.press(await screen.findByTestId('apply.choice.form'));
     expect(await screen.findByTestId('apply.form.screen')).toBeOnTheScreen();
-    expect(screen.getByText('Application form')).toBeOnTheScreen();
-    expect(screen.getByText(/Fill in the profile form first/)).toBeOnTheScreen();
-    await fireEvent.press(screen.getByTestId('apply.form.build'));
     expect(await screen.findByTestId('builder.screen')).toBeOnTheScreen();
+    expect(screen.getByTestId('builder.applyingTo')).toHaveTextContent(/Radiology Technician/);
   });
 
   it('the form page leads back to the chooser', async () => {
