@@ -30,10 +30,17 @@ env:
     timeout: 10000
     optional: true
 - runFlow: ../maestro/_common/iosPasswordSheet.yaml
+# The sheet can open later than 10 s on a slow runner and hide Home: wait, close it if it came, wait again.
 - extendedWaitUntil:
     visible:
       id: home.screen
     timeout: 60000
+    optional: true
+- runFlow: ../maestro/_common/iosPasswordSheet.yaml
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 30000
 - waitForAnimationToEnd:
     timeout: 6000
 - takeScreenshot: ${OUT}04-home
