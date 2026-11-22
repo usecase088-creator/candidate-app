@@ -1,5 +1,5 @@
 import { isValidElement, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { type AccessibilityRole, type AccessibilityState, StyleSheet, View } from 'react-native';
 
 import type { HapticKind } from '@/lib/haptics';
 import { colors, spacing } from '@/theme/tokens';
@@ -25,8 +25,12 @@ export type ListRowProps = {
   onPress?: () => void;
   /** Meaning of the press (D32 haptic map). Plain navigation taps stay silent. */
   haptic?: HapticKind;
-  /** Default: the title, plus ", value" when a value is shown. */
+  /** Default: the title, plus the subtitle and the value when shown. */
   accessibilityLabel?: string;
+  /** Pressable rows: default `button`. */
+  accessibilityRole?: AccessibilityRole;
+  accessibilityState?: AccessibilityState;
+  accessibilityHint?: string;
   /** `body` (15/500) for settings-style rows, `rowTitle` (16/600) for content rows. */
   titleVariant?: 'body' | 'rowTitle';
   titleNumberOfLines?: number;
@@ -48,12 +52,15 @@ export function ListRow({
   onPress,
   haptic,
   accessibilityLabel,
+  accessibilityRole,
+  accessibilityState,
+  accessibilityHint,
   titleVariant = 'body',
-  titleNumberOfLines = 1,
+  titleNumberOfLines = 2,
   subtitleNumberOfLines = 2,
 }: ListRowProps) {
   const resolvedTrailing = trailing ?? (onPress ? 'chevron' : 'none');
-  const label = accessibilityLabel ?? (value ? `${title}, ${value}` : title);
+  const label = accessibilityLabel ?? [title, subtitle, value].filter(Boolean).join(', ');
 
   const content = (
     <>
@@ -94,7 +101,15 @@ export function ListRow({
 
   if (!onPress) {
     return (
-      <View testID={testID} accessible accessibilityLabel={label} style={styles.row}>
+      <View
+        testID={testID}
+        accessible
+        accessibilityLabel={label}
+        accessibilityRole={accessibilityRole}
+        accessibilityState={accessibilityState}
+        accessibilityHint={accessibilityHint}
+        style={styles.row}
+      >
         {content}
       </View>
     );
@@ -104,6 +119,9 @@ export function ListRow({
     <PressableScale
       testID={testID}
       accessibilityLabel={label}
+      accessibilityRole={accessibilityRole}
+      accessibilityState={accessibilityState}
+      accessibilityHint={accessibilityHint}
       haptic={haptic}
       pressScale={1}
       onPress={onPress}

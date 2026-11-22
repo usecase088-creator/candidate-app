@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
 
@@ -116,6 +116,28 @@ describe('uploading', () => {
     expect(bar.props.accessibilityRole).toBe('progressbar');
     expect(bar.props.accessibilityValue).toEqual({ min: 0, max: 100, now: 40 });
     expect(screen.getByText('Uploading… 40%')).toBeTruthy();
+  });
+
+  it('R3 a11y: speaks progress at 25% steps only, and speaks errors', async () => {
+    const spy = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    spy.mockClear();
+    const { rerender } = await renderWithProviders(
+      <FilePickerField {...props({ files, upload: { state: 'uploading', progress: 0.26 } })} />,
+    );
+    await rerender(<FilePickerField {...props({ files, upload: { state: 'uploading', progress: 0.3 } })} />);
+    await rerender(<FilePickerField {...props({ files, upload: { state: 'uploading', progress: 0.49 } })} />);
+    expect(spy.mock.calls.map(([m]) => m)).toEqual(['Uploading 25%']);
+    await rerender(
+      <FilePickerField
+        {...props({ files, upload: { state: 'error', progress: 0.5, message: 'Upload failed' } })}
+      />,
+    );
+    expect(spy).toHaveBeenLastCalledWith('Upload failed');
+  });
+
+  it('the remove button reaches the 48 touch target', async () => {
+    await renderWithProviders(<FilePickerField {...props({ files })} />);
+    expect(44 + 2 * (screen.getByTestId('docs.remove.0').props.hitSlop as number)).toBeGreaterThanOrEqual(48);
   });
 
   it('offers Cancel, and hides Remove and the source buttons while it runs', async () => {

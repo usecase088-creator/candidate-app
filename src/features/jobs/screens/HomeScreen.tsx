@@ -1,10 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
+import { ListGroup } from '@/components/ui/ListGroup';
+import { ListRow } from '@/components/ui/ListRow';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { Screen } from '@/components/ui/Screen';
 import { SearchField } from '@/components/ui/SearchField';
@@ -62,8 +64,13 @@ const QUICK_LINKS: QuickLink[] = [
  * destinations are a row of tiles, the recommended rail bleeds to the edges, and the jobs are rows (JobRow).
  * Search text, city and filters live on the Search tab (same store, so they stay when switching tabs).
  */
+/** Above this font scale the three tiles become list rows (R3 a11y P2-7: "International" broke mid-word). */
+export const TILES_MAX_FONT_SCALE = 1.3;
+
 export function HomeScreen() {
   const router = useRouter();
+  const { fontScale } = useWindowDimensions();
+  const linksAsRows = fontScale > TILES_MAX_FONT_SCALE;
   const signedIn = useIsSignedIn();
   const openJob = useOpenJob();
   const jobsQuery = useJobs();
@@ -101,7 +108,13 @@ export function HomeScreen() {
         <AppText variant="title" color="primaryForeground" accessibilityRole="header">
           Your next clinical role, curated for you.
         </AppText>
-        <AppText variant="secondary" color="primaryForegroundMuted">
+        {/* Found on the phone at 2.0: the subtitle doubled and the band ate the screen. Capped at 1.3. */}
+        <AppText
+          testID="home.hero.subtitle"
+          variant="secondary"
+          color="primaryForegroundMuted"
+          maxFontSizeMultiplier={1.3}
+        >
           Browse verified healthcare openings across India — salary disclosed, credentials checked.
         </AppText>
       </View>
@@ -115,33 +128,55 @@ export function HomeScreen() {
         />
       </View>
       <View style={styles.hero}>
-        <View style={styles.tiles}>
-          {QUICK_LINKS.map((link) => (
-            <PressableScale
-              key={link.testID}
-              testID={link.testID}
-              accessibilityLabel={link.label}
-              onPress={() => (signedIn ? router.push(link.path) : goToSignIn(link.path))}
-              style={styles.tile}
-            >
-              <Icon
-                name={{ ...link.icon, web: link.icon.android }}
-                tintColor={colors.brand}
-                size={TILE_ICON}
+        {linksAsRows ? (
+          <ListGroup testID="home.links">
+            {QUICK_LINKS.map((link) => (
+              <ListRow
+                key={link.testID}
+                testID={link.testID}
+                title={link.label}
+                leading={
+                  <Icon
+                    name={{ ...link.icon, web: link.icon.android }}
+                    tintColor={colors.brand}
+                    size={TILE_ICON}
+                  />
+                }
+                onPress={() => (signedIn ? router.push(link.path) : goToSignIn(link.path))}
               />
-              <AppText
-                variant="secondary"
-                weight="medium"
-                numberOfLines={2}
-                adjustsFontSizeToFit
-                minimumFontScale={0.85}
-                align="center"
+            ))}
+          </ListGroup>
+        ) : (
+          <View style={styles.tiles}>
+            {QUICK_LINKS.map((link) => (
+              <PressableScale
+                key={link.testID}
+                testID={link.testID}
+                accessibilityLabel={link.label}
+                onPress={() => (signedIn ? router.push(link.path) : goToSignIn(link.path))}
+                style={styles.tile}
               >
-                {link.label}
-              </AppText>
-            </PressableScale>
-          ))}
-        </View>
+                <Icon
+                  name={{ ...link.icon, web: link.icon.android }}
+                  tintColor={colors.brand}
+                  size={TILE_ICON}
+                />
+                <AppText
+                  variant="secondary"
+                  weight="medium"
+                  numberOfLines={2}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.85}
+                  // Tiles only show up to 1.3: all three labels stay the same size (one no longer shrank alone).
+                  maxFontSizeMultiplier={TILES_MAX_FONT_SCALE}
+                  align="center"
+                >
+                  {link.label}
+                </AppText>
+              </PressableScale>
+            ))}
+          </View>
+        )}
       </View>
 
       {view === 'ready' && (
@@ -159,7 +194,7 @@ export function HomeScreen() {
             <AppText variant="heading" style={styles.flex}>
               All Opportunities
             </AppText>
-            <AppText testID="home.count" variant="secondary" color="mutedForeground" numberOfLines={1}>
+            <AppText testID="home.count" variant="secondary" color="mutedForeground">
               {`Showing ${visible.length} of ${jobs?.length ?? 0} verified roles`}
             </AppText>
           </View>

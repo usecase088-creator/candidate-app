@@ -86,7 +86,8 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH,
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.input,
+    // R3 a11y P2-5: at-rest outline at 3:1.
+    borderColor: colors.controlBorder,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
     paddingHorizontal: spacing['3'],

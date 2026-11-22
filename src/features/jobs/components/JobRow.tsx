@@ -29,15 +29,16 @@ type Props = {
  * testIDs kept from JobCard: `job.card.{id}`, `job.open.{id}`, `job.title.{id}`, `job.save.{id}`; new `job.match.{id}`.
  */
 function JobRowView({ job, saved, onToggleSave, onOpen }: Props) {
-  const meta = [job.specialty, job.type, formatExp(job.experienceMin, job.experienceMax)]
-    .filter(Boolean)
-    .join(' · ');
+  const experience = formatExp(job.experienceMin, job.experienceMax);
+  const meta = [job.specialty, job.type, experience].filter(Boolean).join(' · ');
   const where = `${job.location} · ${postedLabel(job.postedDays)}`;
   const salary = formatLPA(job.salaryMin, job.salaryMax);
   const match = job.matchPercent != null ? `${Math.round(job.matchPercent)}% match` : null;
   const spoken = [
     `${job.role} at ${job.hospital}`,
     job.hospitalVerified ? 'verified hospital' : null,
+    experience,
+    job.location,
     salary,
     match,
   ]
@@ -71,11 +72,11 @@ function JobRowView({ job, saved, onToggleSave, onOpen }: Props) {
               />
             ) : null}
           </View>
-          <AppText variant="secondary" color="mutedForeground" numberOfLines={1}>
+          <AppText variant="secondary" color="mutedForeground" numberOfLines={2}>
             {meta}
           </AppText>
-          {/* Own line: next to the salary it shrank to "K..." at 320 pt. */}
-          <AppText variant="secondary" color="mutedForeground" numberOfLines={1}>
+          {/* Own line: next to the salary it shrank to "K..." at 320 pt. Two lines: the city must not be cut. */}
+          <AppText variant="secondary" color="mutedForeground" numberOfLines={2}>
             {where}
           </AppText>
           <View style={styles.bottom}>

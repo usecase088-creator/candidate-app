@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, Text } from 'react-native';
 
 import { haptic } from '@/lib/haptics';
 import { colors, motion, radius, shadows } from '@/theme/tokens';
@@ -84,6 +84,39 @@ it('hides itself after 4 seconds by default', async () => {
   expect(screen.queryByTestId('toast')).toBeNull();
 });
 
+it('announces the message to VoiceOver / TalkBack (role="alert" alone is silent on iOS)', async () => {
+  const spy = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+  spy.mockClear();
+  await renderWithProviders(<Trigger message="Invalid OTP." variant="error" />);
+  await fireEvent.press(screen.getByTestId('trigger'));
+  expect(spy).toHaveBeenCalledWith('Invalid OTP.');
+});
+
+it('long messages stay up longer (60 ms per character, at least 4 s)', async () => {
+  const message = 'Password reset successfully! Please sign in with your new password. '.repeat(2).trim(); // 135 chars
+  await renderWithProviders(<Trigger message={message} />);
+  await fireEvent.press(screen.getByTestId('trigger'));
+  await advance(message.length * 60 - 1);
+  expect(screen.getByTestId('toast')).toBeOnTheScreen();
+  await advance(1 + motion.duration.exit);
+  expect(screen.queryByTestId('toast')).toBeNull();
+});
+
+it('keeps the same { show, hide } between toasts, so consumers do not re-render or rebuild callbacks (R3 #8)', async () => {
+  const seen = new Set<unknown>();
+  function Spy() {
+    const toast = useToast();
+    seen.add(toast);
+    return <Pressable testID="spy" onPress={() => toast.show('hello')} />;
+  }
+  await renderWithProviders(<Spy />);
+  await fireEvent.press(screen.getByTestId('spy'));
+  await fireEvent.press(screen.getByTestId('toast'));
+  await advance(motion.duration.exit);
+  await fireEvent.press(screen.getByTestId('spy'));
+  expect(seen.size).toBe(1);
+});
+
 it('respects a custom duration (e.g. the 30 s warm-up message)', async () => {
   await renderWithProviders(<Trigger message="Server is warming up..." duration={30_000} />);
   await fireEvent.press(screen.getByTestId('trigger'));
@@ -143,7 +176,8 @@ describe('D32 look', () => {
     expect(flat(icon.props.style)).toMatchObject({ width: 20, height: 20 });
     const text = screen.getByText('Invalid OTP.');
     expect(flat(text.props.style)).toMatchObject({ color: colors.foreground, fontSize: 15 });
-    expect(text).toHaveProp('numberOfLines', 2);
+    // R3 #6: 2 lines cut server messages at 320 pt / large text; 4 lines, and the toast grows.
+    expect(text).toHaveProp('numberOfLines', 4);
   });
 
   it('success: successSoft fill and a successText check icon', async () => {

@@ -1,6 +1,8 @@
 import '@shopify/flash-list/jestSetup';
 import { configure } from '@testing-library/react-native';
 
+import { resetAnnounceForTests } from '@/lib/announce';
+
 import { server } from './msw/server';
 
 // Reanimated 4 in Jest: animations run synchronously and toHaveAnimatedStyle is available (PressableScale, Toast).
@@ -52,4 +54,5 @@ beforeAll(() => {
   server.listen({ onUnhandledFrame: 'error' });
 });
 afterEach(() => server.resetHandlers());
+beforeEach(() => resetAnnounceForTests());
 afterAll(() => server.close());

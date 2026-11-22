@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
 
-import { colors, fonts, fontSizes, radius, shadows, spacing } from '@/theme/tokens';
+import { colors, fonts, fontSizes, ICON_BUTTON, radius, shadows, spacing, touchSlop } from '@/theme/tokens';
 
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
@@ -133,6 +133,7 @@ function EditableSearchField({
         <PressableScale
           testID={`${testID}.clear`}
           accessibilityLabel="Clear search"
+          hitSlop={touchSlop(ICON_BUTTON)}
           onPress={clear}
           style={styles.clear}
         >

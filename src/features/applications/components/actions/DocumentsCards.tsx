@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
+import { useAnnounce } from '@/components/ui/useAnnounce';
 import { useOpenLink } from '@/features/jobs/components/listings/useOpenLink';
 import { FilePickerField, type PickSource } from '@/features/uploads/components/FilePickerField';
 import { validateDocumentFiles } from '@/features/uploads/logic/files';
@@ -40,6 +41,13 @@ export function DocumentsRequestCard({ application: a }: { application: Applicat
   const [files, setFiles] = useState<PickedAsset[]>([]);
   const [fileError, setFileError] = useState<string>();
   const [cameraBlocked, setCameraBlocked] = useState<'ask' | 'settings'>();
+  useAnnounce(
+    cameraBlocked === 'ask'
+      ? 'Allow camera access to take a photo of a document.'
+      : cameraBlocked === 'settings'
+        ? 'Camera access is turned off for ApronHanger. You can turn it on in your phone settings.'
+        : undefined,
+  );
   const busy = upload.status.state === 'uploading';
 
   const pick = async (source: PickSource) => {

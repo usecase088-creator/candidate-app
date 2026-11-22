@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import * as Network from 'expo-network';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
-import { StyleSheet } from 'react-native';
+import { AccessibilityInfo, ScrollView, StyleSheet } from 'react-native';
 
 import { haptic } from '@/lib/haptics';
 import { applicantMe, applied, jobQuestions } from '@/test/fixtures/applications';
@@ -193,9 +193,24 @@ describe('Apply chooser: content (website wording)', () => {
     setup();
     await open();
     await screen.findByText('Structured form');
-    expect(screen.getByLabelText('Edit & apply')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Upload & apply')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Structured form, Edit & apply')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Upload CV, Upload & apply')).toBeOnTheScreen();
     expect(screen.getByLabelText('Quick Apply')).toBeOnTheScreen();
+  });
+
+  it('R3 #12: a method row speaks its title, the Recommended pill and the CTA; the description is the hint', async () => {
+    setup({ me: noProfile });
+    await open();
+    const form = await screen.findByTestId('apply.choice.form');
+    expect(form.props.accessibilityLabel).toBe('Structured form, Recommended, Start form');
+    expect(form.props.accessibilityHint).toBe(
+      '15-step form that builds your professional CV and syncs to recruiters.',
+    );
+    const upload = screen.getByTestId('apply.choice.upload');
+    expect(upload.props.accessibilityLabel).toBe('Upload CV, Upload & apply');
+    expect(upload.props.accessibilityHint).toBe(
+      'You must complete the structured form once before you can use CV upload.',
+    );
   });
 });
 
@@ -292,7 +307,8 @@ describe('Quick Apply', () => {
     expect(await screen.findByTestId('applications.screen')).toBeOnTheScreen();
     // D32: medium impact when the primary action lands, success notification on the outcome.
     expect(haptic).toHaveBeenCalledWith('medium');
-    expect(haptic).toHaveBeenCalledWith('success');
+    // R3 #7: one success haptic (the toast's), not two.
+    expect(jest.mocked(haptic).mock.calls.filter(([k]) => k === 'success')).toHaveLength(1);
     expect(apps.bodies[0]).toMatchObject({
       jobId: 'job-1',
       cvSource: 'form',
@@ -386,6 +402,56 @@ describe('Job questions on the chooser', () => {
     expect(await screen.findByTestId('apply.questions.q_scans.error')).toHaveTextContent(
       '"Scans you handle per day" is required',
     );
+  });
+
+  it('R3 #1: a refused Quick Apply scrolls the field into view, speaks the message and buzzes "error", not "medium"', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    announce.mockClear();
+    const scrollTo = jest.mocked(ScrollView.prototype.scrollTo);
+    setup({ jobs: [jobWithQuestions] });
+    await open();
+    await screen.findByTestId('apply.questions');
+    const layout = (y: number) => ({ nativeEvent: { layout: { x: 0, y, width: 300, height: 60 } } });
+    await fireEvent(screen.getByTestId('apply.questions.group'), 'layout', layout(500));
+    await fireEvent(screen.getByTestId('apply.questions.q_modality.block'), 'layout', layout(80));
+    scrollTo.mockClear();
+    jest.mocked(haptic).mockClear();
+    await fireEvent.press(screen.getByTestId('apply.quick'));
+    const message = '"Which imaging machines have you operated?" is required';
+    expect(await screen.findByTestId('apply.questions.q_modality.error')).toHaveTextContent(message);
+    expect(scrollTo).toHaveBeenCalledWith({ y: 500 + 80 - 16, animated: true });
+    await waitFor(() => expect(announce).toHaveBeenCalledWith(message));
+    expect(haptic).toHaveBeenCalledWith('error');
+    expect(haptic).not.toHaveBeenCalledWith('medium');
+    // A second refused tap with the same message is spoken again (the field's own effect would stay silent).
+    // A moment later: announce() says one message once per second (a toast and an inline box often repeat it).
+    const later = Date.now() + 5000;
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(later);
+    announce.mockClear();
+    await fireEvent.press(screen.getByTestId('apply.quick'));
+    clock.mockRestore();
+    expect(announce).toHaveBeenCalledTimes(1);
+    expect(announce).toHaveBeenCalledWith(message);
+  });
+
+  it('R3 #12: the chips report "disabled" while Quick Apply runs', async () => {
+    setup({ jobs: [jobWithQuestions] });
+    server.use(
+      http.post(`${API}/api/applications`, async () => {
+        await delay(300);
+        return HttpResponse.json({ ...applied, jobId: 'job-1' }, { status: 201 });
+      }),
+    );
+    await open();
+    await fireEvent.changeText(await screen.findByTestId('apply.questions.q_modality'), '128-slice CT');
+    await fireEvent.changeText(screen.getByTestId('apply.questions.q_scans'), '12');
+    await fireEvent.press(screen.getByTestId('apply.questions.q_shift.option.1'));
+    await fireEvent.press(screen.getByTestId('apply.questions.q_license.no'));
+    expect(screen.getByTestId('apply.questions.q_license.yes')).toBeEnabled();
+    await fireEvent.press(screen.getByTestId('apply.quick'));
+    await waitFor(() => expect(screen.getByTestId('apply.questions.q_license.yes')).toBeDisabled());
+    expect(screen.getByTestId('apply.questions.q_shift.option.0')).toBeDisabled();
+    await screen.findByTestId('applications.screen');
   });
 
   it('sends the answers: numbers as numbers, yes/no as true or false, empty optional ones left out', async () => {

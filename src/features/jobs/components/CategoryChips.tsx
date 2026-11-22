@@ -39,4 +39,9 @@ export function CategoryChips({ categories, active, onChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({ row: { gap: spacing['2'], paddingVertical: spacing['1'] } });
+const styles = StyleSheet.create({
+  row: {
+    gap: spacing['2'],
+    paddingVertical: spacing['2'] /* >= the chip hitSlop: Android clips touches outside the rail */,
+  },
+});

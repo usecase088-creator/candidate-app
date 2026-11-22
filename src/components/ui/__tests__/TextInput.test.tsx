@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { AccessibilityInfo, StyleSheet, Text } from 'react-native';
 
 import { colors, fonts, radius } from '@/theme/tokens';
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
@@ -90,7 +90,7 @@ describe('TextInput (D32)', () => {
     const input = screen.getByTestId('i');
     expect(flat(screen.getByTestId('i.field').props.style)).toMatchObject({
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.controlBorder,
     });
     await fireEvent(input, 'focus');
     expect(flat(screen.getByTestId('i.field').props.style)).toMatchObject({
@@ -100,8 +100,26 @@ describe('TextInput (D32)', () => {
     await fireEvent(input, 'blur');
     expect(flat(screen.getByTestId('i.field').props.style)).toMatchObject({
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.controlBorder,
     });
+  });
+
+  it('R3 a11y: the field text grows with the system size up to 1.5x (like its capped label), not 3x', async () => {
+    await renderWithProviders(<TextInput testID="i" label="Email" />);
+    expect(screen.getByTestId('i')).toHaveProp('maxFontSizeMultiplier', 1.5);
+  });
+
+  it('R3 a11y P1-1: speaks a new error once (iOS does not announce role="alert")', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    announce.mockClear();
+    const { rerender } = await renderWithProviders(<TextInput testID="i" label="Email" />);
+    expect(announce).not.toHaveBeenCalled();
+    await rerender(<TextInput testID="i" label="Email" error="Please enter a valid email" />);
+    expect(announce).toHaveBeenCalledWith('Please enter a valid email');
+    await rerender(<TextInput testID="i" label="Email" error="Please enter a valid email" value="x" />);
+    expect(announce).toHaveBeenCalledTimes(1);
+    await rerender(<TextInput testID="i" label="Email" error="Email is required" />);
+    expect(announce).toHaveBeenLastCalledWith('Email is required');
   });
 
   it('keeps calling the given onFocus and onBlur', async () => {

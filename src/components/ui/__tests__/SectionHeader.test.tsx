@@ -36,7 +36,8 @@ describe('SectionHeader', () => {
     );
     const button = screen.getByRole('button', { name: 'See all' });
     expect(button).toHaveProp('testID', 'home.recent.seeAll');
-    expect(button).toHaveProp('hitSlop', spacing['3']);
+    // R3 a11y P2-9: the 20-pt label line padded to the 48 target (was 12: 44).
+    expect(button).toHaveProp('hitSlop', 14);
     await fireEvent.press(button);
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(flat(screen.getByTestId('home.recent.seeAll.label').props.style)).toMatchObject({

@@ -15,6 +15,7 @@ import { Screen } from '@/components/ui/Screen';
 import { Separator } from '@/components/ui/Separator';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { AppText } from '@/components/ui/Text';
+import { useAnnounce } from '@/components/ui/useAnnounce';
 import { queryView } from '@/features/jobs/hooks/queryView';
 import { useCandidateMe } from '@/features/profile/hooks/useCandidateMe';
 import { isOpenableLink } from '@/features/jobs/logic/deadline';
@@ -38,6 +39,7 @@ export function CvPreviewScreen() {
   const view = queryView(query);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  useAnnounce(error);
   const me = query.data;
   const profile = (me?.profile ?? null) as Record<string, unknown> | null;
   const build = () => router.push('/profile-builder');
@@ -175,7 +177,8 @@ export function CvPreviewScreen() {
             <View style={styles.metrics}>
               {cv.metrics.map(([k, v], i) => (
                 <View key={k} style={[styles.metric, i > 0 && styles.metricDivider]}>
-                  <AppText variant="heading" tabular numberOfLines={1}>
+                  {/* A value, not a section: no header role (R3 a11y P3-4). */}
+                  <AppText variant="heading" accessibilityRole="text" tabular numberOfLines={1}>
                     {v}
                   </AppText>
                   <AppText variant="caption" color="mutedForeground" numberOfLines={1}>

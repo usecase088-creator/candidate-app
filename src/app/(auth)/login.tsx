@@ -35,6 +35,8 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(false);
   const passwordRef = useRef<TextInputRef>(null);
+  // R3 #15: a second tap can land before the re-render that disables Sign in: one login request at a time.
+  const pending = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -48,9 +50,12 @@ export default function Login() {
     setFormError(message);
     toast.show(message, { variant: 'error' });
     setBusy(false);
+    pending.current = false;
   };
 
   const onValid = async (values: LoginValues) => {
+    if (pending.current) return;
+    pending.current = true;
     setFormError(undefined);
     setBusy(true);
     try {
@@ -102,7 +107,8 @@ export default function Login() {
             render={({ field }) => (
               <TextInput
                 testID="login.email"
-                label="Email *"
+                label="Email"
+                required
                 accessibilityLabel="Email"
                 placeholder="you@example.com"
                 keyboardType="email-address"
@@ -128,7 +134,8 @@ export default function Login() {
               <PasswordInput
                 ref={passwordRef}
                 testID="login.password"
-                label="Password *"
+                label="Password"
+                required
                 accessibilityLabel="Password"
                 placeholder="••••••••"
                 returnKeyType="done"

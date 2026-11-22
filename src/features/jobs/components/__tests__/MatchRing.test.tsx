@@ -21,6 +21,8 @@ describe('MatchRing', () => {
     expect(flat(screen.getByTestId('m').props.style).width).toBe(44);
     await renderWithProviders(<MatchRing testID="s" value={60} size={36} />);
     expect(flat(screen.getByTestId('s').props.style).height).toBe(36);
+    // R3 #13 / a11y P3-15: the small ring's text is the theme's 2xs size (11 pt), not a loose 10.
+    expect(flat(screen.getByText('60%', { exact: true }).props.style)).toMatchObject({ fontSize: 11 });
   });
 
   it('keeps the value in 0..100 and rounds it', async () => {

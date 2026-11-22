@@ -99,6 +99,24 @@ describe('Button (D32)', () => {
     expect(haptic).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    ['sm', 36, 6],
+    ['md', 44, 2],
+    ['lg', 48, 0],
+  ] as const)(
+    'R3 #11: %s (%d pt) pads its touch area to 48 with a vertical hitSlop of %d',
+    async (size, h, slop) => {
+      await renderWithProviders(<Button testID="b" label="Go" size={size} onPress={() => {}} />);
+      expect(screen.getByTestId('b').props.hitSlop).toEqual({ top: slop, bottom: slop });
+      expect(h + 2 * slop).toBeGreaterThanOrEqual(48);
+    },
+  );
+
+  it('keeps a caller hitSlop', async () => {
+    await renderWithProviders(<Button testID="b" label="Go" size="sm" hitSlop={10} onPress={() => {}} />);
+    expect(screen.getByTestId('b').props.hitSlop).toBe(10);
+  });
+
   it('can show a leading icon', async () => {
     await renderWithProviders(
       <Button

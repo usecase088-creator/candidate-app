@@ -2,7 +2,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useFonts } from 'expo-font';
 import { fireEvent, screen, waitFor } from 'expo-router/testing-library';
 import { http, HttpResponse } from 'msw';
-import { StyleSheet } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 
 import type { CandidateMe } from '@/api/schemas/candidate';
 import { useSession } from '@/features/auth/sessionStore';
@@ -248,6 +248,25 @@ describe('Profile builder: D32 chrome', () => {
     expect(screen.queryByTestId('builder.back')).toBeNull();
     await next();
     expect(await screen.findByTestId('builder.back')).toHaveTextContent('Back');
+  });
+
+  it('R3 #4: the sticky bar owns the bottom inset and the native header the top one (no double insets)', async () => {
+    setup();
+    await open();
+    expect((await screen.findByTestId('builder.screen')).props.edges).toMatchObject({
+      top: 'off',
+      bottom: 'off',
+    });
+  });
+
+  it('R3 a11y P2-14: a new step is spoken (focus stayed on Continue and the reader said nothing)', async () => {
+    setup();
+    await open();
+    await screen.findByTestId('builder.next');
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    announce.mockClear();
+    await next();
+    await waitFor(() => expect(announce).toHaveBeenCalledWith(expect.stringMatching(/^Step 2 of 16, /)));
   });
 
   it('a select with many options is a picker row that opens a check list, not 36 chips', async () => {

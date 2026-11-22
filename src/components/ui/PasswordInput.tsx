@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, ICON_BUTTON, radius, spacing, touchSlop } from '@/theme/tokens';
 
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
@@ -12,7 +12,7 @@ export type PasswordInputProps = Omit<TextInputProps, 'secureTextEntry' | 'acces
   isNew?: boolean;
 };
 
-const TOGGLE = 44;
+const TOGGLE = ICON_BUTTON;
 const ICON_SIZE = 20;
 const EYE = { ios: 'eye', android: 'visibility', web: 'visibility' } as const;
 const EYE_OFF = { ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' } as const;
@@ -33,6 +33,7 @@ export function PasswordInput({ testID, isNew = false, ...rest }: PasswordInputP
           testID={`${testID}.toggle`}
           accessibilityLabel={visible ? 'Hide password' : 'Show password'}
           pressScale={1}
+          hitSlop={touchSlop(TOGGLE)}
           onPress={() => setVisible((v) => !v)}
           style={styles.toggle}
         >

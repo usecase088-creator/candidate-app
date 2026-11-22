@@ -18,6 +18,11 @@ const CHECK = { ios: 'checkmark', android: 'check', web: 'check' } as const;
 const XMARK = { ios: 'xmark', android: 'close', web: 'close' } as const;
 
 type NodeState = 'done' | 'current' | 'todo';
+const SPOKEN_STATE: Record<NodeState, string> = {
+  done: 'done',
+  current: 'current stage',
+  todo: 'not reached',
+};
 
 /** The date line of a stage, when the application has that date (the applied date is bare: the header says "Applied"). */
 function stageDate(i: number, a: Application): string | undefined {
@@ -33,20 +38,26 @@ export function VerticalTimeline({ testID, application: a }: { testID: string; a
   const current = view.kind === 'steps' ? view.current : timelineStep(a.status);
   // A closed application: the stages reached stay ticked, the rail then ends in the terminal node.
   const rows = view.kind === 'steps' ? TIMELINE_STEPS.length : current + 1;
-  const label =
-    view.kind === 'steps'
-      ? `Progress: step ${current + 1} of ${TIMELINE_STEPS.length}, ${TIMELINE_STEPS[current] ?? ''}`
-      : `Progress: ${view.text}`;
 
+  // R3 a11y P2-10: each stage is one element ("Interview, current stage, 30 Oct 2026, 7:30 pm. <last update>"); the
+  // container label was ignored on iOS (not accessible) and said twice on Android.
   return (
-    <View testID={testID} accessibilityLabel={label} style={styles.list}>
+    <View testID={testID} style={styles.list}>
       {TIMELINE_STEPS.slice(0, rows).map((name, i) => {
         const state: NodeState =
           view.kind === 'message' ? 'done' : i < current ? 'done' : i === current ? 'current' : 'todo';
         const date = stageDate(i, a);
         const last = view.kind === 'steps' && i === rows - 1;
+        const spoken = [name, SPOKEN_STATE[state], date].filter(Boolean).join(', ');
         return (
-          <View key={name} testID={`${testID}.row.${i}`} style={[styles.row, !last && styles.rowStep]}>
+          <View
+            key={name}
+            testID={`${testID}.row.${i}`}
+            accessible
+            accessibilityLabel={state === 'current' ? `${spoken}. ${lastUpdateText(a.status)}` : spoken}
+            accessibilityState={{ selected: state === 'current', disabled: state === 'todo' }}
+            style={[styles.row, !last && styles.rowStep]}
+          >
             <View style={styles.spine}>
               <Node testID={`${testID}.node.${i}`} state={state} tone={tone} />
               {!last && (
@@ -76,7 +87,12 @@ export function VerticalTimeline({ testID, application: a }: { testID: string; a
       })}
 
       {view.kind === 'message' ? (
-        <View testID={`${testID}.terminal`} style={styles.row}>
+        <View
+          testID={`${testID}.terminal`}
+          accessible
+          accessibilityLabel={[view.text, a.finalStatusNote].filter(Boolean).join('. ')}
+          style={styles.row}
+        >
           <View style={styles.spine}>
             <View
               style={[
@@ -109,7 +125,6 @@ function Node({ testID, state, tone }: { testID: string; state: NodeState; tone:
   return (
     <View
       testID={testID}
-      accessibilityState={{ checked: state === 'done', selected: state === 'current' }}
       style={[
         styles.node,
         state === 'done' && styles.nodeDone,
@@ -138,7 +153,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   nodeDone: { backgroundColor: colors.brand },
-  nodeTodo: { borderWidth: 1.5, borderColor: colors.separator, backgroundColor: colors.surface },
+  // R3 a11y P3-7: a stage not reached is outlined at 3:1 (separator was 1.2:1).
+  nodeTodo: { borderWidth: 1.5, borderColor: colors.controlBorder, backgroundColor: colors.surface },
   nodeTerminalDanger: { backgroundColor: colors.destructive },
   nodeTerminalMuted: { backgroundColor: colors.mutedForeground },
   // A 2-pt gap at each node keeps the rail reading as one continuous line.

@@ -3,9 +3,11 @@ import { StyleSheet, View } from 'react-native';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import { AppText } from './Text';
+import { useAnnounce } from './useAnnounce';
 
 /** The website's red box at the top of auth forms (first validation error or the server error). */
 export function FormErrorBox({ testID, message }: { testID: string; message: string | undefined }) {
+  useAnnounce(message);
   if (!message) return null;
   return (
     <View

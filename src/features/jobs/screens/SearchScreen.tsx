@@ -98,7 +98,7 @@ export function SearchScreen() {
           <AppText variant="heading" style={styles.flex}>
             All Opportunities
           </AppText>
-          <AppText testID="search.count" variant="secondary" color="mutedForeground" numberOfLines={1}>
+          <AppText testID="search.count" variant="secondary" color="mutedForeground">
             {`Showing ${visible.length} of ${total} verified roles`}
           </AppText>
         </View>

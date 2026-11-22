@@ -44,7 +44,16 @@ describe('large text (font scale 2, 320 pt)', () => {
     server.use(
       http.get(`${API}/api/notifications`, () =>
         HttpResponse.json({
-          data: [{ id: 'a', title: 't', message: 'm', read: false, link: null, createdAt: '2026-10-20T10:00:00.000Z' }],
+          data: [
+            {
+              id: 'a',
+              title: 't',
+              message: 'm',
+              read: false,
+              link: null,
+              createdAt: '2026-10-20T10:00:00.000Z',
+            },
+          ],
           unreadCount: 1,
         }),
       ),
@@ -65,7 +74,16 @@ describe('large text (font scale 2, 320 pt)', () => {
     server.use(
       http.get(`${API}/api/notifications`, () =>
         HttpResponse.json({
-          data: [{ id: 'a', title: 't', message: 'm', read: false, link: null, createdAt: '2026-10-20T10:00:00.000Z' }],
+          data: [
+            {
+              id: 'a',
+              title: 't',
+              message: 'm',
+              read: false,
+              link: null,
+              createdAt: '2026-10-20T10:00:00.000Z',
+            },
+          ],
           unreadCount: 1,
         }),
       ),
@@ -75,15 +93,20 @@ describe('large text (font scale 2, 320 pt)', () => {
     expect(style('notifications.actions')).toMatchObject({ flexWrap: 'wrap' });
   });
 
-  it('sign in: "Create Account" stays on one line inside its tab instead of overflowing', async () => {
+  it('sign in: the mode tabs stay readable (no auto-shrink to ~6 pt), wrap to 2 lines and grow the track', async () => {
     await renderRouter(appRoutes, { initialUrl: '/login' });
     await screen.findByTestId('login.screen');
-    // D32: the "New" badge is gone and the segmented control has a fixed 40-pt track, so the label no longer wraps:
-    // it is capped at 1.3x and shrinks to fit its segment (like the tab bar labels).
-    const label = screen.getByText('Create Account');
-    expect(label).toHaveProp('numberOfLines', 1);
-    expect(label).toHaveProp('maxFontSizeMultiplier', 1.3);
-    expect(label).toHaveProp('adjustsFontSizeToFit', true);
-    expect(StyleSheet.flatten(label.props.style)).toMatchObject({ flexShrink: 1 });
+    // Found on the phone at 2.0: adjustsFontSizeToFit shrank "Sign In" / "Create Account" to about 6 pt.
+    for (const name of ['Sign In', 'Create Account']) {
+      const label = screen.getByText(name);
+      expect(label).toHaveProp('maxFontSizeMultiplier', 1.3);
+      expect(label).toHaveProp('numberOfLines', 2);
+      expect(label.props.adjustsFontSizeToFit).toBeFalsy();
+    }
+    const track = style('auth.tabs');
+    expect(track.height).toBeUndefined();
+    expect(track.minHeight).toBe(48);
+    // The sliding tile is pinned to the track's top and bottom, so it follows the measured height.
+    expect(style('auth.tabs.indicator')).toMatchObject({ top: 4, bottom: 4 });
   });
 });

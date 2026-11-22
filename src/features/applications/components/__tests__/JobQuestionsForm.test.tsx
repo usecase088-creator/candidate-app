@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AccessibilityInfo } from 'react-native';
 
 import type { CustomFieldResponses } from '@/api/schemas/applications';
 import { jobQuestions } from '@/test/fixtures/applications';
@@ -106,8 +107,8 @@ describe('answering', () => {
     for (const i of [0, 1, 2]) expect(screen.getByTestId(`q.q_shift.option.${i}`)).toBeTruthy();
     await fireEvent.press(screen.getByTestId('q.q_shift.option.1'));
     expect(seen.at(-1)).toEqual({ q_shift: 'Evening' });
-    expect(screen.getByTestId('q.q_shift.option.1').props.accessibilityState.selected).toBe(true);
-    expect(screen.getByTestId('q.q_shift.option.0').props.accessibilityState.selected).toBe(false);
+    expect(screen.getByTestId('q.q_shift.option.1').props.accessibilityState.checked).toBe(true);
+    expect(screen.getByTestId('q.q_shift.option.0').props.accessibilityState.checked).toBe(false);
     await fireEvent.press(screen.getByTestId('q.q_shift.option.2'));
     expect(seen.at(-1)).toEqual({ q_shift: 'Night' });
   });
@@ -115,10 +116,10 @@ describe('answering', () => {
   it('a yes/no question stores true or false, and No counts as an answer', async () => {
     const seen: CustomFieldResponses[] = [];
     await renderWithProviders(<Harness onValues={(v) => seen.push(v)} />);
-    expect(screen.getByTestId('q.q_license.yes').props.accessibilityState.selected).toBe(false);
+    expect(screen.getByTestId('q.q_license.yes').props.accessibilityState.checked).toBe(false);
     await fireEvent.press(screen.getByTestId('q.q_license.no'));
     expect(seen.at(-1)).toEqual({ q_license: false });
-    expect(screen.getByTestId('q.q_license.no').props.accessibilityState.selected).toBe(true);
+    expect(screen.getByTestId('q.q_license.no').props.accessibilityState.checked).toBe(true);
     await fireEvent.press(screen.getByTestId('q.q_license.yes'));
     expect(seen.at(-1)).toEqual({ q_license: true });
   });
@@ -126,8 +127,8 @@ describe('answering', () => {
   it('shows answers that were already there (coming back to the screen)', async () => {
     await renderWithProviders(<Harness initial={{ q_modality: 'MRI', q_shift: 'Night', q_license: true }} />);
     expect(screen.getByTestId('q.q_modality').props.value).toBe('MRI');
-    expect(screen.getByTestId('q.q_shift.option.2').props.accessibilityState.selected).toBe(true);
-    expect(screen.getByTestId('q.q_license.yes').props.accessibilityState.selected).toBe(true);
+    expect(screen.getByTestId('q.q_shift.option.2').props.accessibilityState.checked).toBe(true);
+    expect(screen.getByTestId('q.q_license.yes').props.accessibilityState.checked).toBe(true);
   });
 
   it('an unknown question type is a plain text box', async () => {
@@ -151,6 +152,61 @@ describe('disabled and errors', () => {
     await fireEvent.press(screen.getByTestId('q.q_shift.option.0'));
     await fireEvent.press(screen.getByTestId('q.q_license.yes'));
     expect(onChange).not.toHaveBeenCalled();
+    // R3 #12: the chips say so too (they used to look and sound enabled while ignoring taps).
+    expect(screen.getByTestId('q.q_shift.option.0')).toBeDisabled();
+    expect(screen.getByTestId('q.q_license.yes')).toBeDisabled();
+  });
+
+  it('a choice question is a radio group named by its question, "required" and its error (R3 a11y P2-12)', async () => {
+    const { rerender } = await renderWithProviders(
+      <JobQuestionsForm testID="q" title="T" fields={fields} values={{}} onChange={jest.fn()} />,
+    );
+    const group = screen.getByTestId('q.q_shift.choices');
+    expect(group.props.accessibilityRole).toBe('radiogroup');
+    expect(group.props.accessibilityLabel).toBe('Preferred shift, required');
+    expect(screen.getByRole('radio', { name: 'Evening', checked: false })).toBeOnTheScreen();
+    await rerender(
+      <JobQuestionsForm
+        testID="q"
+        title="T"
+        fields={fields}
+        values={{}}
+        onChange={jest.fn()}
+        problem={{ fieldId: 'q_shift', message: '"Preferred shift" is required' }}
+      />,
+    );
+    expect(screen.getByTestId('q.q_shift.choices').props.accessibilityLabel).toBe(
+      'Preferred shift, required, "Preferred shift" is required',
+    );
+  });
+
+  it('speaks a new error of a choice question once (R3 a11y P1-1)', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    announce.mockClear();
+    const props = { testID: 'q', title: 'T', fields, values: {}, onChange: jest.fn() };
+    const problem = { fieldId: 'q_license', message: 'Pick one' };
+    const { rerender } = await renderWithProviders(<JobQuestionsForm {...props} problem={problem} />);
+    expect(announce).toHaveBeenCalledWith('Pick one');
+    await rerender(<JobQuestionsForm {...props} problem={{ ...problem }} />);
+    expect(announce).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports where each question sits, for scrolling to an error (R3 #1)', async () => {
+    const onLayoutOf = jest.fn(() => jest.fn());
+    await renderWithProviders(
+      <JobQuestionsForm
+        testID="q"
+        title="T"
+        fields={fields}
+        values={{}}
+        onChange={jest.fn()}
+        onLayoutOf={onLayoutOf}
+      />,
+    );
+    expect(onLayoutOf).toHaveBeenCalledWith('q_modality');
+    expect(onLayoutOf).toHaveBeenCalledWith('q_shift');
+    expect(screen.getByTestId('q.q_modality.block')).toBeOnTheScreen();
+    expect(screen.getByTestId('q.q_license.block')).toBeOnTheScreen();
   });
 
   // D32: one error placement, under the field it belongs to (was a summary line under all the questions).

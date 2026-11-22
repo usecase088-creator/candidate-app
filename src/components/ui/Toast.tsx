@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   runOnJS,
@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { announce } from '@/lib/announce';
 import { haptic } from '@/lib/haptics';
 import { type ColorToken, colors, motion, radius, shadows, spacing } from '@/theme/tokens';
 
@@ -46,6 +47,10 @@ type ToastState = {
 type ToastApi = { show: (message: string, options?: ToastOptions) => void; hide: () => void };
 
 const DEFAULT_DURATION_MS = 4000;
+/** Long messages need reading time (R3 #6): 60 ms per character, never under the default. */
+const MS_PER_CHAR = 60;
+/** Lines before the message ellipsises; the toast grows up to this. */
+const MAX_LINES = 4;
 /** Height of the tab bar: the default bottom toast sits above it (plus the safe-area inset). */
 const TAB_BAR_HEIGHT = 72;
 /** How far the toast travels while it slides in or out. */
@@ -74,32 +79,61 @@ const ToastContext = createContext<ToastApi | null>(null);
 /**
  * One toast at a time; a new one replaces the current one. Slides + fades in over motion.duration.enter and out over
  * motion.duration.exit (Reduce Motion: fade only), then leaves the tree. Tap dismisses.
+ * The toast is the one source of the outcome haptic (success / error): callers must not fire their own (R3 #7).
+ * `show` / `hide` never change identity (R3 #8): the current toast is read from a ref.
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const [toast, setToastState] = useState<ToastState | null>(null);
+  const current = useRef<ToastState | null>(null);
   const nextId = useRef(0);
+  const screenReader = useRef(false);
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
 
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(0);
 
-  // Called when the exit animation of toast `id` finished. A newer toast may have replaced it meanwhile: keep that one.
-  const remove = useCallback((id: number) => {
-    setToast((current) => (current && current.id === id ? null : current));
+  // WCAG 2.2.1: with a screen reader running, a toast stays up twice as long (R3 a11y P3-16).
+  useEffect(() => {
+    let alive = true;
+    AccessibilityInfo.isScreenReaderEnabled()
+      .then((on) => {
+        if (alive) screenReader.current = on;
+      })
+      .catch(() => undefined);
+    const sub = AccessibilityInfo.addEventListener('screenReaderChanged', (on: boolean) => {
+      screenReader.current = on;
+    });
+    return () => {
+      alive = false;
+      sub?.remove();
+    };
   }, []);
 
+  const setToast = useCallback((next: ToastState | null) => {
+    current.current = next;
+    setToastState(next);
+  }, []);
+
+  // Called when the exit animation of toast `id` finished. A newer toast may have replaced it meanwhile: keep that one.
+  const remove = useCallback(
+    (id: number) => {
+      if (current.current?.id === id) setToast(null);
+    },
+    [setToast],
+  );
+
   const hide = useCallback(() => {
-    const current = toast;
-    if (!current) return;
-    const slide = reduceMotion ? 0 : current.placement === 'top' ? -SLIDE : SLIDE;
+    const shown = current.current;
+    if (!shown) return;
+    const slide = reduceMotion ? 0 : shown.placement === 'top' ? -SLIDE : SLIDE;
     opacity.set(withTiming(0, { duration: motion.duration.exit, easing: Easing.in(Easing.quad) }));
     translateY.set(
       withTiming(slide, { duration: motion.duration.exit, easing: Easing.in(Easing.quad) }, (finished) => {
-        if (finished) runOnJS(remove)(current.id);
+        if (finished) runOnJS(remove)(shown.id);
       }),
     );
-  }, [toast, reduceMotion, opacity, translateY, remove]);
+  }, [reduceMotion, opacity, translateY, remove]);
 
   const show = useCallback(
     (message: string, options: ToastOptions = {}) => {
@@ -110,16 +144,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       opacity.set(0);
       translateY.set(reduceMotion ? 0 : placement === 'top' ? -SLIDE : SLIDE);
       nextId.current += 1;
+      const base = options.duration ?? Math.max(DEFAULT_DURATION_MS, message.length * MS_PER_CHAR);
       setToast({
         id: nextId.current,
         message,
         variant,
-        duration: options.duration ?? DEFAULT_DURATION_MS,
+        duration: screenReader.current ? base * 2 : base,
         placement,
         offset: options.offset ?? 0,
       });
+      announce(message);
     },
-    [opacity, reduceMotion, translateY],
+    [opacity, reduceMotion, translateY, setToast],
   );
 
   // Enter animation for each new toast (also when a toast replaces another mid-flight).
@@ -167,7 +203,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             style={[styles.toast, { backgroundColor: colors[look.bg] }, animated]}
           >
             <Icon testID="toast.icon" name={look.icon} size={ICON_SIZE} tintColor={colors[look.fg]} />
-            <AppText style={styles.message} numberOfLines={2}>
+            <AppText style={styles.message} numberOfLines={MAX_LINES}>
               {toast.message}
             </AppText>
           </AnimatedPressable>

@@ -58,6 +58,8 @@ export default function Signup() {
   // True from the moment a code is sent for checking until it fails: the 6th digit submits on its own (onComplete),
   // so a press on Verify that lands before the button re-renders as disabled must not send the code twice.
   const verifying = useRef(false);
+  // R3 #15: a fast double tap on Send OTP must not send two SMS (the second can make the first code invalid).
+  const sending = useRef(false);
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -75,6 +77,8 @@ export default function Signup() {
 
   const sendOtp = async (values: SignupValues) => {
     if (!terms || !privacy) return setFormError(CONSENT_ERROR);
+    if (sending.current) return;
+    sending.current = true;
     setFormError(undefined);
     setBusy(true);
     try {
@@ -86,6 +90,8 @@ export default function Signup() {
       setBusy(false);
     } catch (e) {
       fail(loginErrorMessage(e));
+    } finally {
+      sending.current = false;
     }
   };
 
@@ -151,7 +157,8 @@ export default function Signup() {
                 render={({ field }) => (
                   <TextInput
                     testID="signup.name"
-                    label="Full name *"
+                    label="Full name"
+                    required
                     accessibilityLabel="Full name"
                     placeholder="Dr. Aarav Mehta"
                     autoComplete="name"
@@ -174,7 +181,8 @@ export default function Signup() {
                   <TextInput
                     ref={mobileRef}
                     testID="signup.mobile"
-                    label="Mobile Number *"
+                    label="Mobile Number"
+                    required
                     accessibilityLabel="Mobile number"
                     placeholder="+91 9876543210"
                     keyboardType="phone-pad"
@@ -198,7 +206,8 @@ export default function Signup() {
                   <TextInput
                     ref={emailRef}
                     testID="signup.email"
-                    label="Email *"
+                    label="Email"
+                    required
                     accessibilityLabel="Email"
                     placeholder="you@example.com"
                     keyboardType="email-address"
@@ -224,7 +233,8 @@ export default function Signup() {
                   <PasswordInput
                     ref={passwordRef}
                     testID="signup.password"
-                    label="Password *"
+                    label="Password"
+                    required
                     accessibilityLabel="Password"
                     placeholder="Min. 8 chars, 1 upper, 1 lower, 1 special"
                     isNew
@@ -265,6 +275,11 @@ export default function Signup() {
                 onChange={setTerms}
                 invalid={formError === CONSENT_ERROR}
                 accessibilityLabel="I have read and agree to the Terms & Conditions."
+                // R3 a11y P2-11: the link inside the row cannot be focused by a screen reader: offer it as an action.
+                linkAction={{
+                  label: 'Open Terms & Conditions',
+                  onOpen: () => void WebBrowser.openBrowserAsync(TERMS_URL),
+                }}
               >
                 <AppText variant="label" weight="regular">
                   I have read and agree to the{' '}
@@ -287,6 +302,10 @@ export default function Signup() {
                 onChange={setPrivacy}
                 invalid={formError === CONSENT_ERROR}
                 accessibilityLabel="I consent to the collection, processing, storage and sharing of my personal and professional information for recruitment purposes as described in the Privacy Policy."
+                linkAction={{
+                  label: 'Open Privacy Policy',
+                  onOpen: () => void WebBrowser.openBrowserAsync(PRIVACY_URL),
+                }}
               >
                 <AppText variant="label" weight="regular">
                   I consent to the collection, processing, storage and sharing of my personal and professional
@@ -344,7 +363,8 @@ export default function Signup() {
             <View style={styles.fields}>
               <OtpInput
                 testID="signup.otp"
-                label="Mobile OTP *"
+                label="Mobile OTP"
+                required
                 value={otp}
                 onChangeText={setOtp}
                 onComplete={(code) => void verifyAndRegister(code)}

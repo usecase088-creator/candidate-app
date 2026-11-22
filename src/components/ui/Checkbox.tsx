@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { type AccessibilityActionEvent, StyleSheet, View } from 'react-native';
 
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, fontSizes, radius, spacing } from '@/theme/tokens';
 
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
@@ -15,6 +15,11 @@ export type CheckboxProps = {
   accessibilityLabel: string;
   children: ReactNode;
   invalid?: boolean;
+  /**
+   * A link inside the visible label (Terms, Privacy). The row is one accessible element, so screen readers cannot
+   * focus the nested link: it is offered as a custom action ("Open Terms & Conditions") next to ticking the box.
+   */
+  linkAction?: { label: string; onOpen: () => void };
 };
 
 const BOX = 22;
@@ -32,7 +37,18 @@ export function Checkbox({
   accessibilityLabel,
   children,
   invalid,
+  linkAction,
 }: CheckboxProps) {
+  const toggle = () => onChange(!checked);
+  const a11yActions = linkAction
+    ? {
+        accessibilityActions: [{ name: 'activate' }, { name: 'openLink', label: linkAction.label }],
+        onAccessibilityAction: (e: AccessibilityActionEvent) => {
+          if (e.nativeEvent.actionName === 'openLink') linkAction.onOpen();
+          else if (e.nativeEvent.actionName === 'activate') toggle();
+        },
+      }
+    : {};
   return (
     <PressableScale
       testID={testID}
@@ -41,7 +57,8 @@ export function Checkbox({
       accessibilityRole="checkbox"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked }}
-      onPress={() => onChange(!checked)}
+      {...a11yActions}
+      onPress={toggle}
       style={styles.row}
     >
       <View
@@ -73,10 +90,11 @@ const styles = StyleSheet.create({
   box: {
     width: BOX,
     height: BOX,
-    // Body text has a 20-pt line; this centres the box on the first line.
-    marginTop: (20 - BOX) / 2,
+    // Centres the box on the first line of body text.
+    marginTop: (fontSizes.base.lineHeight - BOX) / 2,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    // R3 a11y P2-5: the outline is the whole control at rest: 3:1.
+    borderColor: colors.controlBorder,
     borderRadius: radius.sm - 2,
     backgroundColor: colors.surface,
     alignItems: 'center',

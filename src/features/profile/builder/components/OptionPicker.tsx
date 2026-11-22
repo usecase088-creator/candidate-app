@@ -95,7 +95,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing['2'],
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    // R3 a11y P2-5: at-rest outline at 3:1.
+    borderColor: colors.controlBorder,
     backgroundColor: colors.surface,
   },
   fieldOpen: { borderWidth: 1.5, borderColor: colors.ring },

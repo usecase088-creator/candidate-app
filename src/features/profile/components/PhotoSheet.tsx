@@ -1,4 +1,5 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ListRow } from '@/components/ui/ListRow';
@@ -34,6 +35,7 @@ type Props = {
  */
 export function PhotoSheet({ visible, canRemove, onClose, onPick }: Props) {
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
   if (!visible) return null;
   const pick = (action: PhotoAction) => {
     onClose();
@@ -47,7 +49,13 @@ export function PhotoSheet({ visible, canRemove, onClose, onPick }: Props) {
     />
   );
   return (
-    <Modal transparent animationType="slide" visible onRequestClose={onClose} statusBarTranslucent>
+    <Modal
+      transparent
+      animationType={reduceMotion ? 'fade' : 'slide'}
+      visible
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
       <Pressable
         testID="profile.photo.scrim"
         style={styles.scrim}
@@ -58,6 +66,8 @@ export function PhotoSheet({ visible, canRemove, onClose, onPick }: Props) {
       <View
         testID="profile.photo.sheet"
         accessibilityViewIsModal
+        // VoiceOver's two-finger scrub closes it, like Android Back (R3 a11y P3-10).
+        onAccessibilityEscape={onClose}
         style={[styles.sheet, { paddingBottom: insets.bottom + spacing['2'] }]}
       >
         <View style={styles.grabber} />

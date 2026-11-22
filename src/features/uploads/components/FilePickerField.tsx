@@ -10,7 +10,8 @@ import { Icon } from '@/components/ui/Icon';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
 import { TextButton } from '@/components/ui/TextButton';
-import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
+import { useAnnounce } from '@/components/ui/useAnnounce';
+import { colors, ICON_BUTTON, MIN_TOUCH, radius, spacing, touchSlop } from '@/theme/tokens';
 
 import { formatBytes } from '../logic/files';
 import type { PickedAsset } from '../uploadsApi';
@@ -78,11 +79,18 @@ export function FilePickerField({
 }: FilePickerFieldProps) {
   const uploading = upload.state === 'uploading';
   const percent = Math.round(Math.min(1, Math.max(0, upload.progress)) * 100);
+  // R3 a11y P1-1 / P3-14: errors are spoken; progress only at 0 / 25 / 50 / 75 / 100 (a live region read every percent).
+  useAnnounce(error);
+  useAnnounce(upload.state === 'error' ? upload.message : undefined);
+  const milestone = Math.floor(percent / 25) * 25;
+  useAnnounce(uploading ? (milestone > 0 ? `Uploading ${milestone}%` : 'Starting upload') : undefined);
 
   return (
     <View testID={testID} style={styles.box}>
       <View style={styles.head}>
-        <AppText variant="label">{title}</AppText>
+        <AppText variant="label" accessibilityRole="header">
+          {title}
+        </AppText>
         {hint ? (
           <AppText variant="secondary" color="mutedForeground">
             {hint}
@@ -134,6 +142,7 @@ export function FilePickerField({
               accessibilityLabel={`Remove ${file.name}`}
               disabled={disabled}
               pressScale={0.9}
+              hitSlop={touchSlop(ICON_BUTTON)}
               onPress={() => onRemove(index)}
               style={styles.remove}
             >
@@ -167,7 +176,7 @@ export function FilePickerField({
             <View style={[styles.fill, { width: `${percent}%` }]} />
           </View>
           <View style={styles.progressRow}>
-            <AppText variant="caption" color="mutedForeground" tabular accessibilityLiveRegion="polite">
+            <AppText variant="caption" color="mutedForeground" tabular>
               {percent > 0 ? `Uploading… ${percent}%` : 'Starting upload…'}
             </AppText>
             <TextButton
@@ -224,8 +233,8 @@ const styles = StyleSheet.create({
   },
   rowText: { flexShrink: 1, flexGrow: 1 },
   remove: {
-    width: MIN_TOUCH - 4,
-    height: MIN_TOUCH - 4,
+    width: ICON_BUTTON,
+    height: ICON_BUTTON,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.full,

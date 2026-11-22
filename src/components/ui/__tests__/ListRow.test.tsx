@@ -92,7 +92,7 @@ describe('ListRow', () => {
     expect(flat(subtitle.props.style)).toMatchObject({ fontSize: 13, color: colors.mutedForeground });
   });
 
-  it('title is body 15/500 on one line by default, rowTitle 16/600 on request', async () => {
+  it('title is body 15/500 on up to two lines by default (R3 a11y: one line cut titles at large text), rowTitle 16/600 on request', async () => {
     await renderWithProviders(
       <>
         <ListRow testID="a" title="Settings row" />
@@ -100,7 +100,7 @@ describe('ListRow', () => {
       </>,
     );
     const a = screen.getByTestId('a.title');
-    expect(a).toHaveProp('numberOfLines', 1);
+    expect(a).toHaveProp('numberOfLines', 2);
     expect(flat(a.props.style)).toMatchObject({
       fontSize: 15,
       fontFamily: fonts.medium,
@@ -110,6 +110,28 @@ describe('ListRow', () => {
       fontSize: 16,
       fontFamily: fonts.semibold,
     });
+  });
+
+  it('speaks the subtitle too (title, subtitle, value)', async () => {
+    await renderWithProviders(
+      <ListRow testID="a" title="Language" subtitle="App language" value="English" onPress={() => {}} />,
+    );
+    expect(screen.getByRole('button', { name: 'Language, App language, English' })).toBeOnTheScreen();
+  });
+
+  it('can be a switch-like row with a state and a hint (Settings push row)', async () => {
+    await renderWithProviders(
+      <ListRow
+        testID="a"
+        title="Push notifications"
+        accessibilityRole="switch"
+        accessibilityState={{ checked: true }}
+        accessibilityHint="Opens your phone settings"
+        onPress={() => {}}
+      />,
+    );
+    const row = screen.getByRole('switch', { name: 'Push notifications', checked: true });
+    expect(row.props.accessibilityHint).toBe('Opens your phone settings');
   });
 
   it('paints a destructive title in errorText', async () => {

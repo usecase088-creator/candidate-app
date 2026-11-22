@@ -1,17 +1,17 @@
-import { Platform, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import { haptic } from '@/lib/haptics';
 import { motion } from '@/theme/tokens';
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
 
-import { PressableScale, rippleFor } from '../PressableScale';
+import { PressableScale } from '../PressableScale';
+import { pressableRipple as androidRipple } from '../pressableRipple.android';
+import { pressableRipple as iosRipple } from '../pressableRipple.ios';
 
 jest.mock('@/lib/haptics', () => ({ haptic: jest.fn() }));
 
 const flat = (s: unknown) => StyleSheet.flatten(s as never) ?? {};
-const os = Platform.OS;
 afterEach(() => {
-  Platform.OS = os;
   jest.clearAllMocks();
 });
 
@@ -62,7 +62,6 @@ describe('PressableScale', () => {
   });
 
   it('shrinks and dims while pressed, and springs back (iOS)', async () => {
-    Platform.OS = 'ios';
     jest.useFakeTimers();
     try {
       await renderWithProviders(
@@ -86,8 +85,17 @@ describe('PressableScale', () => {
   });
 
   it('uses a ripple on Android only', () => {
-    expect(rippleFor('android')).toEqual({ color: motion.ripple, foreground: true });
-    expect(rippleFor('ios')).toBeUndefined();
+    expect(androidRipple).toEqual({ color: motion.ripple, foreground: true });
+    expect(iosRipple).toBeUndefined();
+  });
+
+  it('keeps "disabled" when the caller passes its own accessibilityState', async () => {
+    await renderWithProviders(
+      <PressableScale testID="a" disabled accessibilityState={{ selected: true }} onPress={() => {}}>
+        <Text>a</Text>
+      </PressableScale>,
+    );
+    expect(screen.getByTestId('a').props.accessibilityState).toEqual({ selected: true, disabled: true });
   });
 
   it('keeps the caller style (radius, padding) on the pressable itself so the ripple is clipped to the shape', async () => {

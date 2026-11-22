@@ -5,7 +5,7 @@ import { Pill, type PillTone } from '@/components/ui/Pill';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { AppText } from '@/components/ui/Text';
-import { colors, MIN_TOUCH, radius, spacing } from '@/theme/tokens';
+import { colors, ICON_BUTTON, radius, spacing, touchSlop } from '@/theme/tokens';
 
 import { type DeadlineInfo } from '../../logic/deadline';
 
@@ -94,6 +94,7 @@ export function ExternalLinkButton({
       accessibilityLabel={accessibilityLabel}
       disabled={disabled}
       pressScale={0.9}
+      hitSlop={touchSlop(ICON_BUTTON)}
       onPress={onPress}
       style={styles.link}
     >
@@ -189,8 +190,8 @@ const styles = StyleSheet.create({
   cell: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingHorizontal: spacing['1'] },
   deadline: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing['2'] },
   link: {
-    width: MIN_TOUCH - 4,
-    height: MIN_TOUCH - 4,
+    width: ICON_BUTTON,
+    height: ICON_BUTTON,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.full,

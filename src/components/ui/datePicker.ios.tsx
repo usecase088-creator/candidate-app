@@ -1,6 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -17,8 +18,9 @@ export function DatePicker(props: DatePickerProps) {
 function Sheet({ testID, value, onPick, onClose, maximumDate, minimumDate }: DatePickerProps) {
   const insets = useSafeAreaInsets();
   const [day, setDay] = useState(value);
+  const reduceMotion = useReducedMotion();
   return (
-    <Modal transparent animationType="slide" visible onRequestClose={onClose}>
+    <Modal transparent animationType={reduceMotion ? 'fade' : 'slide'} visible onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} accessible={false} />
       <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing['4'] }]}>
         <DateTimePicker

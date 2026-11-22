@@ -10,7 +10,7 @@ import { Icon } from '@/components/ui/Icon';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { Stepper } from '@/components/ui/Stepper';
 import { AppText } from '@/components/ui/Text';
-import { colors, spacing } from '@/theme/tokens';
+import { colors, ICON_BUTTON, spacing, touchSlop } from '@/theme/tokens';
 
 import { selectFilterState, useFilterStore } from '../filterStore';
 import { useJobs } from '../hooks/useJobsData';
@@ -57,6 +57,7 @@ export function FilterSheet() {
           accessibilityLabel="Close"
           onPress={close}
           pressScale={0.9}
+          hitSlop={touchSlop(ICON_BUTTON)}
           style={styles.close}
         >
           <Icon
@@ -67,8 +68,10 @@ export function FilterSheet() {
         </PressableScale>
       </View>
 
+      {/* flex: 1 + the footer outside the scroll view: the list shrinks, the footer never leaves the sheet (R3 #14). */}
       <ScrollView
         testID="filters.scroll"
+        style={styles.flex}
         contentContainerStyle={styles.body}
         keyboardShouldPersistTaps="handled"
       >
@@ -212,7 +215,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
   },
-  close: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  close: { width: ICON_BUTTON, height: ICON_BUTTON, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: spacing['4'], paddingTop: spacing['3'], paddingBottom: spacing['6'] },
   group: { gap: spacing['3'], paddingTop: spacing['6'] },
   groupHeader: { gap: spacing['0.5'] },

@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { pillTones } from '@/components/ui/Pill';
 import { AppText } from '@/components/ui/Text';
+import { useAnnounce } from '@/components/ui/useAnnounce';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 export type FormMessageTone = 'error' | 'info';
@@ -25,6 +26,7 @@ type Props = {
  * testIDs: `{id}`, `{id}.icon`, `{id}.text` (the message alone).
  */
 export function FormMessage({ testID, tone, message }: Props) {
+  useAnnounce(message);
   if (!message) return null;
   const { bg, fg } = pillTones[tone];
   const isError = tone === 'error';

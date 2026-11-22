@@ -14,7 +14,8 @@ const TONES: Record<PillTone, { bg: string; fg: string }> = {
   success: { bg: colors.successSoft, fg: colors.successText },
   warning: { bg: colors.amberSoft, fg: colors.amberText },
   error: { bg: colors.destructiveSoft, fg: colors.errorText },
-  brand: { bg: colors.brandSoft, fg: colors.brand },
+  // R3 a11y P2-2: brandText (5.3:1 on brandSoft); brand was 4.31.
+  brand: { bg: colors.brandSoft, fg: colors.brandText },
 };
 
 describe('Pill', () => {
@@ -58,7 +59,7 @@ describe('Pill', () => {
       />,
     );
     const icon = screen.getByTestId('p.icon');
-    expect(icon).toHaveProp('tintColor', colors.brand);
+    expect(icon).toHaveProp('tintColor', colors.brandText);
     expect(flat(icon.props.style)).toMatchObject({ width: 12, height: 12 });
   });
 

@@ -19,7 +19,7 @@ import {
 import { installApplicationsBackend } from '@/test/msw/applications';
 import { API } from '@/test/msw/handlers';
 import { server } from '@/test/msw/server';
-import { fireEvent, renderWithProviders, screen, waitFor, within } from '@/test/render';
+import { act, fireEvent, renderWithProviders, screen, waitFor, within } from '@/test/render';
 import { installXhrOverFetch } from '@/test/xhrOverFetch';
 import { colors } from '@/theme/tokens';
 
@@ -106,6 +106,8 @@ describe('interview', () => {
     await show(interviewVirtual);
     expect(screen.getByText('Interview Scheduled')).toBeOnTheScreen();
     expect(screen.getByText('30 Oct 2026, 7:30 pm')).toBeOnTheScreen();
+    // R3 a11y P3-4: the date is big, but it is a value, not a section header.
+    expect(screen.getByText('30 Oct 2026, 7:30 pm').props.accessibilityRole).toBe('text');
     expect(screen.getByText('Virtual')).toBeOnTheScreen();
     expect(screen.getByText('Dr. Seed Interviewer')).toBeOnTheScreen();
     // D32: no "Link:" label and no white row inside the panel; Join Meeting is a full-width secondary button.
@@ -476,6 +478,26 @@ describe('offer', () => {
     expect(screen.queryByTestId('action.offer.view')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('action.offer.share')).not.toBeOnTheScreen();
     expect(screen.getByTestId('action.offer.accept')).toBeOnTheScreen();
+  });
+
+  it('R3 #9: while the letter opens, View and Share are disabled and busy, and a second tap opens nothing more', async () => {
+    let finish: () => void = () => {};
+    browser.mockImplementationOnce(
+      () => new Promise((resolve) => (finish = () => resolve({ type: 'dismiss' } as never))),
+    );
+    await show(offerSent);
+    const view = screen.getByTestId('action.offer.view');
+    await fireEvent.press(view);
+    await fireEvent.press(view);
+    await fireEvent.press(screen.getByTestId('action.offer.share'));
+    expect(browser).toHaveBeenCalledTimes(1);
+    expect(share).not.toHaveBeenCalled();
+    expect(screen.getByTestId('action.offer.view')).toBeDisabled();
+    expect(screen.getByTestId('action.offer.view').props.accessibilityState).toMatchObject({ busy: true });
+    expect(screen.getByTestId('action.offer.share')).toBeDisabled();
+    await act(async () => finish());
+    await waitFor(() => expect(screen.getByTestId('action.offer.view')).toBeEnabled());
+    expect(screen.getByTestId('action.offer.share')).toBeEnabled();
   });
 
   it('a letter link that is not a web link cannot be opened or shared', async () => {

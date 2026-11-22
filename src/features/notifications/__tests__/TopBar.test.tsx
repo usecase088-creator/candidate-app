@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 import { useSession } from '@/features/auth/sessionStore';
+import { fontSizes, headingLetterSpacing } from '@/theme/tokens';
 import { renderWithProviders, screen } from '@/test/render';
 
 import { TopBar } from '../components/TopBar';
@@ -16,6 +17,12 @@ describe('TopBar (D32)', () => {
     expect(screen.getByTestId('topbar.brand')).toHaveTextContent('ApronHanger');
     expect(flat(screen.getByTestId('topbar').props.style).minHeight).toBe(44);
     expect(screen.queryByRole('header')).toBeNull();
+    // R3 #13: the wordmark comes from the type ramp (17/22, tight heading tracking), not loose numbers.
+    expect(flat(screen.getByTestId('topbar.brand').props.style)).toMatchObject({
+      fontSize: fontSizes.xl.fontSize,
+      lineHeight: fontSizes.xl.lineHeight,
+      letterSpacing: headingLetterSpacing(fontSizes.xl.fontSize),
+    });
   });
 
   it('other tabs: the title is the header, the wordmark is gone', async () => {

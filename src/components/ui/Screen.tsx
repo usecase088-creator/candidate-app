@@ -1,11 +1,12 @@
+import { HeaderHeightContext, HeaderShownContext } from 'expo-router/react-navigation';
 import { StatusBar } from 'expo-status-bar';
-import { type ComponentRef, type ReactNode, useEffect, useRef } from 'react';
+import { type ComponentRef, type ReactNode, useContext, useEffect, useRef } from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet } from 'react-native';
 import { type Edge, SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, spacing } from '@/theme/tokens';
 
-import { keyboardBehavior } from './keyboardBehavior';
+import { keyboardBehavior, keyboardOffset } from './keyboardBehavior';
 import { OfflineBanner } from './OfflineBanner';
 import { useKeyboardScroll } from './useKeyboardScroll';
 
@@ -20,6 +21,14 @@ export type ScreenProps = {
   /** When this value changes the scroll view jumps back to the top (a new step of a form). */
   scrollToTopKey?: unknown;
 };
+
+/**
+ * The KeyboardAvoidingView offset (R3 #3): on iOS the height of the native stack header the screen sits under (its
+ * frame starts below it), 0 outside a stack with a header and on Android.
+ */
+export function useKeyboardOffset(): number {
+  return keyboardOffset(useContext(HeaderHeightContext) ?? 0);
+}
 
 /**
  * Every screen's root: safe areas (Android is edge-to-edge), theme background, dark status bar icons (D11),
@@ -38,6 +47,11 @@ export function Screen({
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [scrollToTopKey]);
   const offset = useRef(0);
+  const keyboardVerticalOffset = useKeyboardOffset();
+  // Under a native stack header the header already sits below the status bar: padding the top inset again left an
+  // empty band on every pushed screen (found on the phone). Tab screens (TopBar) and auth screens have no header.
+  const headerShown = useContext(HeaderShownContext);
+  const safeEdges = headerShown ? edges.filter((e) => e !== 'top') : edges;
   useKeyboardScroll(
     (y) => scrollRef.current?.scrollTo({ y, animated: true }),
     () => offset.current,
@@ -61,12 +75,13 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView testID={testID} edges={edges} style={styles.root}>
+    <SafeAreaView testID={testID} edges={safeEdges} style={styles.root}>
       <StatusBar style="dark" />
       <OfflineBanner />
       <KeyboardAvoidingView
         testID={`${testID}.keyboard`}
         behavior={keyboardBehavior}
+        keyboardVerticalOffset={keyboardVerticalOffset}
         style={[styles.flex, !scroll && padded && styles.padded]}
       >
         {content}

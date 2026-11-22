@@ -23,6 +23,7 @@ import { useSession } from '@/features/auth/sessionStore';
 import { queryView } from '@/features/jobs/hooks/queryView';
 import { MAX_VAULT_FILES } from '@/features/uploads/logic/files';
 import { uploadSupportingDocuments } from '@/features/uploads/uploadsApi';
+import { announce } from '@/lib/announce';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import { VaultSection } from '../components/VaultSection';
@@ -123,8 +124,13 @@ function Builder({
   // field focused just before the keyboard opens is scrolled above it (Screen does the same in scroll mode).
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const offset = useRef(0);
+  // R3 a11y P2-14: the whole content changes but focus stays on Continue: say which step this is.
+  const shownStep = useRef(step);
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
+    if (shownStep.current === step) return;
+    shownStep.current = step;
+    announce(`Step ${step + 1} of ${STEPS.length}, ${STEPS[step]!.label}`);
   }, [step]);
   useKeyboardScroll(
     (y) => scrollRef.current?.scrollTo({ y, animated: true }),
@@ -215,7 +221,8 @@ function Builder({
   const meta = STEPS[step]!;
   const progress = Math.round(((step + 1) / STEPS.length) * 100);
   return (
-    <Screen testID="builder.screen" padded={false}>
+    // R3 #4: the sticky bar pads the bottom inset itself (like JobDetails / ApplyFrame), so the screen takes only the top.
+    <Screen testID="builder.screen" edges={['top']} padded={false}>
       <ScrollView
         ref={scrollRef}
         testID="builder.screen.scroll"

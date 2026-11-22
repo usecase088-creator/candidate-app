@@ -54,7 +54,7 @@ describe('Application details: content', () => {
     expect(screen.getByText('Seed City Multispeciality Hospital · Kolkata')).toBeOnTheScreen();
     expect(screen.getByText('Applied 25 Oct 2026')).toBeOnTheScreen();
     expect(screen.getByLabelText('Status: Applied')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Progress: step 1 of 5, Applied')).toBeOnTheScreen();
+    expect(screen.getByLabelText(/^Applied, current stage, 25 Oct 2026/)).toBeOnTheScreen();
     expect(screen.getByText('Application received by hospital')).toBeOnTheScreen();
   });
 
@@ -86,7 +86,7 @@ describe('Application details: content', () => {
       .map((el) => el.props.testID);
     expect(ids).toEqual(['application.status', 'action.card', 'application.timeline', 'application.viewjob']);
     // The timeline shows the stages with the dates the data has.
-    expect(screen.getByLabelText('Progress: step 3 of 5, Interview')).toBeOnTheScreen();
+    expect(screen.getByLabelText(/^Interview, current stage/)).toBeOnTheScreen();
     const timeline = within(screen.getByTestId('application.timeline'));
     expect(timeline.getByText('21 Oct 2026')).toBeOnTheScreen();
     expect(timeline.getByText('30 Oct 2026, 7:30 pm')).toBeOnTheScreen();

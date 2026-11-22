@@ -2,6 +2,7 @@ import { useFonts } from 'expo-font';
 import * as Sharing from 'expo-sharing';
 import * as WebBrowser from 'expo-web-browser';
 import { fireEvent, screen, waitFor } from 'expo-router/testing-library';
+import { AccessibilityInfo } from 'react-native';
 
 import { applicantMe } from '@/test/fixtures/applications';
 import { installJobsBackend } from '@/test/msw/jobs';
@@ -84,8 +85,12 @@ describe('CV preview', () => {
     installJobsBackend({ me: full });
     jest.mocked(Sharing.isAvailableAsync).mockResolvedValueOnce(false);
     await open();
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    announce.mockClear();
     await fireEvent.press(await screen.findByTestId('cv.pdf'));
     expect(await screen.findByTestId('cv.error')).toBeOnTheScreen();
+    // R3 a11y P1-1: spoken, not only shown.
+    expect(announce).toHaveBeenCalled();
   });
 
   it('has Edit CV, which opens the profile form', async () => {

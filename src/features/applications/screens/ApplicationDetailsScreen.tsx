@@ -95,7 +95,7 @@ function Details({ application: a }: { application: Application }) {
             {place ? `${a.job.hospital} · ${place}` : a.job.hospital}
           </AppText>
           {applied ? (
-            <AppText variant="secondary" color="mutedForeground" tabular numberOfLines={1}>
+            <AppText variant="secondary" color="mutedForeground" tabular>
               {`Applied ${applied}`}
             </AppText>
           ) : null}

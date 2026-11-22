@@ -134,6 +134,28 @@ describe('details step', () => {
     );
   });
 
+  it('R3 a11y P2-11: screen readers can open the Terms and the Privacy Policy from their checkboxes', async () => {
+    await openSignup();
+    const terms = screen.getByTestId('signup.terms');
+    expect(terms.props.accessibilityActions).toEqual(
+      expect.arrayContaining([{ name: 'openLink', label: 'Open Terms & Conditions' }]),
+    );
+    await fireEvent(terms, 'accessibilityAction', { nativeEvent: { actionName: 'openLink' } });
+    await fireEvent(screen.getByTestId('signup.privacy'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'openLink' },
+    });
+    expect(WebBrowser.openBrowserAsync).toHaveBeenNthCalledWith(
+      1,
+      'https://apronhanger.work/APRONHANGER_Work_Terms_and_Conditions.pdf',
+    );
+    expect(jest.mocked(WebBrowser.openBrowserAsync).mock.calls[1]?.[0]).toMatch(/Privacy/i);
+    // The default action still ticks the box.
+    expect(terms.props.accessibilityState).toMatchObject({ checked: false });
+    await fireEvent(terms, 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });
+    expect(screen.getByTestId('signup.terms').props.accessibilityState).toMatchObject({ checked: true });
+    jest.mocked(WebBrowser.openBrowserAsync).mockClear();
+  });
+
   it('opens the Terms and the Privacy Policy on the website', async () => {
     await openSignup();
     await fireEvent.press(screen.getByTestId('signup.terms.link'));

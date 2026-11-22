@@ -60,7 +60,7 @@ describe('Checkbox', () => {
       height: 22,
       borderRadius: 6,
       borderWidth: 1.5,
-      borderColor: colors.border,
+      borderColor: colors.controlBorder,
     });
     expect(screen.queryByTestId('c.check')).toBeNull();
     expect(flat(screen.getByTestId('c').props.style)).toMatchObject({ paddingVertical: 8 });

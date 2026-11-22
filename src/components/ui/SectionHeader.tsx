@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { spacing } from '@/theme/tokens';
+import { fontSizes, spacing, touchSlop } from '@/theme/tokens';
 
 import { PressableScale } from './PressableScale';
 import { AppText } from './Text';
@@ -30,7 +30,8 @@ export function SectionHeader({ testID, title, meta, action }: SectionHeaderProp
         <PressableScale
           testID={action.testID}
           accessibilityLabel={action.label}
-          hitSlop={spacing['3']}
+          // The 20-pt label line padded to the 48 target (R3 a11y P2-9).
+          hitSlop={touchSlop(fontSizes.md.lineHeight)}
           pressScale={1}
           onPress={action.onPress}
         >

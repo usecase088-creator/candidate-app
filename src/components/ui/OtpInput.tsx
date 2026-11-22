@@ -1,8 +1,10 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { TextInput as RNTextInput, StyleSheet, View } from 'react-native';
 
+import { announce } from '@/lib/announce';
 import { colors, fonts, fontSizes, radius, spacing } from '@/theme/tokens';
 
+import { FieldLabel } from './FieldLabel';
 import { otpAutofill } from './otpAutofill';
 import { AppText } from './Text';
 
@@ -18,6 +20,8 @@ export type OtpInputProps = {
   onComplete?: (code: string) => void;
   error?: string;
   autoFocus?: boolean;
+  /** The red required marker after the label; screen readers hear "{label}, required". */
+  required?: boolean;
 };
 
 /**
@@ -34,7 +38,12 @@ export function OtpInput({
   onComplete,
   error,
   autoFocus,
+  required,
 }: OtpInputProps) {
+  // R3 a11y P1-1: a new error is spoken (role="alert" is silent on iOS).
+  useEffect(() => {
+    if (error) announce(error);
+  }, [error]);
   // The last code handed to onComplete: a 7th key press or a repeated autofill event yields the same 6 digits again
   // and must not submit twice.
   const completed = useRef<string | null>(null);
@@ -51,14 +60,12 @@ export function OtpInput({
 
   return (
     <View style={styles.container}>
-      <AppText variant="label" nativeID={`${testID}.label`}>
-        {label}
-      </AppText>
+      <FieldLabel testID={testID} label={label} required={required} nativeID={`${testID}.label`} />
       <View>
         {/* The input is drawn first, under the opaque boxes. */}
         <RNTextInput
           testID={testID}
-          accessibilityLabel={label}
+          accessibilityLabel={required ? `${label}, required` : label}
           accessibilityHint={error}
           value={value}
           onChangeText={handleChange}
@@ -121,7 +128,8 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: BOX_HEIGHT,
     borderWidth: 1,
-    borderColor: colors.border,
+    // R3 a11y P2-5: an empty box is only its outline: 3:1.
+    borderColor: colors.controlBorder,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
     alignItems: 'center',

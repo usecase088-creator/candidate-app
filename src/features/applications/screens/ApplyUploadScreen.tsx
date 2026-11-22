@@ -2,14 +2,17 @@
 // questions. The CV goes up first (progress, cancel, retry), then the application. Email is sent exactly as typed.
 // D32: 17/600 headings, errors under their fields (no toast), Submit in the sticky bar.
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { CustomFieldResponses } from '@/api/schemas/applications';
 import { Button } from '@/components/ui/Button';
 import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { AppText } from '@/components/ui/Text';
-import { TextInput } from '@/components/ui/TextInput';
+import { TextInput, type TextInputRef } from '@/components/ui/TextInput';
+import { useFieldScroll } from '@/components/ui/useFieldScroll';
+import { announce } from '@/lib/announce';
+import { haptic } from '@/lib/haptics';
 import { FilePickerField } from '@/features/uploads/components/FilePickerField';
 import { validateCvFile } from '@/features/uploads/logic/files';
 import { pickCv } from '@/features/uploads/pickers';
@@ -90,6 +93,9 @@ function UploadForm({ job, me }: ApplyReady) {
   const [problem, setProblem] = useState<AnswerProblem>();
   const fields = job.customApplicationFields;
   const busy = apply.status.state === 'uploading';
+  const { scrollRef, onLayoutOf, scrollToField } = useFieldScroll();
+  const emailRef = useRef<TextInputRef>(null);
+  const phoneRef = useRef<TextInputRef>(null);
 
   const choose = async () => {
     const result = await pickCv();
@@ -109,21 +115,40 @@ function UploadForm({ job, me }: ApplyReady) {
     if ((await run).ok) router.replace('/applications');
   };
 
+  /**
+   * R3 #1: the message sits under its field, maybe off-screen: bring the field into view, buzz "error" and speak it.
+   * A field speaks a new message itself; the same message again (a second refused tap) is spoken here.
+   */
+  const refuse = (path: string[], message: string, shown: string | undefined) => {
+    haptic('error');
+    if (shown === message) announce(message);
+    scrollToField(path);
+  };
+
   const submit = () => {
     // Website order, first problem only; each message sits under its own field (D32).
     const contactProblem = uploadApplyError({ name, email, phone });
     if (contactProblem) {
+      refuse(['fields', contactProblem.field], contactProblem.message, fieldErrors[contactProblem.field]);
       setFieldErrors({ [contactProblem.field]: contactProblem.message });
       return;
     }
     setFieldErrors({});
     if (!file) {
-      setFileError('Please upload your CV (PDF or Word document)');
+      const message = 'Please upload your CV (PDF or Word document)';
+      refuse(['file'], message, fileError);
+      setFileError(message);
       return;
     }
     const found = firstProblem(fields, answers);
-    setProblem(found ?? undefined);
-    if (found) return;
+    if (found) {
+      const same = problem?.fieldId === found.fieldId ? problem.message : undefined;
+      refuse(['questions', found.fieldId], found.message, same);
+      setProblem(found);
+      return;
+    }
+    setProblem(undefined);
+    haptic('medium');
     void finish(
       apply.submit({
         jobId: job.id,
@@ -137,6 +162,7 @@ function UploadForm({ job, me }: ApplyReady) {
   return (
     <ApplyBody
       prefix={PREFIX}
+      scrollRef={scrollRef}
       bar={
         <StickyActionBar testID="apply.upload.bar">
           <Button
@@ -144,7 +170,6 @@ function UploadForm({ job, me }: ApplyReady) {
             label={busy ? 'Submitting…' : 'Submit application'}
             accessibilityLabel="Submit application"
             loading={busy}
-            haptic="medium"
             onPress={submit}
           />
         </StickyActionBar>
@@ -158,75 +183,94 @@ function UploadForm({ job, me }: ApplyReady) {
         </AppText>
       </View>
 
-      <View style={styles.fields}>
-        <TextInput
-          testID="apply.upload.name"
-          label="Full name"
-          value={name}
-          onChangeText={setName}
-          error={fieldErrors.name}
-          editable={!busy}
-          autoCapitalize="words"
-          textContentType="name"
-          returnKeyType="next"
-        />
-        <TextInput
-          testID="apply.upload.email"
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          error={fieldErrors.email}
-          editable={!busy}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          textContentType="emailAddress"
-          returnKeyType="next"
-        />
-        <TextInput
-          testID="apply.upload.phone"
-          label="Phone"
-          value={phone}
-          onChangeText={setPhone}
-          error={fieldErrors.phone}
-          editable={!busy}
-          keyboardType="phone-pad"
-          textContentType="telephoneNumber"
-          returnKeyType="done"
+      <View testID="apply.upload.fields" style={styles.fields} onLayout={onLayoutOf('fields')}>
+        <View testID="apply.upload.name.block" onLayout={onLayoutOf('name')}>
+          <TextInput
+            testID="apply.upload.name"
+            label="Full name"
+            value={name}
+            onChangeText={setName}
+            error={fieldErrors.name}
+            editable={!busy}
+            autoCapitalize="words"
+            textContentType="name"
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => emailRef.current?.focus()}
+          />
+        </View>
+        <View testID="apply.upload.email.block" onLayout={onLayoutOf('email')}>
+          <TextInput
+            ref={emailRef}
+            testID="apply.upload.email"
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            error={fieldErrors.email}
+            editable={!busy}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="emailAddress"
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => phoneRef.current?.focus()}
+          />
+        </View>
+        <View testID="apply.upload.phone.block" onLayout={onLayoutOf('phone')}>
+          <TextInput
+            ref={phoneRef}
+            testID="apply.upload.phone"
+            label="Phone"
+            value={phone}
+            onChangeText={setPhone}
+            error={fieldErrors.phone}
+            editable={!busy}
+            keyboardType="phone-pad"
+            textContentType="telephoneNumber"
+            returnKeyType="done"
+          />
+        </View>
+      </View>
+
+      <View testID="apply.upload.file.block" onLayout={onLayoutOf('file')}>
+        <FilePickerField
+          testID="apply.upload.file"
+          title="Choose your CV"
+          hint="PDF or Word (.pdf, .doc, .docx), up to 5MB"
+          files={file ? [file] : []}
+          sources={['files']}
+          single
+          onPick={() => void choose()}
+          onRemove={() => {
+            setFile(undefined);
+            setFileError(undefined);
+          }}
+          onCancel={apply.cancel}
+          onRetry={() => void finish(apply.retry())}
+          upload={apply.status}
+          error={fileError}
+          disabled={busy}
         />
       </View>
 
-      <FilePickerField
-        testID="apply.upload.file"
-        title="Choose your CV"
-        hint="PDF or Word (.pdf, .doc, .docx), up to 5MB"
-        files={file ? [file] : []}
-        sources={['files']}
-        single
-        onPick={() => void choose()}
-        onRemove={() => {
-          setFile(undefined);
-          setFileError(undefined);
-        }}
-        onCancel={apply.cancel}
-        onRetry={() => void finish(apply.retry())}
-        upload={apply.status}
-        error={fileError}
-        disabled={busy}
-      />
-
-      <JobQuestionsForm
-        testID="apply.upload.questions"
-        title="Additional questions from the recruiter"
-        fields={fields}
-        values={answers}
-        onChange={(next) => {
-          setAnswers(next);
-          setProblem(undefined);
-        }}
-        disabled={busy}
-        problem={problem}
-      />
+      {fields.length > 0 ? (
+        <View onLayout={onLayoutOf('questions')}>
+          <JobQuestionsForm
+            testID="apply.upload.questions"
+            title="Additional questions from the recruiter"
+            fields={fields}
+            values={answers}
+            onChange={(next) => {
+              setAnswers(next);
+              setProblem(undefined);
+            }}
+            disabled={busy}
+            problem={problem}
+            onLayoutOf={onLayoutOf}
+          />
+        </View>
+      ) : null}
     </ApplyBody>
   );
 }

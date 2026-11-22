@@ -1,7 +1,7 @@
 import type { SymbolViewProps } from 'expo-symbols';
 import { StyleSheet } from 'react-native';
 
-import { colors, radius, spacing } from '@/theme/tokens';
+import { colors, radius, spacing, touchSlop } from '@/theme/tokens';
 
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
@@ -18,21 +18,38 @@ export type ChipProps = {
   icon?: SymbolViewProps['name'];
   /** Adds a trailing 16-pt clear button (`{testID}.remove`, "Remove {label}") that fires instead of onPress. */
   onRemove?: () => void;
+  /** Ignores presses and says "disabled" (e.g. while the answers are being sent). */
+  disabled?: boolean;
+  /**
+   * In a question (R3 a11y P2-12): `radio` (one answer) or `checkbox` (several), spoken with `checked`. Default: a
+   * filter button with `selected`.
+   */
+  role?: 'radio' | 'checkbox';
 };
 
 const HEIGHT = 32;
 const ICON_SIZE = 14;
 const REMOVE_ICON_SIZE = 16;
-/** Pads the touch area of a 32-pt chip to 44 (D32), without changing its drawn size. */
-const CHIP_SLOP = (44 - HEIGHT) / 2;
-const REMOVE_SLOP = (44 - REMOVE_ICON_SIZE) / 2;
+/** Pads the touch area of a 32-pt chip to MIN_TOUCH (48: Android 48 dp, iOS 44 pt), without changing its drawn size. */
+export const CHIP_SLOP = touchSlop(HEIGHT);
+const REMOVE_SLOP = touchSlop(REMOVE_ICON_SIZE);
 const XMARK = { ios: 'xmark', android: 'close', web: 'close' } as const;
 
 /**
  * D32 selectable pill (categories, countries, cities, job types, sort). Tonal when idle, brandSoft + brand when
  * selected; press feedback and a selection haptic through PressableScale.
  */
-export function Chip({ testID, label, selected, onPress, accessibilityLabel, icon, onRemove }: ChipProps) {
+export function Chip({
+  testID,
+  label,
+  selected,
+  onPress,
+  accessibilityLabel,
+  icon,
+  onRemove,
+  disabled,
+  role,
+}: ChipProps) {
   const tint = selected ? colors.brand : colors.foreground;
   return (
     <PressableScale
@@ -40,7 +57,9 @@ export function Chip({ testID, label, selected, onPress, accessibilityLabel, ico
       haptic="selection"
       hitSlop={CHIP_SLOP}
       accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ selected }}
+      accessibilityRole={role ?? 'button'}
+      accessibilityState={role ? { checked: selected } : { selected }}
+      disabled={disabled}
       onPress={onPress}
       style={[styles.chip, selected ? styles.selected : styles.idle]}
     >
@@ -49,7 +68,7 @@ export function Chip({ testID, label, selected, onPress, accessibilityLabel, ico
         testID={`${testID}.label`}
         variant="secondary"
         weight="medium"
-        color={selected ? 'brand' : 'foreground'}
+        color={selected ? 'brandText' : 'foreground'}
         numberOfLines={1}
       >
         {label}

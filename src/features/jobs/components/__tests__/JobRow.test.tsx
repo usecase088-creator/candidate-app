@@ -44,7 +44,8 @@ describe('JobRow', () => {
     const onOpen = jest.fn();
     await renderWithProviders(<JobRow job={job} saved={false} onOpen={onOpen} onToggleSave={() => {}} />);
     const row = screen.getByRole('button', {
-      name: 'Staff Nurse at Seed City Multispeciality Hospital, verified hospital, ₹3–4.5 LPA, 52% match',
+      // R3 a11y P2-8: the experience and the place are spoken too (they are cut on screen at large text).
+      name: 'Staff Nurse at Seed City Multispeciality Hospital, verified hospital, 1–5 yrs, Kolkata, West Bengal, ₹3–4.5 LPA, 52% match',
     });
     await fireEvent.press(row);
     expect(onOpen).toHaveBeenCalledWith(job);
@@ -60,6 +61,9 @@ describe('JobRow', () => {
     const salary = screen.getByText('₹3–4.5 LPA');
     expect(flat(salary.props.style)).toMatchObject({ fontVariant: ['tabular-nums'] });
     expect(screen.getByText('Kolkata, West Bengal · Today')).toBeOnTheScreen();
+    // R3 a11y P2-8: meta and place may take two lines (one line cut the experience and the city at large text).
+    expect(screen.getByText('Nursing · Full-time · 1–5 yrs')).toHaveProp('numberOfLines', 2);
+    expect(screen.getByText('Kolkata, West Bengal · Today')).toHaveProp('numberOfLines', 2);
   });
 
   it('shows the match as a pill, and no pill when there is no score (guest)', async () => {
@@ -89,8 +93,10 @@ describe('JobRow', () => {
 
   it('saved: the bookmark says so and is filled', async () => {
     await renderWithProviders(<JobRow job={job} saved onOpen={() => {}} onToggleSave={() => {}} />);
-    expect(screen.getByRole('button', { name: 'Remove from saved jobs' })).toHaveProp('accessibilityState', {
+    // PressableScale now always adds `disabled` to the caller's state (R3 #12).
+    expect(screen.getByRole('button', { name: 'Remove from saved jobs' }).props.accessibilityState).toEqual({
       selected: true,
+      disabled: false,
     });
   });
 

@@ -20,8 +20,11 @@ const TABS: { mode: Mode; label: string; href: '/login' | '/signup' }[] = [
   { mode: 'signup', label: 'Create Account', href: '/signup' },
 ];
 
-/** D32 segmented control: a 40-pt track, the selected segment is a white tile. */
-const TRACK_HEIGHT = 40;
+/**
+ * D32 segmented control, the selected segment is a white tile. R3: the track is at least 48 (40-pt segments + the
+ * inset slop = a 48 target) and grows with the text; the indicator is pinned top/bottom, so it follows the height.
+ */
+const TRACK_MIN_HEIGHT = 48;
 const INSET = spacing['1'];
 
 /**
@@ -72,7 +75,7 @@ export function AuthModeTabs({ active }: { active: Mode }) {
             accessibilityState={{ selected: isSelected }}
             haptic={isSelected ? 'none' : 'selection'}
             pressScale={1}
-            // 32-pt segment inside the 40-pt track: the slop takes the touch target to the track's full height.
+            // 40-pt segment inside the 48-pt track: the slop takes the touch target to the track's full height.
             hitSlop={INSET}
             onPress={() => {
               if (mode === active) return;
@@ -85,9 +88,9 @@ export function AuthModeTabs({ active }: { active: Mode }) {
               variant="button"
               align="center"
               color={isSelected ? 'foreground' : 'mutedForeground'}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.75}
+              // Found on the phone: auto-shrink took the labels to ~6 pt at font scale 2. Capped at 1.3 (button
+              // variant) and allowed a second line instead.
+              numberOfLines={2}
               style={styles.label}
             >
               {label}
@@ -102,7 +105,7 @@ export function AuthModeTabs({ active }: { active: Mode }) {
 const styles = StyleSheet.create({
   track: {
     flexDirection: 'row',
-    height: TRACK_HEIGHT,
+    minHeight: TRACK_MIN_HEIGHT,
     padding: INSET,
     backgroundColor: colors.surface2,
     borderRadius: radius.md,
@@ -118,6 +121,7 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
+    minHeight: TRACK_MIN_HEIGHT - INSET * 2,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.sm,

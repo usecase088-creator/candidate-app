@@ -123,6 +123,13 @@ describe('sign in', () => {
     await expect(secureStorage.getItem(TOKEN_KEY)).resolves.toBe('test.jwt.token');
   });
 
+  it('R3 a11y P3-3: the labels use the one red required marker and say "required"', async () => {
+    await openLogin();
+    expect(screen.getByTestId('login.email.required')).toHaveTextContent('*');
+    expect(screen.getByTestId('login.password.required')).toHaveTextContent('*');
+    expect(screen.getByTestId('login.email').props.accessibilityLabel).toBe('Email, required');
+  });
+
   it('submits from the keyboard "done" key on the password field', async () => {
     const sent = mockLogin(() => HttpResponse.json(loginResponse));
     await openLogin();

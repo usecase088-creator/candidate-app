@@ -28,6 +28,8 @@ export function ProgressSegments({ testID, status }: { testID: string; status: s
     <View
       testID={testID}
       accessible
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: TIMELINE_STEPS.length, now: view.current + 1 }}
       accessibilityLabel={`Progress: step ${view.current + 1} of ${TIMELINE_STEPS.length}, ${TIMELINE_STEPS[view.current] ?? ''}`}
       style={styles.wrap}
     >
@@ -52,5 +54,6 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', gap: spacing['0.5'] },
   segment: { flex: 1, height: 4, borderRadius: radius.full },
   done: { backgroundColor: colors.brand },
-  todo: { backgroundColor: colors.separator },
+  // R3 a11y P3-7: the steps still to come stay visible (3:1) next to the done ones.
+  todo: { backgroundColor: colors.controlBorder },
 });

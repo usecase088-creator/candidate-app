@@ -13,7 +13,7 @@ import Animated, {
 import Svg, { Circle } from 'react-native-svg';
 
 import { AppText } from '@/components/ui/Text';
-import { colors } from '@/theme/tokens';
+import { colors, fontSizes } from '@/theme/tokens';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const FILL_MS = 600;
@@ -104,5 +104,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   // Stays inside a 36-pt ring.
-  small: { fontSize: 10, lineHeight: 12 },
+  small: fontSizes['2xs'],
 });

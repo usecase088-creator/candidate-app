@@ -3,7 +3,7 @@ import { useFonts } from 'expo-font';
 import * as Network from 'expo-network';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
-import { StyleSheet } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 
 import { API } from '@/test/msw/handlers';
 import { installJobsBackend, makeJob } from '@/test/msw/jobs';
@@ -60,6 +60,18 @@ const flat = (s: unknown) => StyleSheet.flatten(s as never) ?? {};
 
 // R2: the brand moment (a navy band behind the headline, the white search overlapping its bottom edge) and the
 // elevated tiles (white + soft shadow instead of an invisible tonal fill). Wording and testIDs stay.
+/** useWindowDimensions reads Dimensions.get('window'); React Native's Jest setup reports font scale 2. */
+let dimensions: jest.SpyInstance | undefined;
+function atFontScale(fontScale: number) {
+  dimensions = jest
+    .spyOn(Dimensions, 'get')
+    .mockImplementation(() => ({ width: 390, height: 844, scale: 3, fontScale }));
+}
+afterEach(() => {
+  dimensions?.mockRestore();
+  dimensions = undefined;
+});
+
 describe('Home: hero band and tiles (R2)', () => {
   it('the headline and subtitle sit on a navy gradient band in white and 80% white', async () => {
     installJobsBackend({ jobs: [nurse] });
@@ -88,6 +100,7 @@ describe('Home: hero band and tiles (R2)', () => {
   });
 
   it('the three tiles are white with the soft shadow, the same min height, icons on top', async () => {
+    atFontScale(1);
     installJobsBackend({ jobs: [nurse] });
     await home();
     await screen.findByTestId('job.card.n1');
@@ -104,6 +117,31 @@ describe('Home: hero band and tiles (R2)', () => {
       expect(t.minHeight).toBeGreaterThanOrEqual(12 + 22 + 4 + 2 * 18 + 8);
     }
     expect(new Set(tiles.map((t) => t.minHeight)).size).toBe(1);
+    // The labels are capped together (found on the phone: one shrank while the others grew).
+    expect(screen.getByText('International Jobs')).toHaveProp('maxFontSizeMultiplier', 1.3);
+    expect(screen.getByText('International Jobs')).toHaveProp('minimumFontScale', 0.85);
+  });
+
+  it('R3 a11y P2-7: above font scale 1.3 the three destinations are list rows (same testIDs), not tiles', async () => {
+    atFontScale(2);
+    installJobsBackend({ jobs: [nurse] });
+    await home();
+    await screen.findByTestId('job.card.n1');
+    expect(screen.getByTestId('home.links')).toBeOnTheScreen();
+    expect(screen.getByTestId('home.link.intl.title')).toHaveTextContent('International Jobs');
+    expect(screen.getByTestId('home.link.intl.chevron')).toBeOnTheScreen();
+  });
+
+  it('the hero subtitle grows at most 1.3x (at 2.0 the band ate the screen)', async () => {
+    installJobsBackend({ jobs: [nurse] });
+    await home();
+    expect(await screen.findByTestId('home.hero.subtitle')).toHaveProp('maxFontSizeMultiplier', 1.3);
+  });
+
+  it('the count line may wrap (it was cut at large text)', async () => {
+    installJobsBackend({ jobs: [nurse] });
+    await home();
+    expect((await screen.findByTestId('home.count')).props.numberOfLines).toBeUndefined();
   });
 });
 

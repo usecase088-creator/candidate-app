@@ -2,7 +2,7 @@
 // home page; the app opens the letter, and can also download and share it. Reject asks once more (D26): it is final.
 // D32: the panel wears the status tone (amber: the offer needs an answer; green once joining is confirmed), the letter
 // as a document row with a share button, one full-width primary, Reject as red text.
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import type { Application } from '@/api/schemas/applications';
@@ -32,13 +32,18 @@ export function OfferCard({ application: a }: { application: Application }) {
   const respond = useRespond();
   const toast = useToast();
   const [working, setWorking] = useState<'view' | 'share'>();
+  // R3 #9: a second tap can land before the re-render that disables the rows: the ref refuses it.
+  const running = useRef(false);
   const busy = respond.isPending;
   const letter = a.offerLetterUrl;
+  const letterBusy = working !== undefined;
 
   const run = async (kind: 'view' | 'share', action: (url: string) => Promise<OfferLetterResult>) => {
-    if (!letter || working) return;
+    if (!letter || running.current) return;
+    running.current = true;
     setWorking(kind);
     const result = await action(letter);
+    running.current = false;
     setWorking(undefined);
     if (!result.ok) {
       toast.show(kind === 'share' && result.reason === 'failed' ? CANNOT_DOWNLOAD : CANNOT_OPEN, {
@@ -66,6 +71,7 @@ export function OfferCard({ application: a }: { application: Application }) {
               testID="action.offer.view"
               accessibilityLabel="View offer letter"
               accessibilityState={{ busy: working === 'view' }}
+              disabled={letterBusy}
               pressScale={1}
               onPress={() => void run('view', openOfferLetter)}
               style={styles.letter}
@@ -89,6 +95,7 @@ export function OfferCard({ application: a }: { application: Application }) {
               testID="action.offer.share"
               accessibilityLabel="Download or share offer letter"
               accessibilityState={{ busy: working === 'share' }}
+              disabled={letterBusy}
               pressScale={1}
               onPress={() => void run('share', shareOfferLetter)}
               style={styles.share}

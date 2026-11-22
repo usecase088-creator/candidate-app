@@ -17,13 +17,16 @@ export const colors = {
   brand: '#326AD9',
   brandForeground: '#F7FBFD',
   brandSoft: '#E1F0FF',
+  /** R3 a11y: blue TEXT on brand tints (brandSoft, fill, skySoft): `brand` is 4.31:1 there. `brand` stays for fills, borders, icons. */
+  brandText: '#2A5BC4',
   secondary: '#EFF4FA',
   secondaryForeground: '#0D172F',
   muted: '#EFF4FA',
   mutedForeground: '#596475',
   accent: '#E1F0FF',
   accentForeground: '#0D172F',
-  destructive: '#E23439',
+  /** R3 a11y exception to the website red #E23439 (4.22:1 under the button label): same hue, AA 4.5:1 (D32 note). */
+  destructive: '#C81E2A',
   destructiveForeground: '#F7FBFD',
   /** Error box background, close to the website's bg-destructive/10, light enough for D15 text to stay 4.5:1. */
   destructiveSoft: '#FDF2F2',
@@ -50,8 +53,10 @@ export const colors = {
   overlay: 'rgba(10,18,31,0.5)',
   /** D32: hairline between rows and under headers (replaces 1 px `border` on cards). */
   separator: '#E5E9EF',
-  /** D32: input placeholders (3:1 on white; real values use `foreground`). */
-  placeholder: '#8A94A6',
+  /** Input placeholders: R3 a11y raised to AA (4.5:1 on white, background and fill); real values use `foreground`. */
+  placeholder: '#636D7F',
+  /** R3 a11y: at-rest outline of inputs, pickers, OTP boxes, the unchecked checkbox and the switch off track (3:1, WCAG 1.4.11). */
+  controlBorder: '#8A94A6',
   /** D32: "done" status (the website already uses emerald for application statuses; its blue --success stays on the web). */
   successSoft: '#E6F8F1',
   successText: '#047857',
@@ -89,6 +94,8 @@ export type FontWeight = keyof typeof fonts;
 
 /** D32 type ramp (docs/design/UI-REDESIGN.md section 2). Few sizes; weight and colour carry the hierarchy. */
 export const fontSizes = {
+  /** Only for text inside a 36-pt ring (MatchRing small); never for reading text. */
+  '2xs': { fontSize: 11, lineHeight: 13 },
   xs: { fontSize: 12, lineHeight: 16 },
   sm: { fontSize: 13, lineHeight: 18 },
   md: { fontSize: 14, lineHeight: 20 },
@@ -136,3 +143,9 @@ export const gradients = {
 
 /** Smallest comfortable touch target (Android 48 dp, iOS 44 pt). */
 export const MIN_TOUCH = 48;
+
+/** Drawn size of round icon buttons (bookmark, close, clear); `touchSlop(ICON_BUTTON)` brings the target to MIN_TOUCH. */
+export const ICON_BUTTON = 44;
+
+/** hitSlop that pads a control drawn `size` tall (or wide) up to MIN_TOUCH, without changing how it looks. */
+export const touchSlop = (size: number) => Math.max(0, Math.ceil((MIN_TOUCH - size) / 2));

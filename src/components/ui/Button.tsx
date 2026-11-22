@@ -3,7 +3,7 @@ import { type SymbolViewProps } from 'expo-symbols';
 import { ActivityIndicator, type PressableProps, StyleSheet, View } from 'react-native';
 
 import { type HapticKind } from '@/lib/haptics';
-import { type ColorToken, colors, gradients, radius, spacing } from '@/theme/tokens';
+import { type ColorToken, colors, gradients, radius, spacing, touchSlop } from '@/theme/tokens';
 
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
@@ -85,6 +85,8 @@ export function Button({
       disabled={inactive}
       haptic={haptic}
       onPress={onPress}
+      // R3 #11: sm (36) and md (44) reach the 48 touch target without growing (a caller hitSlop wins).
+      hitSlop={{ top: touchSlop(SIZES[size].minHeight), bottom: touchSlop(SIZES[size].minHeight) }}
       style={[
         styles.base,
         SIZES[size],

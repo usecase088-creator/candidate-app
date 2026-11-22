@@ -42,7 +42,8 @@ export function InterviewCard({ application: a }: { application: Application }) 
     <CardFrame status={a.status} icon={CALENDAR} title="Interview Scheduled">
       <View style={styles.body}>
         <View style={styles.when}>
-          <AppText variant="heading" tabular>
+          {/* A date, not a section: no header role (R3 a11y P3-4). */}
+          <AppText variant="heading" accessibilityRole="text" tabular>
             {formatIstDateTime(a.interviewDate)}
           </AppText>
           {a.interviewType ? <AppText variant="label">{a.interviewType}</AppText> : null}

@@ -54,6 +54,8 @@ function Disclaimer() {
         <TextButton
           testID="gov.disclaimer.toggle"
           label={open ? 'Less' : 'More'}
+          // R3 a11y P2-3: brand on the skySoft note is 4.47:1; skyText is 6.77.
+          color="skyText"
           accessibilityLabel={open ? 'Show less of the notice' : 'Show the full notice'}
           onPress={() => setOpen((o) => !o)}
         />

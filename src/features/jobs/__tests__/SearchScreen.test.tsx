@@ -150,6 +150,19 @@ describe('Search: filter sheet', () => {
     expect(screen.getByText('Profile relevance')).toBeOnTheScreen();
   });
 
+  it('R3 #14: the options scroll inside the sheet and the Reset / Show footer sits outside the scroll view', async () => {
+    installJobsBackend({ jobs: [nurse, doctor, tech] });
+    await search();
+    await screen.findByTestId('job.card.n1');
+    await openFilters();
+    const scroll = screen.getByTestId('filters.scroll');
+    expect(StyleSheet.flatten(scroll.props.style)).toMatchObject({ flex: 1 });
+    expect(within(scroll).queryByTestId('filters.done')).toBeNull();
+    expect(within(screen.getByTestId('filters.sheet')).getByTestId('filters.done')).toBeOnTheScreen();
+    // Close the sheet so the next test starts on Search.
+    await fireEvent.press(screen.getByTestId('filters.done'));
+  });
+
   it('a city filter applies at once; the Done button shows how many roles match', async () => {
     installJobsBackend({ jobs: [nurse, doctor, tech] });
     await search();

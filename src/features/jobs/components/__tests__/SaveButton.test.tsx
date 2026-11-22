@@ -1,9 +1,11 @@
 import { act } from 'react';
+import { StyleSheet } from 'react-native';
 
 import { haptic } from '@/lib/haptics';
+import { colors } from '@/theme/tokens';
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
 
-import { SaveButton } from '../SaveButton';
+import { bookmarkIcon, SaveButton } from '../SaveButton';
 
 jest.mock('@/lib/haptics', () => ({ haptic: jest.fn() }));
 
@@ -58,11 +60,43 @@ describe('SaveButton bookmark pop', () => {
     expect(icon).toHaveAnimatedStyle({ transform: [{ scale: 1 }] });
   });
 
+  it('R3 #2: does not pop when the saved list arrives (saved changes without a press)', async () => {
+    const { rerender } = await renderWithProviders(
+      <SaveButton testID="job.save.x" saved={false} onPress={() => {}} />,
+    );
+    await rerender(<SaveButton testID="job.save.x" saved onPress={() => {}} />);
+    await advance(110);
+    expect(screen.getByTestId('job.save.x.icon')).toHaveAnimatedStyle({ transform: [{ scale: 1 }] });
+  });
+
+  it('R3 #2: does not pop when a recycled list cell shows another, saved job', async () => {
+    const { rerender } = await renderWithProviders(
+      <SaveButton testID="job.save.a" saved={false} onPress={() => {}} />,
+    );
+    // Even right after a press on job a (its save is still on the way), the cell now showing job b stays still.
+    await fireEvent.press(screen.getByTestId('job.save.a'));
+    await rerender(<SaveButton testID="job.save.b" saved onPress={() => {}} />);
+    await advance(110);
+    expect(screen.getByTestId('job.save.b.icon')).toHaveAnimatedStyle({ transform: [{ scale: 1 }] });
+  });
+
+  it('a press on a saved bookmark (unsave) does not pop when it is saved again by someone else', async () => {
+    const { rerender } = await renderWithProviders(
+      <SaveButton testID="job.save.x" saved onPress={() => {}} />,
+    );
+    await fireEvent.press(screen.getByTestId('job.save.x'));
+    await rerender(<SaveButton testID="job.save.x" saved={false} onPress={() => {}} />);
+    await rerender(<SaveButton testID="job.save.x" saved onPress={() => {}} />);
+    await advance(110);
+    expect(screen.getByTestId('job.save.x.icon')).toHaveAnimatedStyle({ transform: [{ scale: 1 }] });
+  });
+
   it('Reduce Motion: no pop', async () => {
     mockReduceMotion = true;
     const { rerender } = await renderWithProviders(
       <SaveButton testID="job.save.x" saved={false} onPress={() => {}} />,
     );
+    await fireEvent.press(screen.getByTestId('job.save.x'));
     await rerender(<SaveButton testID="job.save.x" saved onPress={() => {}} />);
     await advance(110);
     expect(screen.getByTestId('job.save.x.icon')).toHaveAnimatedStyle({ transform: [{ scale: 1 }] });
@@ -72,8 +106,27 @@ describe('SaveButton bookmark pop', () => {
     const { rerender } = await renderWithProviders(
       <SaveButton testID="job.save" variant="button" saved={false} onPress={() => {}} />,
     );
+    await fireEvent.press(screen.getByTestId('job.save'));
     await rerender(<SaveButton testID="job.save" variant="button" saved onPress={() => {}} />);
     await advance(110);
     expect(screen.getByTestId('job.save.icon')).toHaveAnimatedStyle({ transform: [{ scale: 1.25 }] });
+  });
+});
+
+describe('SaveButton a11y (R3)', () => {
+  it('Android shows saved by shape too, not by colour only (bookmark_added)', () => {
+    expect(bookmarkIcon(true).android).toBe('bookmark_added');
+    expect(bookmarkIcon(false).android).toBe('bookmark');
+    expect(bookmarkIcon(true).ios).toBe('bookmark.fill');
+  });
+
+  it('the "Saved" label uses brandText (AA on brandSoft)', async () => {
+    await renderWithProviders(<SaveButton testID="job.save" variant="button" saved onPress={() => {}} />);
+    expect(StyleSheet.flatten(screen.getByText('Saved').props.style).color).toBe(colors.brandText);
+  });
+
+  it('the 44-pt bookmark reaches 48 with hitSlop', async () => {
+    await renderWithProviders(<SaveButton testID="job.save.x" saved={false} onPress={() => {}} />);
+    expect(44 + 2 * (screen.getByTestId('job.save.x').props.hitSlop as number)).toBeGreaterThanOrEqual(48);
   });
 });

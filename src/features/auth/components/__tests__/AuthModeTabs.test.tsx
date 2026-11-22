@@ -13,10 +13,10 @@ const style = (id: string) => StyleSheet.flatten(screen.getByTestId(id).props.st
 beforeEach(() => jest.clearAllMocks());
 
 describe('AuthModeTabs (D32 segmented control)', () => {
-  it('is a 40-pt surface2 track, radius 12, with a white sliding segment (soft shadow)', async () => {
+  it('is a surface2 track at least 48 pt (it grows with the text), radius 12, with a white sliding segment (soft shadow)', async () => {
     await render(<AuthModeTabs active="signin" />);
     expect(style('auth.tabs')).toMatchObject({
-      height: 40,
+      minHeight: 48,
       backgroundColor: colors.surface2,
       borderRadius: radius.md,
     });
@@ -26,11 +26,11 @@ describe('AuthModeTabs (D32 segmented control)', () => {
     });
   });
 
-  it('labels are 15/600 on one line, and there is no "New" badge', async () => {
+  it('labels are 15/600 on up to two lines (no auto-shrink), and there is no "New" badge', async () => {
     await render(<AuthModeTabs active="signup" />);
     for (const label of ['Sign In', 'Create Account']) {
       const text = screen.getByText(label);
-      expect(text).toHaveProp('numberOfLines', 1);
+      expect(text).toHaveProp('numberOfLines', 2);
       expect(StyleSheet.flatten(text.props.style)).toMatchObject({ fontSize: 15 });
     }
     expect(screen.queryByText('New')).toBeNull();

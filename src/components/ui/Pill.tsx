@@ -15,7 +15,8 @@ export const pillTones: Record<PillTone, { bg: ColorToken; fg: ColorToken }> = {
   success: { bg: 'successSoft', fg: 'successText' },
   warning: { bg: 'amberSoft', fg: 'amberText' },
   error: { bg: 'destructiveSoft', fg: 'errorText' },
-  brand: { bg: 'brandSoft', fg: 'brand' },
+  // R3 a11y P2-2: text on brandSoft needs brandText (brand is 4.31:1 there).
+  brand: { bg: 'brandSoft', fg: 'brandText' },
 };
 
 export type PillProps = {

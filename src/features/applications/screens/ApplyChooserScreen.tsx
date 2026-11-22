@@ -16,6 +16,8 @@ import { Pill } from '@/components/ui/Pill';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { StickyActionBar } from '@/components/ui/StickyActionBar';
 import { AppText } from '@/components/ui/Text';
+import { useFieldScroll } from '@/components/ui/useFieldScroll';
+import { announce } from '@/lib/announce';
 import { haptic } from '@/lib/haptics';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -48,19 +50,27 @@ function Chooser({ job, me, hasFormCv }: ApplyReady) {
   const fields = job.customApplicationFields;
   const quickOpen = hasFormCv && !!me;
 
+  const { scrollRef, onLayoutOf, scrollToField } = useFieldScroll();
+
   useEffect(() => {
-    if (quick.isSuccess) {
-      // D32: the outcome lands with a success notification; the toast and the navigation stay as before.
-      haptic('success');
-      router.replace('/applications');
-    }
+    // The success haptic comes with the success toast (R3 #7: one source).
+    if (quick.isSuccess) router.replace('/applications');
   }, [quick.isSuccess, router]);
 
   const onQuickApply = () => {
     if (!me) return;
     const found = firstProblem(fields, answers);
-    setProblem(found ?? undefined);
-    if (found) return;
+    if (found) {
+      // R3 #1: the error sits under its question, maybe off-screen: bring it into view, buzz "error" and speak it.
+      // The field speaks a new message itself; the same message again (a second refused tap) is spoken here.
+      haptic('error');
+      if (problem?.fieldId === found.fieldId && problem.message === found.message) announce(found.message);
+      setProblem(found);
+      scrollToField(['questions', found.fieldId]);
+      return;
+    }
+    setProblem(undefined);
+    haptic('medium');
     quick.mutate({ jobId: job.id, me, answers: answersForSubmit(fields, answers) });
   };
 
@@ -94,7 +104,6 @@ function Chooser({ job, me, hasFormCv }: ApplyReady) {
               accessibilityLabel="Quick Apply"
               size="md"
               loading={quick.isPending}
-              haptic="medium"
               onPress={onQuickApply}
             />
           </View>
@@ -103,7 +112,7 @@ function Chooser({ job, me, hasFormCv }: ApplyReady) {
     ) : null;
 
   return (
-    <ApplyBody prefix="apply" bar={bar}>
+    <ApplyBody prefix="apply" bar={bar} scrollRef={scrollRef}>
       <ApplyingForCard job={job} />
 
       <View style={styles.heading}>
@@ -137,7 +146,7 @@ function Chooser({ job, me, hasFormCv }: ApplyReady) {
       </View>
 
       {fields.length > 0 && (
-        <View style={styles.questions}>
+        <View testID="apply.questions.group" style={styles.questions} onLayout={onLayoutOf('questions')}>
           <JobQuestionsForm
             testID="apply.questions"
             title="Answer these job-specific questions"
@@ -149,6 +158,7 @@ function Chooser({ job, me, hasFormCv }: ApplyReady) {
             }}
             disabled={quick.isPending}
             problem={problem}
+            onLayoutOf={onLayoutOf}
           />
           <AppText variant="secondary" color="mutedForeground">
             Required for all application methods (form, upload, or quick apply).
@@ -181,7 +191,7 @@ type ChoiceProps = {
 
 /**
  * A method row: 40-pt icon tile, title, the description (wraps, never cut), and the CTA line as the one affordance
- * (also the row's spoken name; round 2 dropped the chevron that repeated it).
+ * (round 2 dropped the chevron that repeated it). Spoken: "title, Recommended, CTA"; the description is the hint.
  */
 function ChoiceRow({
   testID,
@@ -198,7 +208,7 @@ function ChoiceRow({
   return (
     <PressableScale
       testID={testID}
-      accessibilityLabel={cta}
+      accessibilityLabel={[title, recommended ? 'Recommended' : '', cta].filter(Boolean).join(', ')}
       accessibilityHint={disabled ? disabledReason : description}
       disabled={disabled}
       pressScale={0.99}

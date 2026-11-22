@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Platform, Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -11,11 +11,9 @@ import Animated, {
 import { type HapticKind, haptic } from '@/lib/haptics';
 import { motion } from '@/theme/tokens';
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+import { pressableRipple } from './pressableRipple';
 
-/** Android gets a ripple clipped to the caller's shape (in front of the children); iOS relies on scale + opacity. */
-export const rippleFor = (os: typeof Platform.OS): PressableProps['android_ripple'] =>
-  os === 'android' ? { color: motion.ripple, foreground: true } : undefined;
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export type PressableScaleProps = Omit<PressableProps, 'style' | 'children'> & {
   testID: string;
@@ -42,6 +40,7 @@ export function PressableScale({
   accessibilityRole = 'button',
   style,
   children,
+  accessibilityState,
   ...rest
 }: PressableScaleProps) {
   const reduceMotion = useReducedMotion();
@@ -83,12 +82,15 @@ export function PressableScale({
   return (
     <AnimatedPressable
       accessibilityRole={accessibilityRole}
-      accessibilityState={{ disabled: !!disabled }}
+      accessibilityState={{
+        ...accessibilityState,
+        disabled: !!disabled || accessibilityState?.disabled === true,
+      }}
       disabled={disabled}
       onPress={handlePress}
       onPressIn={handleIn}
       onPressOut={handleOut}
-      android_ripple={rippleFor(Platform.OS)}
+      android_ripple={pressableRipple}
       style={[style, animated]}
       {...rest}
     >

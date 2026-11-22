@@ -304,6 +304,7 @@ describe('useApplyWithCv', () => {
 
 describe('useRespond', () => {
   it('accepts an interview: the row changes, "Response recorded successfully!", the list is refreshed', async () => {
+    jest.mocked(Haptics.notificationAsync).mockClear();
     const b = installApplicationsBackend({ apps: [{ ...interviewVirtual }] });
     const { result } = await renderHookWithProviders(() => ({
       respond: useRespond(),
@@ -318,7 +319,9 @@ describe('useRespond', () => {
     expect(b.bodies[0]).toEqual({ status: 'InterviewAccepted' });
     await waitFor(() => expect(result.current.list.data?.[0]?.status).toBe('InterviewAccepted'));
     // D32: a success haptic marks the outcome (iOS notification; Android maps to Confirm in lib/haptics).
+    // R3 #7: exactly one: the success toast fires it, the hook does not add its own.
     expect(jest.mocked(Haptics.notificationAsync)).toHaveBeenCalledWith('success');
+    expect(jest.mocked(Haptics.notificationAsync)).toHaveBeenCalledTimes(1);
   });
 
   it('a reschedule request sends the note', async () => {
@@ -407,6 +410,7 @@ describe('useUploadRequestedDocuments', () => {
   const photo = { uri: 'file:///cache/p.jpg', name: 'p.jpg', size: 2000, mime: 'image/jpeg' };
 
   it('uploads the files in the field "documents", says "Documents uploaded successfully!" and refreshes the list', async () => {
+    jest.mocked(Haptics.notificationAsync).mockClear();
     const b = installApplicationsBackend({ apps: [{ ...documentsRequested }] });
     const { result } = await renderHookWithProviders(() => ({
       up: useUploadRequestedDocuments(),
@@ -423,6 +427,7 @@ describe('useUploadRequestedDocuments', () => {
     expect(await screen.findByText('Documents uploaded successfully!')).toBeTruthy();
     await waitFor(() => expect(result.current.list.data?.[0]?.status).toBe('DocumentsUploaded'));
     expect(jest.mocked(Haptics.notificationAsync)).toHaveBeenCalledWith('success');
+    expect(jest.mocked(Haptics.notificationAsync)).toHaveBeenCalledTimes(1);
   });
 
   it('a file the app refuses is never sent; the reason is shown with the field', async () => {

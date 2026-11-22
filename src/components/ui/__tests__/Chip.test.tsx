@@ -39,7 +39,7 @@ describe('Chip (D32)', () => {
     });
   });
 
-  it('selected: brandSoft fill, 1.5-px brand border, brand text, and says so', async () => {
+  it('selected: brandSoft fill, 1.5-px brand border, brandText label (AA on the tint), and says so', async () => {
     await renderWithProviders(<Chip testID="c" label="Nursing" selected onPress={() => {}} />);
     const chip = screen.getByTestId('c');
     expect(flat(chip.props.style)).toMatchObject({
@@ -47,19 +47,41 @@ describe('Chip (D32)', () => {
       borderWidth: 1.5,
       borderColor: colors.brand,
     });
-    expect(flat(screen.getByTestId('c.label').props.style).color).toBe(colors.brand);
+    expect(flat(screen.getByTestId('c.label').props.style).color).toBe(colors.brandText);
     expect(chip).toBeSelected();
     expect(screen.getByRole('button', { name: 'Nursing', selected: true })).toBeOnTheScreen();
   });
 
-  it('presses with a selection haptic and a hit area that reaches 44', async () => {
+  it('presses with a selection haptic and a hit area that reaches 48 (Android) / 44 (iOS)', async () => {
     const onPress = jest.fn();
     await renderWithProviders(<Chip testID="c" label="Nursing" selected={false} onPress={onPress} />);
     const chip = screen.getByTestId('c');
     await fireEvent.press(chip);
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(haptic).toHaveBeenCalledWith('selection');
-    expect(32 + verticalSlop(chip.props.hitSlop) * 2).toBeGreaterThanOrEqual(44);
+    expect(32 + verticalSlop(chip.props.hitSlop) * 2).toBeGreaterThanOrEqual(48);
+  });
+
+  it('can be disabled: no press, no haptic, and it says so', async () => {
+    const onPress = jest.fn();
+    await renderWithProviders(<Chip testID="c" label="Yes" selected onPress={onPress} disabled />);
+    const chip = screen.getByTestId('c');
+    await fireEvent.press(chip);
+    expect(onPress).not.toHaveBeenCalled();
+    expect(haptic).not.toHaveBeenCalled();
+    expect(chip).toBeDisabled();
+    expect(chip.props.accessibilityState).toMatchObject({ selected: true, disabled: true });
+  });
+
+  it('as a radio (one answer of a question) it says radio + checked instead of button + selected', async () => {
+    await renderWithProviders(
+      <>
+        <Chip testID="a" label="Yes" selected role="radio" onPress={() => {}} />
+        <Chip testID="b" label="MBBS" selected={false} role="checkbox" onPress={() => {}} />
+      </>,
+    );
+    expect(screen.getByRole('radio', { name: 'Yes', checked: true })).toBeOnTheScreen();
+    expect(screen.getByRole('checkbox', { name: 'MBBS', checked: false })).toBeOnTheScreen();
   });
 
   it('keeps a custom spoken label', async () => {
@@ -99,7 +121,7 @@ describe('Chip (D32)', () => {
     const remove = screen.getByRole('button', { name: 'Remove Mumbai' });
     expect(remove).toBe(screen.getByTestId('c.remove'));
     expect(flat(screen.getByTestId('c.remove.icon').props.style)).toMatchObject({ width: 16, height: 16 });
-    expect(16 + verticalSlop(remove.props.hitSlop) * 2).toBeGreaterThanOrEqual(44);
+    expect(16 + verticalSlop(remove.props.hitSlop) * 2).toBeGreaterThanOrEqual(48);
     await fireEvent.press(remove);
     expect(onRemove).toHaveBeenCalledTimes(1);
     expect(onPress).not.toHaveBeenCalled();

@@ -159,7 +159,11 @@ const styles = StyleSheet.create({
   content: { paddingTop: spacing['3'], paddingBottom: spacing['4'] },
   header: { gap: spacing['2'], marginBottom: spacing['3'] },
   count: { paddingHorizontal: spacing['4'] },
-  tabs: { gap: spacing['2'], paddingHorizontal: spacing['4'], paddingVertical: spacing['1'] },
+  tabs: {
+    gap: spacing['2'],
+    paddingHorizontal: spacing['4'],
+    paddingVertical: spacing['2'] /* >= the chip hitSlop: Android clips touches outside the rail */,
+  },
   inset: { paddingHorizontal: spacing['4'] },
   skeleton: {
     gap: spacing['3'],

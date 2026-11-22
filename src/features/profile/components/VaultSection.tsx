@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Separator } from '@/components/ui/Separator';
 import { AppText } from '@/components/ui/Text';
+import { useAnnounce } from '@/components/ui/useAnnounce';
 import { keepPickedFile, type PendingFile } from '@/features/profile/builder/draftStore';
 import { validateVaultFiles } from '@/features/uploads/logic/files';
 import { pickVaultFiles } from '@/features/uploads/pickers';
@@ -32,6 +33,7 @@ const ROW_INSET = spacing['4'] + 24 + spacing['3'];
 export function VaultSection({ saved, waiting, userId, onPicked }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  useAnnounce(error);
 
   async function add() {
     setError(undefined);

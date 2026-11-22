@@ -1,4 +1,4 @@
-import { type ComponentRef, type ReactNode, type Ref, useState } from 'react';
+import { type ComponentRef, type ReactNode, type Ref, useEffect, useState } from 'react';
 import {
   TextInput as RNTextInput,
   type TextInputProps as RNTextInputProps,
@@ -6,6 +6,7 @@ import {
   View,
 } from 'react-native';
 
+import { announce } from '@/lib/announce';
 import { colors, fonts, fontSizes, radius, spacing } from '@/theme/tokens';
 
 import { FieldLabel } from './FieldLabel';
@@ -29,6 +30,8 @@ export type TextInputProps = Omit<RNTextInputProps, 'style'> & {
 };
 
 const HEIGHT = 48;
+/** The typed text grows with the system size up to here (R3 a11y P3-2); beyond it a 48-pt field gets unusable. */
+const INPUT_FONT_CAP = 1.5;
 const MULTILINE_HEIGHT = 96;
 
 /**
@@ -56,6 +59,10 @@ export function TextInput({
   const hasError = !!error;
   const borderStyle = hasError ? styles.borderError : focused ? styles.borderFocused : styles.borderRest;
   const spokenLabel = accessibilityLabel ?? label;
+  // R3 a11y P1-1: VoiceOver does not speak role="alert", TalkBack misses a live region on a new View.
+  useEffect(() => {
+    if (error) announce(error);
+  }, [error]);
   return (
     <View style={styles.container}>
       <View testID={`${testID}.labelRow`} style={styles.labelRow}>
@@ -83,6 +90,7 @@ export function TextInput({
           multiline={multiline}
           textAlignVertical={multiline ? 'top' : undefined}
           placeholderTextColor={colors.placeholder}
+          maxFontSizeMultiplier={INPUT_FONT_CAP}
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);
@@ -134,7 +142,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing['3'],
   },
   fieldMultiline: { minHeight: MULTILINE_HEIGHT, alignItems: 'flex-start' },
-  borderRest: { borderWidth: 1, borderColor: colors.border },
+  // R3 a11y P2-5: the outline is all that marks the field: 3:1 (controlBorder), not the 1.4:1 card border.
+  borderRest: { borderWidth: 1, borderColor: colors.controlBorder },
   borderFocused: { borderWidth: 1.5, borderColor: colors.ring },
   borderError: { borderWidth: 1.5, borderColor: colors.destructive },
   input: {

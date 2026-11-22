@@ -2,6 +2,7 @@
 import * as Device from 'expo-device';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
+import { AccessibilityInfo, Linking, StyleSheet } from 'react-native';
 import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
 import { http, HttpResponse } from 'msw';
 
@@ -13,6 +14,7 @@ import { applicantMe } from '@/test/fixtures/applications';
 import { API } from '@/test/msw/handlers';
 import { installJobsBackend } from '@/test/msw/jobs';
 import { server } from '@/test/msw/server';
+import { colors } from '@/theme/tokens';
 import { resetAppState, startSignedIn } from '@/test/startSignedIn';
 
 import { resetPushListenerForTests } from '../PushListener';
@@ -126,6 +128,58 @@ describe('Settings: notifications', () => {
     const group = within(screen.getByTestId('settings.group.notifications'));
     expect(group.getByTestId('settings.push.open')).toHaveTextContent('Open phone settings');
     expect(group.getByTestId('settings.push.open.chevron')).toBeOnTheScreen();
+  });
+
+  it('R3 #5: when on, the row is a switch that opens the phone settings (it can only be turned off there)', async () => {
+    jest
+      .mocked(Notifications.getPermissionsAsync)
+      .mockResolvedValue({ status: 'granted', granted: true, canAskAgain: true } as never);
+    const open = jest.spyOn(Linking, 'openSettings').mockResolvedValue(undefined);
+    await startSignedIn('/settings', 'settings.screen');
+    const row = await screen.findByRole('switch', { name: 'Push notifications', checked: true });
+    expect(row.props.accessibilityHint).toBe('Opens your phone settings to turn notifications off');
+    await fireEvent.press(row);
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+
+  it('R3 #5: after a refusal, the off row opens the phone settings too', async () => {
+    jest
+      .mocked(Notifications.getPermissionsAsync)
+      .mockResolvedValue({ status: 'denied', granted: false, canAskAgain: false } as never);
+    const open = jest.spyOn(Linking, 'openSettings').mockResolvedValue(undefined);
+    open.mockClear();
+    await startSignedIn('/settings', 'settings.screen');
+    const row = await screen.findByRole('switch', { name: 'Push notifications', checked: false });
+    expect(row.props.accessibilityHint).toBe('Opens your phone settings to turn notifications on');
+    await fireEvent.press(row);
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+
+  it('R3 a11y: not asked yet, the row is a switch that is off; the off track has a 3:1 outline colour', async () => {
+    await startSignedIn('/settings', 'settings.screen');
+    expect(await screen.findByRole('switch', { name: 'Push notifications', checked: false })).toBe(
+      screen.getByTestId('settings.push'),
+    );
+    const sw = screen.getByTestId('settings.push.switch', { includeHiddenElements: true });
+    expect(sw.props.tintColor).toBe(colors.controlBorder);
+    expect(StyleSheet.flatten(sw.props.style)?.backgroundColor).toBe(colors.controlBorder);
+  });
+
+  it('R3 a11y P1-1: a failure to turn on is spoken', async () => {
+    jest
+      .mocked(Notifications.getPermissionsAsync)
+      .mockResolvedValue({ status: 'undetermined', granted: false, canAskAgain: true } as never);
+    jest
+      .mocked(Notifications.requestPermissionsAsync)
+      .mockResolvedValueOnce({ status: 'granted', granted: true, canAskAgain: true } as never);
+    jest.mocked(Notifications.getExpoPushTokenAsync).mockRejectedValueOnce(new Error('no token'));
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    announce.mockClear();
+    await startSignedIn('/settings', 'settings.screen');
+    await fireEvent.press(await screen.findByTestId('settings.push'));
+    expect(await screen.findByTestId('settings.push.error')).toBeOnTheScreen();
+    expect(announce).toHaveBeenCalledWith('Could not turn on notifications. Please try again later.');
+    jest.mocked(Notifications.requestPermissionsAsync).mockClear();
   });
 
   it('says nothing about push on a phone that cannot do it (emulator)', async () => {

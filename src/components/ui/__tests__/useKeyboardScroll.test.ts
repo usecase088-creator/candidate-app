@@ -2,7 +2,7 @@ import { Keyboard, TextInput } from 'react-native';
 
 import { renderHook } from '@/test/render';
 
-import { keyboardScrollDelta, useKeyboardScroll } from '../useKeyboardScroll';
+import { KEYBOARD_SETTLE_MS, keyboardScrollDelta, useKeyboardScroll } from '../useKeyboardScroll';
 
 describe('keyboardScrollDelta', () => {
   it('is 0 when the field is above the keyboard with room to spare', () => {
@@ -19,11 +19,18 @@ describe('keyboardScrollDelta', () => {
 });
 
 describe('useKeyboardScroll', () => {
+  afterEach(() => jest.useRealTimers());
+  /** The keyboard event, then the settle delay (the padded layout lands first). */
+  const show = (screenY: number) => {
+    emitShow({ endCoordinates: { screenY } });
+    jest.advanceTimersByTime(KEYBOARD_SETTLE_MS);
+  };
   type ShowEvent = { endCoordinates: { screenY: number } };
   let emitShow: (e: ShowEvent) => void;
   const remove = jest.fn();
 
   beforeEach(() => {
+    jest.useFakeTimers();
     remove.mockClear();
     jest.spyOn(Keyboard, 'addListener').mockImplementation(((
       _event: string,
@@ -45,6 +52,8 @@ describe('useKeyboardScroll', () => {
     await renderHook(() => useKeyboardScroll(scrollTo, () => 40));
     focusFieldAt(700, 48);
     emitShow({ endCoordinates: { screenY: 600 } });
+    expect(scrollTo).not.toHaveBeenCalled(); // waits for the keyboard padding to be laid out
+    jest.advanceTimersByTime(KEYBOARD_SETTLE_MS);
     expect(scrollTo).toHaveBeenCalledWith(40 + 748 + 16 - 600);
   });
 
@@ -52,7 +61,7 @@ describe('useKeyboardScroll', () => {
     const scrollTo = jest.fn();
     await renderHook(() => useKeyboardScroll(scrollTo, () => 0));
     focusFieldAt(100, 48);
-    emitShow({ endCoordinates: { screenY: 600 } });
+    show(600);
     expect(scrollTo).not.toHaveBeenCalled();
   });
 
@@ -60,7 +69,7 @@ describe('useKeyboardScroll', () => {
     const scrollTo = jest.fn();
     await renderHook(() => useKeyboardScroll(scrollTo, () => 0));
     jest.spyOn(TextInput.State, 'currentlyFocusedInput').mockReturnValue(null as never);
-    emitShow({ endCoordinates: { screenY: 600 } });
+    show(600);
     expect(scrollTo).not.toHaveBeenCalled();
   });
 

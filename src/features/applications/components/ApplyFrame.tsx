@@ -4,7 +4,7 @@
 // under it (D32: above the bottom inset, hidden while the keyboard is up). The native stack header carries the back
 // chevron and the title (src/features/navigation/pushedScreens.ts).
 import { useRouter } from 'expo-router';
-import { type ReactNode } from 'react';
+import { type ComponentRef, type ReactNode, type Ref } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { ERROR_MESSAGES, isApiError } from '@/api/errors';
@@ -103,13 +103,16 @@ export type ApplyBodyProps = {
   children: ReactNode;
   /** A `StickyActionBar`, rendered under the scroll view so it never covers the content. */
   bar?: ReactNode;
+  /** The scroll view, for bringing a field with an error into view (useFieldScroll). */
+  scrollRef?: Ref<ComponentRef<typeof ScrollView>>;
 };
 
 /** The scrolling content of an apply screen (`{prefix}.screen.scroll`) with the optional sticky bar under it. */
-export function ApplyBody({ prefix, children, bar }: ApplyBodyProps) {
+export function ApplyBody({ prefix, children, bar, scrollRef }: ApplyBodyProps) {
   return (
     <>
       <ScrollView
+        ref={scrollRef}
         testID={`${prefix}.screen.scroll`}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}

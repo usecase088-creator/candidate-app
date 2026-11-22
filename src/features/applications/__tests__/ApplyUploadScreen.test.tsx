@@ -3,6 +3,9 @@ import { router } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { delay, http, HttpResponse } from 'msw';
+import { AccessibilityInfo, ScrollView, TextInput as RNTextInput } from 'react-native';
+
+import { haptic } from '@/lib/haptics';
 
 import { applicantMe, applied, jobQuestions } from '@/test/fixtures/applications';
 import { installApplicationsBackend } from '@/test/msw/applications';
@@ -17,6 +20,7 @@ jest.mock('expo-splash-screen', () => ({
   hideAsync: jest.fn(() => Promise.resolve()),
   preventAutoHideAsync: jest.fn(() => Promise.resolve()),
 }));
+jest.mock('@/lib/haptics', () => ({ haptic: jest.fn() }));
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
 jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: jest.fn(),
@@ -207,6 +211,62 @@ describe('checks before anything is sent (website messages, first problem only)'
       'Enter a valid 10-digit phone number',
     );
     expect(writes(backend.calls)).toEqual([]);
+  });
+
+  it('R3 #1: an invalid Submit scrolls the field into view, speaks the message and buzzes "error", not "medium"', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    const scrollTo = jest.mocked(ScrollView.prototype.scrollTo);
+    setup();
+    await open();
+    const email = await screen.findByTestId('apply.upload.email');
+    const layout = (y: number) => ({ nativeEvent: { layout: { x: 0, y, width: 300, height: 70 } } });
+    await fireEvent(screen.getByTestId('apply.upload.fields'), 'layout', layout(240));
+    await fireEvent(screen.getByTestId('apply.upload.email.block'), 'layout', layout(90));
+    await fireEvent.changeText(email, '');
+    announce.mockClear();
+    scrollTo.mockClear();
+    jest.mocked(haptic).mockClear();
+    await fireEvent.press(screen.getByTestId('apply.upload.submit'));
+    expect(await screen.findByTestId('apply.upload.email.error')).toBeOnTheScreen();
+    const message = screen.getByTestId('apply.upload.email.error').props.children as string;
+    expect(scrollTo).toHaveBeenCalledWith({ y: 240 + 90 - 16, animated: true });
+    expect(announce).toHaveBeenCalledWith(message);
+    expect(haptic).toHaveBeenCalledWith('error');
+    expect(haptic).not.toHaveBeenCalledWith('medium');
+    // The same message again is spoken again, a moment later
+    const later = Date.now() + 5000;
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(later);
+    announce.mockClear();
+    await fireEvent.press(screen.getByTestId('apply.upload.submit'));
+    clock.mockRestore();
+    expect(announce).toHaveBeenCalledTimes(1);
+  });
+
+  it('a missing CV scrolls to the file picker', async () => {
+    const scrollTo = jest.mocked(ScrollView.prototype.scrollTo);
+    setup();
+    await open();
+    await screen.findByTestId('apply.upload.file.block');
+    await fireEvent(screen.getByTestId('apply.upload.file.block'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 610, width: 300, height: 120 } },
+    });
+    scrollTo.mockClear();
+    await fireEvent.press(screen.getByTestId('apply.upload.submit'));
+    expect(scrollTo).toHaveBeenCalledWith({ y: 610 - 16, animated: true });
+  });
+
+  it('R3 #15: "Next" on the keyboard moves from name to email to phone', async () => {
+    setup();
+    await open();
+    const focus = jest.mocked(RNTextInput.prototype.focus);
+    focus.mockClear();
+    await fireEvent(await screen.findByTestId('apply.upload.name'), 'submitEditing');
+    await fireEvent(screen.getByTestId('apply.upload.email'), 'submitEditing');
+    const focused = focus.mock.contexts.map(
+      (c: unknown) => (c as { props: { testID?: string } }).props.testID,
+    );
+    expect(focused).toEqual(['apply.upload.email', 'apply.upload.phone']);
+    expect(screen.getByTestId('apply.upload.name').props.submitBehavior).toBe('submit');
   });
 
   it('no CV chosen: "Please upload your CV (PDF or Word document)"', async () => {

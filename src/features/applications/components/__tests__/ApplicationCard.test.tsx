@@ -68,6 +68,10 @@ describe('ProgressSegments', () => {
     for (let i = 0; i < 5; i++) expect(screen.getByTestId(`t.segment.${i}`)).toBeOnTheScreen();
     expect(flat(screen.getByTestId('t.segment.3').props.style).backgroundColor).toBe(colors.brand);
     expect(flat(screen.getByTestId('t.segment.4').props.style).backgroundColor).not.toBe(colors.brand);
+    // R3 #12: a progress bar with a value, like CompletenessRing and MatchRing.
+    const bar = screen.getByTestId('t');
+    expect(bar.props.accessibilityRole).toBe('progressbar');
+    expect(bar.props.accessibilityValue).toEqual({ min: 0, max: 5, now: 4 });
   });
 
   it('a rejection shows the website sentence instead of the bar', async () => {
@@ -92,17 +96,34 @@ describe('VerticalTimeline', () => {
 
   it('lists the five stages with the current one marked and the last update under it', async () => {
     await show(interviewVirtual);
-    expect(screen.getByLabelText('Progress: step 3 of 5, Interview')).toBeOnTheScreen();
     for (const [i, name] of ['Applied', 'Reviewed', 'Interview', 'Documents', 'Offer & Joining'].entries()) {
       expect(within(screen.getByTestId(`vt.row.${i}`)).getByText(name)).toBeOnTheScreen();
     }
-    expect(screen.getByTestId('vt.node.0').props.accessibilityState).toMatchObject({ checked: true });
-    expect(screen.getByTestId('vt.node.2').props.accessibilityState).toMatchObject({ selected: true });
-    expect(screen.getByTestId('vt.node.4').props.accessibilityState).toMatchObject({
-      selected: false,
-      checked: false,
-    });
     expect(screen.getByText('Status updated to Interview Scheduled')).toBeOnTheScreen();
+  });
+
+  it('R3 #12 / a11y P2-10: each stage is one spoken element with its state and date; no ignored container label', async () => {
+    await show(interviewVirtual);
+    expect(screen.getByTestId('vt').props.accessibilityLabel).toBeUndefined();
+    const row = (i: number) => screen.getByTestId(`vt.row.${i}`);
+    expect(row(0).props.accessible).toBe(true);
+    expect(row(0).props.accessibilityLabel).toBe('Applied, done, 21 Oct 2026');
+    expect(row(1).props.accessibilityLabel).toBe('Reviewed, done');
+    expect(row(2).props.accessibilityLabel).toBe(
+      'Interview, current stage, 30 Oct 2026, 7:30 pm. Status updated to Interview Scheduled',
+    );
+    expect(row(2).props.accessibilityState).toMatchObject({ selected: true });
+    expect(row(4).props.accessibilityLabel).toBe('Offer & Joining, not reached');
+    expect(row(4).props.accessibilityState).toMatchObject({ disabled: true });
+  });
+
+  it('the terminal stage of a closed application is one spoken element with the sentence and the note', async () => {
+    await show(rejected);
+    const terminal = screen.getByTestId('vt.terminal');
+    expect(terminal.props.accessible).toBe(true);
+    expect(terminal.props.accessibilityLabel).toBe(
+      'Application closed by recruiter. The position has been filled.',
+    );
   });
 
   it('D32 round 2: the rail is continuous (2-pt gap at the nodes) and every non-last row is at least 48 pt', async () => {
@@ -142,6 +163,8 @@ describe('ApplicationCard', () => {
     expect(screen.getByText('ICU Nurse')).toBeOnTheScreen();
     expect(screen.getByText('Seed City Multispeciality Hospital · Kolkata')).toBeOnTheScreen();
     expect(screen.getByText('Applied 25 Oct 2026')).toBeOnTheScreen();
+    // R3 a11y P2-8: the applied line may wrap (it was cut through the date at large text).
+    expect(screen.getByText('Applied 25 Oct 2026').props.numberOfLines).toBeUndefined();
     expect(screen.getByLabelText('Status: Applied')).toBeOnTheScreen();
     expect(screen.getByLabelText('Progress: step 1 of 5, Applied')).toBeOnTheScreen();
     expect(screen.getByText('Step 1 of 5')).toBeOnTheScreen();
@@ -170,8 +193,9 @@ describe('ApplicationCard', () => {
     await render(offerSent, onPress);
     const card = screen.getByTestId(`application.row.${offerSent.id}`);
     expect(card.props.accessibilityRole).toBe('button');
+    // R3 a11y P2-13: names the action and the applied date (was "Action needed." with no word on what).
     expect(card.props.accessibilityLabel).toBe(
-      'Anaesthetist at Seed Valley Care Centre, Offer Sent. Action needed.',
+      'Anaesthetist at Seed Valley Care Centre, Offer Sent. Offer letter received: accept or reject. Applied 13 Oct 2026.',
     );
     await fireEvent.press(card);
     expect(onPress).toHaveBeenCalledTimes(1);

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { AppText } from '@/components/ui/Text';
+import { useAnnounce } from '@/components/ui/useAnnounce';
 import { confirmAction } from '@/lib/confirm';
 import { openAppSettings, type PickResult, pickGalleryPhotos, takePhoto } from '@/features/uploads/pickers';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -27,6 +28,7 @@ export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; 
   const { set, remove } = useAvatar();
   const [sheet, setSheet] = useState(false);
   const [message, setMessage] = useState<string>();
+  useAnnounce(message);
   const [denied, setDenied] = useState(false);
   const busy = set.isPending || remove.isPending;
 
@@ -66,6 +68,7 @@ export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; 
           testID="profile.photo.open"
           accessibilityLabel="Profile photo"
           accessibilityHint="Opens the photo options"
+          accessibilityState={{ busy }}
           disabled={busy}
           onPress={open}
           style={styles.avatarPress}
@@ -80,6 +83,9 @@ export function AvatarSection({ avatarUrl, name }: { avatarUrl?: string | null; 
         <PressableScale
           testID="profile.photo.change"
           accessibilityLabel="Change photo"
+          // The avatar itself opens the same sheet: one element for screen readers, the badge is for touch only.
+          accessible={false}
+          importantForAccessibility="no"
           hitSlop={BADGE_SLOP}
           disabled={busy}
           onPress={open}

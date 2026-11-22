@@ -129,12 +129,18 @@ export function FormField({ testID, spec, value, onChange }: Props) {
       return (
         <View style={styles.group}>
           <FieldLabel testID={testID} label={spec.label} required={spec.required} />
-          <View style={styles.wrap}>
+          <View
+            testID={`${testID}.choices`}
+            accessibilityRole="radiogroup"
+            accessibilityLabel={groupLabel(spec)}
+            style={styles.wrap}
+          >
             {options.map((option, i) => (
               <Chip
                 key={option}
                 testID={`${testID}.option.${i}`}
                 label={option}
+                role="radio"
                 selected={value === option}
                 onPress={() => onChange(value === option ? '' : option)}
               />
@@ -148,12 +154,14 @@ export function FormField({ testID, spec, value, onChange }: Props) {
       return (
         <View style={styles.group}>
           <FieldLabel testID={testID} label={spec.label} required={spec.required} />
-          <View style={styles.wrap}>
+          {/* Several answers: checkbox chips (R3 a11y P2-12); the label above names them. */}
+          <View testID={`${testID}.choices`} style={styles.wrap}>
             {(spec.options ?? []).map((option, i) => (
               <Chip
                 key={option}
                 testID={`${testID}.option.${i}`}
                 label={option}
+                role="checkbox"
                 selected={selected.includes(option)}
                 onPress={() =>
                   onChange(
@@ -175,6 +183,10 @@ export function FormField({ testID, spec, value, onChange }: Props) {
  * Type a word, tap Add (inside the field), remove with the chip's clear button. `single` keeps one value as a string
  * (primary specialty).
  */
+/** The name of a chip group for screen readers: the question and "required" (R3 a11y P2-12). */
+const groupLabel = (spec: { label: string; required?: boolean }) =>
+  spec.required ? `${spec.label}, required` : spec.label;
+
 function ChipsField({ testID, spec, value, onChange }: Props) {
   const [text, setText] = useState('');
   const items = spec.single ? (asString(value) ? [asString(value)] : []) : asList(value);
@@ -247,6 +259,7 @@ function ChipsField({ testID, spec, value, onChange }: Props) {
 const styles = StyleSheet.create({
   group: { gap: spacing['2'] },
   flex: { flex: 1 },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['2'] },
+  // paddingVertical keeps the chips' hitSlop inside the row (Android clips touches outside the parent).
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['2'], paddingVertical: spacing['2'] },
   readonlyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing['2'] },
 });

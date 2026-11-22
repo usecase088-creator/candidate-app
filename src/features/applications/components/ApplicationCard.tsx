@@ -41,12 +41,22 @@ export function ApplicationCard({
   const place = a.job.city || a.job.location || '';
   const applied = formatIndianDate(a.appliedOn);
   const testID = `application.row.${a.id}`;
+  const joining =
+    a.joiningDate && ['JoiningConfirmed', 'Joined', 'Onboarded'].includes(a.status)
+      ? formatIndianDate(a.joiningDate)
+      : '';
+  // R3 a11y P2-13: says what needs an answer and when it was applied for (was "Action needed." only).
+  const spoken =
+    `${a.job.role} at ${a.job.hospital}, ${statusLabel(a.status)}.` +
+    (hint ? ` ${hint}.` : '') +
+    (applied ? ` Applied ${applied}.` : '') +
+    (joining ? ` Joining on ${joining}.` : '');
 
   return (
     <PressableScale
       testID={testID}
       pressScale={CARD_PRESS_SCALE}
-      accessibilityLabel={`${a.job.role} at ${a.job.hospital}, ${statusLabel(a.status)}.${hint ? ' Action needed.' : ''}`}
+      accessibilityLabel={spoken}
       onPress={onPress}
       style={styles.card}
     >
@@ -60,7 +70,7 @@ export function ApplicationCard({
             {place ? `${a.job.hospital} · ${place}` : a.job.hospital}
           </AppText>
           {applied ? (
-            <AppText variant="secondary" color="mutedForeground" tabular numberOfLines={1}>
+            <AppText variant="secondary" color="mutedForeground" tabular>
               {`Applied ${applied}`}
             </AppText>
           ) : null}
@@ -76,9 +86,9 @@ export function ApplicationCard({
             {update}
           </AppText>
         ) : null}
-        {a.joiningDate && ['JoiningConfirmed', 'Joined', 'Onboarded'].includes(a.status) ? (
+        {joining ? (
           <AppText variant="secondary" weight="medium" color="successText" tabular>
-            {`Joining on ${formatIndianDate(a.joiningDate)}`}
+            {`Joining on ${joining}`}
           </AppText>
         ) : null}
       </View>

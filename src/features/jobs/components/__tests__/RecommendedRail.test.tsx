@@ -40,6 +40,13 @@ describe('RecommendedRail', () => {
     expect(name.flexShrink).toBe(1);
   });
 
+  it('R3 a11y P2-13: the card speaks the city and the salary too, and that line may wrap', async () => {
+    await show([matched('a', { city: 'Pune', salaryMin: 6, salaryMax: 12 })]);
+    const card = screen.getByTestId('recommended.job.a');
+    expect(card.props.accessibilityLabel).toMatch(/^Role a at Hospital a, Pune, .*LPA, 82% match$/);
+    expect(within(card).getByText(/^Pune · /)).toHaveProp('numberOfLines', 2);
+  });
+
   it('no seal for a hospital that is not verified', async () => {
     await show([matched('a', { hospitalVerified: false })]);
     expect(screen.queryByTestId('recommended.verified.a')).not.toBeOnTheScreen();

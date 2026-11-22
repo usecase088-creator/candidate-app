@@ -25,6 +25,7 @@ import { queryView } from '../hooks/queryView';
 import { useJob, useSimilarJobs } from '../hooks/useJobsData';
 import { useSavedIdSet, useToggleSave } from '../hooks/useSavedJobs';
 import { applicantsLine, experienceStat, htmlToText, postedLabel } from '../logic/format';
+import { salaryFitsActionBar } from '../logic/layout';
 import { useOpenJob } from '../useOpenJob';
 
 /** Website jobs.$jobId.tsx prints the raw numbers on the details page (cards use formatLPA). */
@@ -229,15 +230,16 @@ function ActionBar({ job }: { job: Job }) {
   const { toggle } = useToggleSave();
   const { width, fontScale } = useWindowDimensions();
   const closed = job.status === 'Closed';
-  // At 320 pt, or with large text, two buttons already fill the bar: the salary stays in the Compensation section.
-  const roomForSalary = width / Math.max(1, fontScale) >= 360;
+  // At 320-375 pt, with large text or a closed job, two buttons already fill the bar: the salary stays in the
+  // Compensation section.
+  const roomForSalary = salaryFitsActionBar(width, fontScale, closed);
 
   return (
     <StickyActionBar
       testID="job.bar"
       leading={
         roomForSalary ? (
-          <AppText variant="rowTitle" tabular numberOfLines={1}>
+          <AppText variant="rowTitle" tabular numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
             {salaryOf(job)}
           </AppText>
         ) : undefined

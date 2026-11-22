@@ -209,6 +209,16 @@ describe('Profile photo', () => {
     return screen.findByTestId('profile.photo.sheet');
   };
 
+  it('R3 a11y P3-10: screen readers get one photo control (the avatar); the sheet closes on the escape gesture', async () => {
+    setup();
+    await openProfile();
+    const badge = await screen.findByTestId('profile.photo.change');
+    expect(badge.props.accessible).toBe(false);
+    expect(screen.getByTestId('profile.photo.open').props.accessibilityState).toMatchObject({ busy: false });
+    const sheet = await openSheet('profile.photo.open');
+    expect(typeof sheet.props.onAccessibilityEscape).toBe('function');
+  });
+
   it('D32: the photo options live in a sheet, not under the avatar', async () => {
     setup();
     await openProfile();

@@ -177,7 +177,7 @@ const IntlRow = memo(function IntlRow({ job, onOpen }: { job: IntlJob; onOpen: (
           variant="body"
           weight="semibold"
           tabular
-          numberOfLines={1}
+          numberOfLines={2}
         >
           {job.payscale || '—'}
         </AppText>
@@ -215,5 +215,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['3'],
   },
   chipsRow: { marginHorizontal: -spacing['4'] },
-  chips: { gap: spacing['2'], paddingHorizontal: spacing['4'], paddingVertical: spacing['1'] },
+  chips: {
+    gap: spacing['2'],
+    paddingHorizontal: spacing['4'],
+    paddingVertical: spacing['2'] /* >= the chip hitSlop: Android clips touches outside the rail */,
+  },
 });

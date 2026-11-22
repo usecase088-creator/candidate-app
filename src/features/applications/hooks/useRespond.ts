@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 
 import { useToast } from '@/components/ui/Toast';
-import { haptic } from '@/lib/haptics';
 import { useUploadTask } from '@/features/uploads/hooks/useUploadTask';
 import { type PickedAsset, uploadApplicationDocuments } from '@/features/uploads/uploadsApi';
 
@@ -26,7 +25,7 @@ export function useRespond() {
     mutationKey: RESPOND_KEY,
     mutationFn: ({ id, status, note }: RespondVars) => applicationsApi.respond(id, status, note),
     onSuccess: () => {
-      haptic('success');
+      // The success toast is the one source of the success haptic (R3 #7).
       toast.show('Response recorded successfully!', { variant: 'success' });
       void refresh();
     },
@@ -66,7 +65,6 @@ export function useUploadRequestedDocuments() {
     async (applicationId: string, files: PickedAsset[]): Promise<DocumentsOutcome> => {
       const run = await task.run((options) => uploadApplicationDocuments(applicationId, files, options));
       if (run.ok) {
-        haptic('success');
         toast.show('Documents uploaded successfully!', { variant: 'success' });
         void client.invalidateQueries({ queryKey: APPLICATIONS_KEY });
         return { ok: true };

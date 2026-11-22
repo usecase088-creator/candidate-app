@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/Text';
-import { colors, spacing } from '@/theme/tokens';
+import { colors, fontSizes, headingLetterSpacing, spacing } from '@/theme/tokens';
 
 import { Button } from '@/components/ui/Button';
 import { goToSignIn } from '@/features/auth/signInGate';
@@ -67,5 +67,5 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.separator,
   },
   brand: { flex: 1 },
-  wordmark: { fontSize: 17, lineHeight: 22, letterSpacing: -0.3 },
+  wordmark: { ...fontSizes.xl, letterSpacing: headingLetterSpacing(fontSizes.xl.fontSize) },
 });

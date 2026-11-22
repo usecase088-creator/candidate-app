@@ -71,7 +71,14 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
           <PressableScale
             key={j.id}
             testID={`recommended.job.${j.id}`}
-            accessibilityLabel={`${j.role} at ${j.hospital}, ${j.matchPercent}% match`}
+            accessibilityLabel={[
+              `${j.role} at ${j.hospital}`,
+              j.city,
+              formatLPA(j.salaryMin, j.salaryMax),
+              `${j.matchPercent}% match`,
+            ]
+              .filter(Boolean)
+              .join(', ')}
             onPress={() => onOpen(j)}
             style={[styles.card, { width: cardWidth }]}
           >
@@ -100,7 +107,7 @@ export function RecommendedRail({ jobs, showPrompt, onOpen }: Props) {
                 />
               ) : null}
             </View>
-            <AppText variant="secondary" color="mutedForeground" numberOfLines={1} tabular>
+            <AppText variant="secondary" color="mutedForeground" numberOfLines={2} tabular>
               {j.city} · {formatLPA(j.salaryMin, j.salaryMax)}
             </AppText>
           </PressableScale>

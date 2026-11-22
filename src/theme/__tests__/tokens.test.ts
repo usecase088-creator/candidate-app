@@ -1,4 +1,17 @@
-import { colors, fonts, gradients, logoTints, motion, radius, shadows, spacing } from '../tokens';
+import {
+  colors,
+  fonts,
+  fontSizes,
+  gradients,
+  ICON_BUTTON,
+  logoTints,
+  MIN_TOUCH,
+  motion,
+  radius,
+  shadows,
+  spacing,
+  touchSlop,
+} from '../tokens';
 
 // WCAG 2.x contrast ratio.
 function luminance(hex: string): number {
@@ -26,11 +39,39 @@ describe('colours (docs/reference/THEME.md)', () => {
       brandSoft: '#E1F0FF',
       muted: '#EFF4FA',
       mutedForeground: '#596475',
-      destructive: '#E23439',
       warning: '#DEA143',
       border: '#D4DAE1',
       ring: '#326AD9',
     });
+  });
+
+  it('R3 a11y: the destructive fill is darker than the website red (#E23439) so its label meets AA', () => {
+    expect(colors.destructive).toBe('#C81E2A');
+    expect(contrast(colors.destructiveForeground, colors.destructive)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('R3 a11y: placeholders meet AA on every field background (also the tonal fill of search fields)', () => {
+    expect(colors.placeholder).toBe('#636D7F');
+    for (const bg of ['surface', 'background', 'fill'] as const) {
+      expect(contrast(colors.placeholder, colors[bg])).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('R3 a11y: brandText is the blue for text on brand tints; brand stays for fills, borders and icons', () => {
+    expect(colors.brandText).toBe('#2A5BC4');
+    for (const bg of ['brandSoft', 'fill', 'skySoft', 'surface'] as const) {
+      expect(contrast(colors.brandText, colors[bg])).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('R3 a11y: controlBorder outlines inputs, checkboxes, OTP boxes and the switch track at >= 3:1 (WCAG 1.4.11)', () => {
+    expect(colors.controlBorder).toBe('#8A94A6');
+    expect(contrast(colors.controlBorder, colors.surface)).toBeGreaterThanOrEqual(3);
+    expect(contrast(colors.controlBorder, colors.background)).toBeGreaterThanOrEqual(2.9);
+  });
+
+  it('gov note More/Less: skyText on skySoft is AA', () => {
+    expect(contrast(colors.skyText, colors.skySoft)).toBeGreaterThanOrEqual(4.5);
   });
 
   it('error text uses the darker red from D15', () => {
@@ -66,12 +107,10 @@ describe('radius (D32 family)', () => {
 describe('D32 additions', () => {
   it('adds the roles the redesign needs and drops the second blue', () => {
     expect(colors.separator).toBe('#E5E9EF');
-    expect(colors.placeholder).toBe('#8A94A6');
     expect(colors.successSoft).toBe('#E6F8F1');
     expect(colors.successText).toBe('#047857');
     expect('checkbox' in colors).toBe(false);
     expect(contrast(colors.successText, colors.successSoft)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(colors.placeholder, colors.surface)).toBeGreaterThanOrEqual(3);
   });
 
   it('R2: a tonal control fill that is visibly darker than the canvas and keeps text AA', () => {
@@ -109,6 +148,29 @@ describe('D32 additions', () => {
     expect(motion.pressScale).toBe(0.97);
     expect(motion.pressOpacity).toBe(0.9);
     expect(motion.spring).toEqual({ damping: 15, stiffness: 300, mass: 1 });
+  });
+});
+
+describe('R3 #13: values that used to bypass the theme', () => {
+  it('has an 11/13 size for text inside a 36-pt ring (the smallest text in the app)', () => {
+    expect(fontSizes['2xs']).toEqual({ fontSize: 11, lineHeight: 13 });
+  });
+
+  it('has the 44-pt icon button size (with touchSlop it reaches MIN_TOUCH)', () => {
+    expect(ICON_BUTTON).toBe(44);
+    expect(ICON_BUTTON + 2 * touchSlop(ICON_BUTTON)).toBe(MIN_TOUCH);
+  });
+});
+
+describe('touch targets', () => {
+  it('touchSlop pads a drawn size up to MIN_TOUCH (48: Android 48 dp, more than iOS 44 pt)', () => {
+    expect(MIN_TOUCH).toBe(48);
+    expect(touchSlop(32)).toBe(8);
+    expect(touchSlop(36)).toBe(6);
+    expect(touchSlop(44)).toBe(2);
+    expect(touchSlop(20)).toBe(14);
+    expect(touchSlop(48)).toBe(0);
+    expect(touchSlop(60)).toBe(0);
   });
 });
 

@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 
 import { colors, radius } from '@/theme/tokens';
 import { fireEvent, renderWithProviders, screen } from '@/test/render';
@@ -126,7 +126,27 @@ it('draws one box per digit', async () => {
 it('highlights the next empty box', async () => {
   await setup({ value: '12' }).render();
   expect(flat(screen.getByTestId('signup.otp.box.2', HIDDEN).props.style).borderColor).toBe(colors.ring);
-  expect(flat(screen.getByTestId('signup.otp.box.3', HIDDEN).props.style).borderColor).toBe(colors.input);
+  // R3 a11y P2-5: empty boxes are outlined at 3:1.
+  expect(flat(screen.getByTestId('signup.otp.box.3', HIDDEN).props.style).borderColor).toBe(
+    colors.controlBorder,
+  );
+});
+
+it('R3 a11y P3-3: required shows the red marker and is spoken as "required" (not "star")', async () => {
+  await renderWithProviders(
+    <OtpInput testID="signup.otp" label="Mobile OTP" required value="" onChangeText={() => {}} />,
+  );
+  expect(screen.getByTestId('signup.otp.required')).toHaveTextContent('*');
+  expect(screen.getByTestId('signup.otp').props.accessibilityLabel).toBe('Mobile OTP, required');
+});
+
+it('R3 a11y P1-1: a new error is spoken', async () => {
+  const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+  announce.mockClear();
+  await renderWithProviders(
+    <OtpInput testID="signup.otp" label="Mobile OTP" value="" error="Invalid OTP." onChangeText={() => {}} />,
+  );
+  expect(announce).toHaveBeenCalledWith('Invalid OTP.');
 });
 
 it('shows an error in the D15 red and red boxes', async () => {
