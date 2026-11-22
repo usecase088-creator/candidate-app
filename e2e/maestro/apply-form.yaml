@@ -1,4 +1,4 @@
-# Apply with the structured form (website apply-mode wizard): the 15 steps open for the job, Continue to Review,
+# Apply with the structured form (website apply-mode wizard): the 16 steps open for the job, Continue to Review,
 # "Submit application" sends it without saving the profile. Demo applicant (filled profile); the Consultant
 # Cardiologist job has no job questions and no seeded application. Needs the staging server reseeded first.
 appId: work.apronhanger.candidate.dev
