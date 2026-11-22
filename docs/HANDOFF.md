@@ -4,6 +4,13 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
 
 ## Where we are
 
+- **2026-11-22 night (client build):** Raj approved the iOS filters page sheet, the destructive red #C81E2A (both in
+  DECISIONS D32) and a new preview build. EAS preview APK `77a60c50` (commit 430dd14, staging backend):
+  https://expo.dev/artifacts/eas/YqaT-LkM3DOySHAZGcnDNCAQHZuWpRKtqmaAyJpREMA.apk (copy `C:\devh-builds\preview-d32.apk`).
+  The first try failed in "Configure expo-updates": the build command needs `GOOGLE_SERVICES_JSON` set locally
+  (docs/SETUP.md). Installed on Raj's phone, the process starts (phone was locked, UI not seen). The client must uninstall
+  the old preview app first.
+
 - **2026-11-22 evening (iPhone verification):** EAS e2e-test build `621de877` (commit dab1632) on the GitHub `ios-e2e`
   simulator (375x667): **all 17 Maestro flows and the visual tour pass** (run 45009995636 + rerun 45015924872 for
   jobs-search-filters). Fixed on the way: iOS filters are now the system page sheet (`presentation: 'modal'`; the
