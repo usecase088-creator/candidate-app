@@ -11,6 +11,12 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: profile.screen
     timeout: 20000
+# The Profile page is long (website sections); the row may sit below the fold, and a tap off-screen hits the tab bar.
+- scrollUntilVisible:
+    element:
+      id: profile.edit
+    centerElement: true
+    timeout: 20000
 - tapOn:
     id: profile.edit
 - extendedWaitUntil:
@@ -54,6 +60,12 @@ appId: work.apronhanger.candidate.dev
     visible:
       id: profile.screen
     timeout: 15000
+# The Profile page is long (website sections); the row may sit below the fold, and a tap off-screen hits the tab bar.
+- scrollUntilVisible:
+    element:
+      id: profile.edit
+    centerElement: true
+    timeout: 20000
 - tapOn:
     id: profile.edit
 - extendedWaitUntil:

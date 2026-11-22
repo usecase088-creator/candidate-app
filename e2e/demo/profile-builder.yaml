@@ -12,6 +12,12 @@ appId: work.apronhanger.candidate.dev
     timeout: 20000
 - runFlow: _demo/pause-500.yaml
 - runFlow: _demo/cap-profile-builder-2.yaml
+# The Profile page is long (website sections); the row may sit below the fold, and a tap off-screen hits the tab bar.
+- scrollUntilVisible:
+    element:
+      id: profile.edit
+    centerElement: true
+    timeout: 20000
 - tapOn:
     id: profile.edit
 - runFlow: _demo/pause-900.yaml
@@ -65,6 +71,12 @@ appId: work.apronhanger.candidate.dev
       id: profile.screen
     timeout: 15000
 - runFlow: _demo/pause-500.yaml
+# The Profile page is long (website sections); the row may sit below the fold, and a tap off-screen hits the tab bar.
+- scrollUntilVisible:
+    element:
+      id: profile.edit
+    centerElement: true
+    timeout: 20000
 - tapOn:
     id: profile.edit
 - runFlow: _demo/pause-900.yaml

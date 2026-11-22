@@ -162,14 +162,19 @@ env:
     optional: true
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}11c-apply-form
+# The iOS "Save Password?" sheet can open late, here over the job page (iPhone run 2026-11-23); close it first.
+- runFlow: ../maestro/_common/iosPasswordSheet.yaml
 - runFlow:
     when:
       visible:
         id: builder.applyingTo
     commands:
       - runFlow: ../maestro/_common/goBack.yaml
+- runFlow: ../maestro/_common/iosPasswordSheet.yaml
 - runFlow: ../maestro/_common/goBack.yaml
+- runFlow: ../maestro/_common/iosPasswordSheet.yaml
 - runFlow: ../maestro/_common/goBack.yaml
+- runFlow: ../maestro/_common/iosPasswordSheet.yaml
 - tapOn:
     id: tabs.applications
 - extendedWaitUntil:

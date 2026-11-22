@@ -36,15 +36,57 @@ appId: work.apronhanger.candidate.dev
       id: builder.applyingTo
     timeout: 30000
 - assertVisible: Consultant Cardiologist.*
-# Through the steps to Review (every step is already valid for the demo applicant).
+# Through the steps to Review.
 - repeat:
-    times: 20
+    times: 24
     while:
       notVisible:
         id: builder.submit
     commands:
       - tapOn:
           id: builder.next
+      # The seeded experience predates the website's "specialty or department focus" rule: fill it like a user would.
+      - runFlow:
+          when:
+            visible: 'Experience 1: specialty or department focus is required'
+          commands:
+            - scrollUntilVisible:
+                element:
+                  id: builder.experience.0.specialty
+                direction: UP
+                centerElement: true
+                timeout: 20000
+            - tapOn:
+                id: builder.experience.0.specialty
+            - inputText: General Medicine
+            - runFlow: _common/hideKeyboard.yaml
+            - scrollUntilVisible:
+                element:
+                  id: builder.next
+                timeout: 20000
+            - tapOn:
+                id: builder.next
+      # The seeded experience predates the website's "specialty or department focus" rule: fill it like a user would.
+      - runFlow:
+          when:
+            visible: 'Experience 2: specialty or department focus is required'
+          commands:
+            - scrollUntilVisible:
+                element:
+                  id: builder.experience.1.specialty
+                direction: UP
+                centerElement: true
+                timeout: 20000
+            - tapOn:
+                id: builder.experience.1.specialty
+            - inputText: General Medicine
+            - runFlow: _common/hideKeyboard.yaml
+            - scrollUntilVisible:
+                element:
+                  id: builder.next
+                timeout: 20000
+            - tapOn:
+                id: builder.next
 - tapOn:
     id: builder.submit
 - extendedWaitUntil:
