@@ -1,0 +1,200 @@
+# Visual tour (D32): one screenshot per screen, for pixel review on Android and the iPhone simulator.
+#   maestro test e2e/tour/visual-tour.yaml -e OUT=<path prefix>   (the iOS workflow keeps output/)
+# Needs the staging seed (demo applicant). Read-only apart from signing in: it changes no data.
+appId: work.apronhanger.candidate.dev
+env:
+  OUT: output/tour-
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}01-home-guest
+- runFlow: ../maestro/_common/openSignIn.yaml
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}02-login
+- tapOn:
+    id: auth.tab.signup
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}03-signup
+- back
+- runFlow: ../maestro/_common/loginApplicant.yaml
+- extendedWaitUntil:
+    visible:
+      id: home.screen
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 6000
+- takeScreenshot: ${OUT}04-home
+- scroll
+- takeScreenshot: ${OUT}04b-home-scrolled
+- scrollUntilVisible:
+    element:
+      id: home.link.gov
+    direction: UP
+- tapOn:
+    id: home.link.gov
+- extendedWaitUntil:
+    visible:
+      id: gov.screen
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}05-gov
+- back
+- tapOn:
+    id: home.link.intl
+- extendedWaitUntil:
+    visible:
+      id: intl.screen
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}06-intl
+- back
+- tapOn:
+    id: home.link.saved
+- extendedWaitUntil:
+    visible:
+      id: saved.screen
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}07-saved
+- back
+- tapOn:
+    id: tabs.search
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}08-search
+- tapOn:
+    id: search.filters
+- extendedWaitUntil:
+    visible:
+      id: filters.sheet
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}09-filters
+- tapOn:
+    id: filters.close
+- tapOn:
+    id: tabs.home
+- scrollUntilVisible:
+    element:
+      id: 'job\.open\..*'
+    timeout: 20000
+- tapOn:
+    id: 'job\.open\..*'
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: job.screen
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}10-job
+- scroll
+- takeScreenshot: ${OUT}10b-job-scrolled
+- tapOn:
+    id: job.apply
+- extendedWaitUntil:
+    visible:
+      id: apply.screen
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}11-apply
+- scroll
+- takeScreenshot: ${OUT}11b-apply-scrolled
+- back
+- back
+- tapOn:
+    id: tabs.applications
+- extendedWaitUntil:
+    visible:
+      id: applications.tab.all
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}12-applications
+- scrollUntilVisible:
+    element:
+      id: application.row.5eed0000-0000-4000-8000-00000000a101
+- tapOn:
+    id: application.row.5eed0000-0000-4000-8000-00000000a101
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}13-app-interview
+- scroll
+- takeScreenshot: ${OUT}13b-app-interview-scrolled
+- back
+- scrollUntilVisible:
+    element:
+      id: application.row.5eed0000-0000-4000-8000-00000000a106
+- tapOn:
+    id: application.row.5eed0000-0000-4000-8000-00000000a106
+- extendedWaitUntil:
+    visible:
+      id: application.screen
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}14-app-offer
+- back
+- scrollUntilVisible:
+    element:
+      id: application.row.5eed0000-0000-4000-8000-00000000a104
+    optional: true
+- tapOn:
+    id: application.row.5eed0000-0000-4000-8000-00000000a104
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}15-app-documents
+- back
+- tapOn:
+    id: tabs.profile
+- extendedWaitUntil:
+    visible:
+      id: profile.screen
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}16-profile
+- scroll
+- takeScreenshot: ${OUT}16b-profile-scrolled
+- tapOn:
+    id: profile.photo.change
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}17-photo-sheet
+- tapOn:
+    id: profile.photo.cancel
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: profile.settings
+- tapOn:
+    id: profile.settings
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}18-settings
+- tapOn:
+    id: settings.delete
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}19-delete
+- back
+- back
+- scrollUntilVisible:
+    element:
+      id: profile.edit
+    direction: UP
+- tapOn:
+    id: profile.edit
+- extendedWaitUntil:
+    visible:
+      id: builder.screen
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}20-builder
+- back
+- tapOn:
+    id: topbar.notifications
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}21-notifications
