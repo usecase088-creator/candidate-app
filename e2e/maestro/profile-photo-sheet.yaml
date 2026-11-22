@@ -1,0 +1,31 @@
+# Profile photo: tapping the avatar opens the photo sheet (Take photo, Choose from gallery, Cancel) and Cancel closes it.
+# Nothing is uploaded. Needs the staging server (or npm run backend:local) and the demo applicant.
+appId: work.apronhanger.candidate.dev
+---
+- runFlow: _common/loginApplicant.yaml
+- runFlow: _common/iosPasswordSheet.yaml
+- tapOn:
+    id: tabs.profile
+- extendedWaitUntil:
+    visible:
+      id: profile.screen
+    timeout: 20000
+- runFlow: _common/iosPasswordSheet.yaml
+- tapOn:
+    id: profile.photo.open
+- extendedWaitUntil:
+    visible:
+      id: profile.photo.sheet
+    timeout: 10000
+- assertVisible:
+    id: profile.photo.camera
+- assertVisible:
+    id: profile.photo.gallery
+- tapOn:
+    id: profile.photo.cancel
+- extendedWaitUntil:
+    notVisible:
+      id: profile.photo.sheet
+    timeout: 10000
+- assertVisible:
+    id: profile.screen
