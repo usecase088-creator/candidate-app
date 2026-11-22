@@ -109,6 +109,9 @@ jobs:
             xcrun simctl io "$UDID" screenshot "output/end-$n.png"
             maestro --device "$UDID" hierarchy > "output/hierarchy-$n.json" 2>&1 || true
           done
+          # takeScreenshot paths resolve next to the flow file or under ~/.maestro, not output/: collect the tour shots.
+          mkdir -p output/tour
+          find "$GITHUB_WORKSPACE" "$HOME/.maestro" -name 'tour-*.png' -not -path '*/output/tour/*' -exec cp {} output/tour/ \; 2>/dev/null
           set -e
           sleep 2
           xcrun simctl io "$UDID" screenshot output/final.png
