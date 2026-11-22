@@ -9,6 +9,7 @@ import { Panel } from '@/components/ui/Panel';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Screen } from '@/components/ui/Screen';
 import { AppText } from '@/components/ui/Text';
+import { isApiError } from '@/api/errors';
 import { failureText } from '@/features/applications/messages';
 import { FormMessage } from '@/features/auth/components/FormMessage';
 import { useSession } from '@/features/auth/sessionStore';
@@ -38,6 +39,9 @@ export function DeleteAccountScreen() {
       await accountApi.deleteAccount(password);
     } catch (e) {
       setBusy(false);
+      // A rejected password (400/401) is cleared: the next try starts from an empty field. Network or server trouble
+      // keeps it, so the person can simply try again.
+      if (isApiError(e) && (e.status === 400 || e.status === 401)) setPassword('');
       return setError(failureText(e, 'Failed to delete account', { reasonOnly: true }));
     }
     // The account is gone: the phone forgets it too. No call to the server is left to make.

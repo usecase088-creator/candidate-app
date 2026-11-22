@@ -38,9 +38,9 @@ env:
     visible: 'Incorrect password'
     timeout: 30000
 # The right one deletes it and shows the login screen with the reason.
+# The app clears a rejected password, so the field is empty again.
 - tapOn:
     id: delete.password
-- eraseText: 30
 - inputText: ${PASSWORD}
 # Close the keyboard first: Gboard's backspace key is also named "Delete" and would take the tap below.
 - runFlow: _common/hideKeyboard.yaml

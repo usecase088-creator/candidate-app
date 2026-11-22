@@ -142,6 +142,9 @@ describe('Delete account', () => {
     expect(await screen.findByTestId('delete.error')).toHaveTextContent('Incorrect password');
     expect(screen.getByTestId('delete.screen')).toBeOnTheScreen();
     expect(await secureStorage.getItem(TOKEN_KEY)).not.toBeNull();
+    // The rejected password is cleared, so the next try starts from an empty field (found on the phone: a retry
+    // appended to the old text).
+    expect(screen.getByTestId('delete.password')).toHaveProp('value', '');
   });
 
   it('too many tries, a server error and no network each have their own words', async () => {
