@@ -74,7 +74,9 @@ appId: work.apronhanger.candidate.dev
       - tapOn:
           text: Next
           optional: true
-# D32: Send OTP sits under the consent boxes.
+# D32: Send OTP sits under the consent boxes. Close the keyboard first: on the iPhone SE a scroll that starts on the
+# keyboard does nothing.
+- runFlow: hideKeyboard.yaml
 - scrollUntilVisible:
     element:
       id: signup.submit

@@ -97,12 +97,12 @@ describe('pushed screens: native header', () => {
 });
 
 describe('filters sheet options', () => {
-  it('Android/web: one full-height detent so the pinned footer is on screen; iOS: two detents', () => {
+  it('one full-height detent on every platform so the pinned footer is on screen', () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const base = require('../filterSheetOptions.ts').filterSheetOptions;
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const ios = require('../filterSheetOptions.ios').filterSheetOptions;
     expect(base).toMatchObject({ presentation: 'formSheet', sheetAllowedDetents: [1] });
-    expect(ios).toMatchObject({ presentation: 'formSheet', sheetAllowedDetents: [0.7, 1] });
+    expect(ios).toMatchObject({ presentation: 'formSheet', sheetAllowedDetents: [1] });
   });
 });

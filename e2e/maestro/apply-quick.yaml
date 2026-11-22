@@ -70,6 +70,8 @@ appId: work.apronhanger.candidate.dev
     timeout: 15000
 - tapOn:
     id: apply.questions.q_scans
+# Let the screen settle (it scrolls the field above the keyboard) before typing.
+- waitForAnimationToEnd
 - inputText: '12'
 - runFlow: _common/hideKeyboard.yaml
 - scrollUntilVisible:

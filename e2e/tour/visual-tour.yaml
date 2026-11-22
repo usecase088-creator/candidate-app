@@ -24,6 +24,11 @@ env:
 - back
 - runFlow: ../maestro/_common/loginApplicant.yaml
 - extendedWaitUntil:
+    visible: 'Save Password.*'
+    timeout: 10000
+    optional: true
+- runFlow: ../maestro/_common/iosPasswordSheet.yaml
+- extendedWaitUntil:
     visible:
       id: home.screen
     timeout: 60000

@@ -214,6 +214,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['3'],
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
+    // Opaque and on top: on the iPhone sheet the scrolled content showed through the header (2026-11-22).
+    backgroundColor: colors.surface,
+    zIndex: 1,
   },
   close: { width: ICON_BUTTON, height: ICON_BUTTON, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: spacing['4'], paddingTop: spacing['3'], paddingBottom: spacing['6'] },

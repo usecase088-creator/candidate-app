@@ -88,6 +88,8 @@ appId: work.apronhanger.candidate.dev
 - runFlow: _common/iosPasswordSheet.yaml
 - tapOn:
     id: action.interview.reschedule
+# The note field may take focus and open the keyboard over the Send button: close it before scrolling.
+- runFlow: _common/hideKeyboard.yaml
 # The form opens below the buttons: on a small iPhone the Send button and the note are not on screen together.
 - scrollUntilVisible:
     element:
