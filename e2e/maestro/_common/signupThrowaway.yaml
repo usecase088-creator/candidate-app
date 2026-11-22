@@ -74,10 +74,11 @@ appId: work.apronhanger.candidate.dev
       - tapOn:
           text: Next
           optional: true
+# D32: Send OTP sits under the consent boxes.
 - scrollUntilVisible:
     element:
       id: signup.submit
-    direction: UP
+    direction: DOWN
 - tapOn:
     id: signup.submit
 # Android: Google Password Manager may ask to save the new password right after the form is sent. It covers the app
@@ -105,10 +106,9 @@ appId: work.apronhanger.candidate.dev
     timeout: 20000
 - tapOn:
     id: signup.otp
+# The 6th digit submits the code on its own (D32); no tap on Verify.
 - inputText: '123456'
 - runFlow: hideKeyboard.yaml
-- tapOn:
-    id: signup.submit
 - extendedWaitUntil:
     notVisible:
       id: signup.screen
