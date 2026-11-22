@@ -11,9 +11,12 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
   and go back with the edge swipe (`_common/goBack.yaml`), the salary stepper is centred before tapping (the sticky
   footer covered it on the small screen), the tour opened the wrong applications and tapped the photo badge (hidden from accessibility; it now taps the avatar). The
   requested-documents list showed an icon and a text bullet per item (the bullet is gone; the website uses an `<li>`). The workflow now keeps the tour
-  screenshots (`output/tour/`); the 26 iPhone screens were reviewed by eye, no layout bug found. **Not re-run on Android
-  since dab1632** (phone disconnected): rebuild the APK and run jobs-search-filters, jobs-gov-intl, apply-quick,
-  application-interview, auth-signup, account-delete and the tour. **Raj to decide:** iOS filters as a page sheet;
+  screenshots (`output/tour/`); the 26 iPhone screens were reviewed by eye, no layout bug found. Final iPhone build `6fc7cc47`
+  (commit ade292c): all 17 flows + tour pass; new flow `profile-photo-sheet` passes too. **Android (Raj's phone, APK
+  rebuilt from the same code):** all 18 flows and the tour pass; the run found that Maestro's Android hideKeyboard
+  presses Back when no keyboard is open (it left the sign-up form and the interview screen: removed there) and that a
+  Google "Save password" sheet can outlive a flow (openSignIn closes it with Back). Nice-to-have: the saved bookmark on
+  Android is the Material outline "bookmark_added", not a filled bookmark like iOS (expo-symbols draws outlines). **Raj to decide:** iOS filters as a page sheet;
   destructive red #C81E2A in DECISIONS.md D32; a new EAS preview build for the client.
 
 - **2026-11-22 day (D32 verification, Raj asked for review agents + pixel checks + an iPhone build):** a code review
