@@ -14,6 +14,7 @@ import { getEnv } from '@/lib/env';
 import { appQueryClient, setupFocusManager, setupOnlineManager } from '@/lib/queryClient';
 import { secureStorage } from '@/lib/secureStorage';
 import { initSentry, reportApiError, sendInstallCheckEvent } from '@/lib/sentry';
+import { filterSheetOptions } from '@/features/navigation/filterSheetOptions';
 import { PUSHED_SCREEN_TITLES } from '@/features/navigation/pushedScreens';
 import { FontGate } from '@/theme/FontGate';
 import { colors, fonts, fontSizes } from '@/theme/tokens';
@@ -81,18 +82,8 @@ export default function RootLayout() {
               >
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                {/* Search filters: a bottom sheet (iOS form sheet with detents; Android falls back to a modal). */}
-                <Stack.Screen
-                  name="filters"
-                  options={{
-                    headerShown: false,
-                    presentation: 'formSheet',
-                    sheetAllowedDetents: [0.7, 1],
-                    sheetGrabberVisible: true,
-                    sheetCornerRadius: 20,
-                    sheetInitialDetentIndex: 0,
-                  }}
-                />
+                {/* Search filters: a bottom sheet (options per platform in features/navigation/filterSheetOptions). */}
+                <Stack.Screen name="filters" options={filterSheetOptions} />
                 {Object.entries(PUSHED_SCREEN_TITLES).map(([name, title]) => (
                   <Stack.Screen key={name} name={name} options={{ title }} />
                 ))}

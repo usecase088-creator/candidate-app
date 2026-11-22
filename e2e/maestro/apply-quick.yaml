@@ -41,7 +41,12 @@ appId: work.apronhanger.candidate.dev
     timeout: 15000
 - tapOn:
     id: apply.quick
-# The message can be above the visible part on a small phone: scroll up to it.
+# D32: the message shows under its own field, which the screen scrolls into view (both directions are tried).
+- scrollUntilVisible:
+    element: '"Which imaging machines have you operated?" is required'
+    direction: DOWN
+    timeout: 15000
+    optional: true
 - scrollUntilVisible:
     element: '"Which imaging machines have you operated?" is required'
     direction: UP
