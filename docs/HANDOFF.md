@@ -18,9 +18,14 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
   them), Optional Section badge, salary ranges with the 0-120 cap, review lines; Settings Legal & Policies (About, Code of
   Conduct, Privacy, Terms & Conditions); **apply with the structured form** like the website wizard (D27 item 9
   superseded). New Maestro flows `apply-form`, `profile-photo-sheet`; the tour has the form apply page and profile
-  sections. `npm run check`: 134 suites / 2,024 tests. Left for later (audit items not done): builder readiness panel,
-  step list and mini preview; chip suggestions; profile strength 8-item list; filters insight tiles and active-filter
-  chips. The GitHub credential in Git Credential Manager expired overnight: pushes used the repo token from `.env.local`
+  sections. `npm run check`: 134 suites / 2,024 tests. The audit items left that night were done on 2026-11-23 (Raj: "go
+  ahead with the remaining website features"): builder readiness panel + step list (card at the top of each step) and
+  mini CV preview on Review (website computeDoctorReadiness / CvMiniPreview); website chip suggestions; Profile strength
+  8-item checklist ("x of 8 complete", a missing item opens its builder step, "Complete profile"); filter insight tiles
+  (Roles / Top LPA / Best fit) in the sheet and removable active-filter chips with Clear all on Search. `npm run check`:
+  137 suites / 2,068 tests. Flows: Profile rows are reached by scrolling to Sign out first (Maestro never counts a row
+  clipped by the tab bar as visible). To check once: on the Android login screen after a session expiry the password box
+  showed dots with an empty email (the form starts empty; most likely Google autofill). The GitHub credential in Git Credential Manager expired overnight: pushes used the repo token from `.env.local`
   for the command only; Raj should sign in to GCM again.
   **iPhone (EAS sim build f1c00b62, commit d6e6b7a): all 20 flows + the tour pass** (first run 15/20: Profile rows below
   the new sections, a seeded experience without the now-required specialty, a late "Save Password?" sheet; flows fixed

@@ -117,8 +117,9 @@ env:
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}09-filters
 # Website parity: a filter shows as a removable chip on Search; Clear all resets it for the rest of the tour.
+# Bengaluru is near the top of the sheet (Job type sits below the fold on a phone).
 - tapOn:
-    id: filters.type.Locum
+    id: filters.city.Bengaluru
     optional: true
 - tapOn:
     id: filters.done
@@ -271,9 +272,18 @@ env:
 - tapOn:
     id: profile.photo.cancel
     optional: true
-- scrollUntilVisible:
-    element:
-      id: profile.settings
+# Scroll to the last row (Sign out): Settings above it is then fully on screen (a row clipped by the tab bar never
+# counts as visible).
+- repeat:
+    times: 12
+    while:
+      notVisible:
+        id: profile.signout
+    commands:
+      # Full-height swipes: Maestro's own scrollUntilVisible stalls on this long page on Android (2026-11-23).
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 25%
 - tapOn:
     id: profile.settings
 - waitForAnimationToEnd
