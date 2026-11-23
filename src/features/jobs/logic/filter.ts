@@ -88,3 +88,55 @@ export function activeFilterCount(f: Filters): number {
     (f.sort !== 'latest' ? 1 : 0)
   );
 }
+
+export type JobInsights = { roles: string; topLpa: string; bestFit: string };
+
+/**
+ * The website filter panel's three tiles (FilterSidebar `Insight`): over every loaded job, not the filtered list.
+ * Top LPA is the highest `salaryMax` ("0" when none), Best fit the highest `matchPercent` ("—" when none).
+ */
+export function jobInsights(jobs: readonly Job[]): JobInsights {
+  const topSalary = jobs.reduce((max, j) => Math.max(max, Number(j.salaryMax || 0)), 0);
+  const strongestMatch = jobs.reduce((max, j) => Math.max(max, Number(j.matchPercent || 0)), 0);
+  return {
+    roles: `${jobs.length}`,
+    topLpa: topSalary ? `${topSalary}` : '0',
+    bestFit: strongestMatch ? `${strongestMatch}%` : '—',
+  };
+}
+
+export type ActiveFilterChip =
+  | { id: `city.${string}`; kind: 'city'; value: string; label: string }
+  | { id: `type.${string}`; kind: 'type'; value: string; label: string }
+  | { id: 'exp' | 'salary' | 'sort'; kind: 'exp' | 'salary' | 'sort'; label: string };
+
+/**
+ * The website's "Active filters" chips, in its order: cities, job types, "N+ yrs", "₹N+ LPA", then the sort (the
+ * website prints the raw key, e.g. "salary"; the app uses the sort's own label). One chip per counted filter.
+ */
+export function activeFilterChips(f: Filters): ActiveFilterChip[] {
+  const chips: ActiveFilterChip[] = [
+    ...f.cities.map((c) => ({ id: `city.${c}` as const, kind: 'city' as const, value: c, label: c })),
+    ...f.types.map((t) => ({ id: `type.${t}` as const, kind: 'type' as const, value: t, label: t })),
+  ];
+  if (f.minExp > 0) chips.push({ id: 'exp', kind: 'exp', label: `${f.minExp}+ yrs` });
+  if (f.minSalary > 0) chips.push({ id: 'salary', kind: 'salary', label: `₹${f.minSalary}+ LPA` });
+  if (f.sort !== 'latest') chips.push({ id: 'sort', kind: 'sort', label: SORT_LABELS[f.sort] });
+  return chips;
+}
+
+/** The filters with one chip's filter removed (back to its default). */
+export function withoutFilter<F extends Filters>(f: F, chip: ActiveFilterChip): F {
+  switch (chip.kind) {
+    case 'city':
+      return { ...f, cities: f.cities.filter((c) => c !== chip.value) };
+    case 'type':
+      return { ...f, types: f.types.filter((t) => t !== chip.value) };
+    case 'exp':
+      return { ...f, minExp: DEFAULT_FILTERS.minExp };
+    case 'salary':
+      return { ...f, minSalary: DEFAULT_FILTERS.minSalary };
+    case 'sort':
+      return { ...f, sort: DEFAULT_FILTERS.sort };
+  }
+}

@@ -307,6 +307,85 @@ describe('Search: filter sheet', () => {
   });
 });
 
+describe('Search: website insight tiles and active filters', () => {
+  it('the sheet opens with the three website tiles over all loaded jobs: Roles, Top LPA, Best fit', async () => {
+    installJobsBackend({ jobs: [nurse, doctor, tech] });
+    await search();
+    await screen.findByTestId('job.card.n1');
+    // A narrowed list must not change them: the website computes them from every job.
+    await fireEvent.changeText(screen.getByTestId('search.query'), 'nurse');
+    await openFilters();
+    const tiles = screen.getByTestId('filters.insights');
+    expect(within(tiles).getByTestId('filters.insight.roles')).toHaveTextContent('Roles3');
+    expect(within(tiles).getByTestId('filters.insight.topLpa')).toHaveTextContent('Top LPA40');
+    expect(within(tiles).getByTestId('filters.insight.bestFit')).toHaveTextContent('Best fit90%');
+    await fireEvent.press(screen.getByTestId('filters.close'));
+  });
+
+  it('no active filters: no chips and no Clear all under the Filters button', async () => {
+    installJobsBackend({ jobs: [nurse, doctor, tech] });
+    await search();
+    await screen.findByTestId('job.card.n1');
+    expect(screen.queryByTestId('search.active')).toBeNull();
+    expect(screen.queryByTestId('search.clearFilters')).toBeNull();
+  });
+
+  it('each active filter shows as a chip in website order; tapping one removes only that filter', async () => {
+    installJobsBackend({ jobs: [nurse, doctor, tech] });
+    await search();
+    await screen.findByTestId('job.card.n1');
+    await openFilters();
+    await fireEvent.press(screen.getByTestId('filters.city.Kolkata'));
+    await fireEvent.press(screen.getByTestId('filters.city.Bengaluru'));
+    await fireEvent.press(screen.getByTestId('filters.type.Locum'));
+    await fireEvent.press(screen.getByTestId('filters.exp.plus'));
+    await fireEvent.press(screen.getByTestId('filters.salary.plus'));
+    await fireEvent.press(screen.getByTestId('filters.sort.salary'));
+    await fireEvent.press(screen.getByTestId('filters.done'));
+
+    const row = screen.getByTestId('search.active');
+    const labels = within(row)
+      .queryAllByTestId(/^search\.active\.[^.]+(\.[^.]+)?\.label$/)
+      .map((n) => n.props.children);
+    expect(labels).toEqual(['Kolkata', 'Bengaluru', 'Locum', '1+ yrs', '₹2+ LPA', 'Salary high to low']);
+    expect(screen.getByTestId('search.active.city.Kolkata')).toHaveAccessibleName('Kolkata, tap to remove');
+    expect(ids()).toEqual(['d1']);
+
+    await fireEvent.press(screen.getByTestId('search.active.type.Locum'));
+    expect(screen.queryByTestId('search.active.type.Locum')).toBeNull();
+    expect(screen.getByTestId('search.filters')).toHaveAccessibleName('Filters, 5 active');
+    expect(ids()).toEqual(['d1', 'n1']);
+
+    await fireEvent.press(screen.getByTestId('search.active.sort.remove'));
+    await fireEvent.press(screen.getByTestId('search.active.exp'));
+    await fireEvent.press(screen.getByTestId('search.active.salary'));
+    expect(screen.getByTestId('search.filters')).toHaveAccessibleName('Filters, 2 active');
+    expect(ids()).toEqual(['d1', 'n1']);
+  });
+
+  it('Clear all resets filters and sort, keeps the typed text and the category', async () => {
+    installJobsBackend({ jobs: [nurse, doctor, tech] });
+    await search();
+    await screen.findByTestId('job.card.n1');
+    await fireEvent.changeText(screen.getByTestId('search.query'), 'a');
+    await openFilters();
+    await fireEvent.press(screen.getByTestId('filters.type.Locum'));
+    await fireEvent.press(screen.getByTestId('filters.sort.salary'));
+    await fireEvent.press(screen.getByTestId('filters.done'));
+    await act(async () => {
+      const { useFilterStore } = jest.requireActual('@/features/jobs/filterStore');
+      useFilterStore.getState().setCategory('Doctors');
+    });
+    const clear = screen.getByTestId('search.clearFilters');
+    expect(clear).toHaveTextContent('Clear all');
+    await fireEvent.press(clear);
+    expect(screen.queryByTestId('search.active')).toBeNull();
+    expect(screen.getByTestId('search.filters')).toHaveAccessibleName('Filters');
+    expect(screen.getByTestId('search.query').props.value).toBe('a');
+    expect(screen.getByTestId('search.category')).toBeOnTheScreen();
+  });
+});
+
 describe('Search: category from Home', () => {
   it('a chosen category shows as a chip and filters; tapping it clears', async () => {
     installJobsBackend({ jobs: [nurse, doctor, tech] });

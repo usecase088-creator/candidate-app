@@ -12,6 +12,7 @@ import { Stepper } from '@/components/ui/Stepper';
 import { AppText } from '@/components/ui/Text';
 import { colors, ICON_BUTTON, spacing, touchSlop } from '@/theme/tokens';
 
+import { FilterInsights } from './FilterInsights';
 import { selectFilterState, useFilterStore } from '../filterStore';
 import { useJobs } from '../hooks/useJobsData';
 import {
@@ -20,6 +21,7 @@ import {
   citiesOf,
   EXP_RANGE,
   JOB_TYPES,
+  jobInsights,
   SALARY_RANGE,
   SORT_LABELS,
   type SortKey,
@@ -30,7 +32,7 @@ const SORTS: SortKey[] = ['latest', 'salary', 'relevance'];
 /**
  * Website FilterSidebar as a bottom sheet (D32): the `/filters` route is presented as a sheet over the Search tab
  * (Android/web: form sheet; iOS: page sheet, see filterSheetOptions.ios).
- * Sort, location, experience, salary, job type, reset. Changes apply at once (the website has no apply button); the
+ * Insight tiles (Roles, Top LPA, Best fit), sort, location, experience, salary, job type, reset. Changes apply at once (the website has no apply button); the
  * primary button only closes the sheet and says how many roles match. testIDs: `filters.*`.
  */
 export function FilterSheet() {
@@ -40,6 +42,7 @@ export function FilterSheet() {
   const filterState = useFilterStore(useShallow(selectFilterState));
   const jobs = useJobs().data;
   const cities = useMemo(() => citiesOf(jobs ?? []), [jobs]);
+  const insights = useMemo(() => jobInsights(jobs ?? []), [jobs]);
   const resultCount = useMemo(() => applyFilters(jobs ?? [], filterState).length, [jobs, filterState]);
   const active = activeFilterCount(f);
   const close = () => (router.canGoBack() ? router.back() : router.replace('/search'));
@@ -76,7 +79,10 @@ export function FilterSheet() {
         contentContainerStyle={styles.body}
         keyboardShouldPersistTaps="handled"
       >
-        <AppText testID="filters.summary" variant="secondary" color="mutedForeground">
+        {/* The website panel's header tiles, over every loaded job (not the filtered list). */}
+        <FilterInsights testID="filters.insights" tilePrefix="filters.insight" insights={insights} />
+
+        <AppText testID="filters.summary" variant="secondary" color="mutedForeground" style={styles.summary}>
           {active === 0 ? 'No filters applied' : `${active} applied`}
         </AppText>
 
@@ -220,6 +226,7 @@ const styles = StyleSheet.create({
   },
   close: { width: ICON_BUTTON, height: ICON_BUTTON, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: spacing['4'], paddingTop: spacing['3'], paddingBottom: spacing['6'] },
+  summary: { paddingTop: spacing['3'] },
   group: { gap: spacing['3'], paddingTop: spacing['6'] },
   groupHeader: { gap: spacing['0.5'] },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing['2'] },

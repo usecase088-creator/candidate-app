@@ -91,6 +91,11 @@ appId: work.apronhanger.candidate.dev
 - assertVisible: Showing 1 of 4 verified roles
 - assertVisible:
     id: job.title.5eed0000-0000-4000-8000-00000000b004
+# Website "Active filters": one removable chip per filter under the Filters button.
+- assertVisible:
+    id: search.active.city.Bengaluru
+- assertVisible:
+    id: search.active.type.Locum
 
 # Filters stay when the user switches tabs and comes back.
 - tapOn:

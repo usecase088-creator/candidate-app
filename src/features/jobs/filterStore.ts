@@ -2,7 +2,15 @@
 // (PLAN.md Phase 2). Reset on sign-out by the root layout, so the next user starts clean.
 import { create } from 'zustand';
 
-import { DEFAULT_FILTERS, EXP_RANGE, type FilterState, type SortKey, SALARY_RANGE } from './logic/filter';
+import {
+  type ActiveFilterChip,
+  DEFAULT_FILTERS,
+  EXP_RANGE,
+  type FilterState,
+  type SortKey,
+  SALARY_RANGE,
+  withoutFilter,
+} from './logic/filter';
 
 type State = FilterState;
 
@@ -15,6 +23,8 @@ type Actions = {
   setMinExp: (years: number) => void;
   setMinSalary: (lpa: number) => void;
   setSort: (sort: SortKey) => void;
+  /** One active-filter chip on the Search screen: that filter back to its default. */
+  removeFilter: (chip: ActiveFilterChip) => void;
   /** The reset icon of the website's filter panel: filters and sort only. */
   resetFilters: () => void;
   /** Sign-out. */
@@ -38,6 +48,7 @@ export const useFilterStore = create<State & Actions>()((set) => ({
   setMinExp: (years) => set({ minExp: clamp(years, EXP_RANGE) }),
   setMinSalary: (lpa) => set({ minSalary: clamp(lpa, SALARY_RANGE) }),
   setSort: (sort) => set({ sort }),
+  removeFilter: (chip) => set((s) => withoutFilter(selectFilterState(s), chip)),
   resetFilters: () => set({ ...DEFAULT_FILTERS }),
   resetAll: () => set({ ...INITIAL }),
 }));

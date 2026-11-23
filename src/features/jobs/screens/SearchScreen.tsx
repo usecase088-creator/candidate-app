@@ -14,6 +14,7 @@ import { spacing } from '@/theme/tokens';
 import { useIsSignedIn } from '@/features/auth/sessionStore';
 import { goToSignIn } from '@/features/auth/signInGate';
 
+import { ActiveFilterChips } from '../components/ActiveFilterChips';
 import { JobListSkeleton } from '../components/JobCardSkeleton';
 import { JobList } from '../components/JobList';
 import { QueryStatus } from '../components/QueryStatus';
@@ -21,7 +22,7 @@ import { selectFilterState, useFilterStore } from '../filterStore';
 import { queryView } from '../hooks/queryView';
 import { useJobs } from '../hooks/useJobsData';
 import { useSavedIdSet, useToggleSave } from '../hooks/useSavedJobs';
-import { activeFilterCount, applyFilters } from '../logic/filter';
+import { activeFilterChips, activeFilterCount, applyFilters } from '../logic/filter';
 import { useOpenJob } from '../useOpenJob';
 
 /**
@@ -41,15 +42,18 @@ export function SearchScreen() {
   const setQuery = useFilterStore((s) => s.setQuery);
   const setCity = useFilterStore((s) => s.setCity);
   const setCategory = useFilterStore((s) => s.setCategory);
+  const removeFilter = useFilterStore((s) => s.removeFilter);
+  const resetFilters = useFilterStore((s) => s.resetFilters);
 
   const jobs = jobsQuery.data;
   const view = queryView(jobsQuery);
   const visible = useMemo(() => applyFilters(jobs ?? [], filterState), [jobs, filterState]);
   const active = activeFilterCount(filterState);
+  const chips = useMemo(() => activeFilterChips(filterState), [filterState]);
   const total = jobs?.length ?? 0;
 
   // D32: two compact search fields (role, then city), a small Filters button with its count, the category as a
-  // removable chip, then the results heading with the count on one line.
+  // removable chip, the active filters as removable chips (+ Clear all), then the results heading with the count.
   const header = (
     <View style={styles.header}>
       <SearchField
@@ -92,6 +96,15 @@ export function SearchScreen() {
           />
         ) : null}
       </View>
+
+      {/* Website "Active filters": one removable chip per filter, then Clear all (the panel's reset). */}
+      <ActiveFilterChips
+        testID="search.active"
+        clearTestID="search.clearFilters"
+        chips={chips}
+        onRemove={removeFilter}
+        onClear={resetFilters}
+      />
 
       {view === 'ready' && (
         <View style={styles.heading}>

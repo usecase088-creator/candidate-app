@@ -2,14 +2,17 @@ import type { Job } from '@/api/schemas/jobs';
 import { publicJob } from '@/test/fixtures/jobs';
 
 import {
+  activeFilterChips,
   activeFilterCount,
   applyFilters,
   categoriesOf,
   citiesOf,
   DEFAULT_FILTERS,
   type FilterState,
+  jobInsights,
   jobMatchesSearch,
   SORT_LABELS,
+  withoutFilter,
 } from '../filter';
 
 const job = (over: Partial<Job>): Job => ({
@@ -158,5 +161,71 @@ describe('activeFilterCount and labels', () => {
       salary: 'Salary high to low',
       relevance: 'Profile relevance',
     });
+  });
+});
+
+describe('jobInsights (website FilterSidebar: Roles, Top LPA, Best fit over all loaded jobs)', () => {
+  it('roles = number of jobs, top LPA = highest salaryMax, best fit = highest matchPercent with %', () => {
+    expect(
+      jobInsights([
+        job({ salaryMax: 4.5, matchPercent: 60 }),
+        job({ salaryMax: 40, matchPercent: 90 }),
+        job({ salaryMax: 3, matchPercent: null }),
+      ]),
+    ).toEqual({ roles: '3', topLpa: '40', bestFit: '90%' });
+  });
+  it('no jobs: "0", "0" and "—" like the website', () => {
+    expect(jobInsights([])).toEqual({ roles: '0', topLpa: '0', bestFit: '—' });
+  });
+  it('no match scores (all null or 0): best fit is "—"', () => {
+    expect(
+      jobInsights([job({ salaryMax: 0, matchPercent: null }), job({ salaryMax: 0, matchPercent: 0 })]),
+    ).toEqual({
+      roles: '2',
+      topLpa: '0',
+      bestFit: '—',
+    });
+  });
+});
+
+describe('activeFilterChips (website "Active filters" chips, same order) and withoutFilter', () => {
+  const all = {
+    cities: ['Pune', 'Kolkata'],
+    types: ['Locum'],
+    minExp: 3,
+    minSalary: 10,
+    sort: 'salary' as const,
+  };
+
+  it('none for the default filters', () => {
+    expect(activeFilterChips(DEFAULT_FILTERS)).toEqual([]);
+  });
+  it('cities, types, "N+ yrs", "₹N+ LPA", then the sort; one chip per active filter', () => {
+    const chips = activeFilterChips(all);
+    expect(chips.map((c) => c.label)).toEqual([
+      'Pune',
+      'Kolkata',
+      'Locum',
+      '3+ yrs',
+      '₹10+ LPA',
+      'Salary high to low',
+    ]);
+    expect(chips.map((c) => c.id)).toEqual([
+      'city.Pune',
+      'city.Kolkata',
+      'type.Locum',
+      'exp',
+      'salary',
+      'sort',
+    ]);
+    expect(chips).toHaveLength(activeFilterCount(all));
+  });
+  it('withoutFilter drops just that one filter', () => {
+    const [pune, , locum, exp, salary, sort] = activeFilterChips(all);
+    expect(withoutFilter(all, pune!)).toEqual({ ...all, cities: ['Kolkata'] });
+    expect(withoutFilter(all, locum!)).toEqual({ ...all, types: [] });
+    expect(withoutFilter(all, exp!)).toEqual({ ...all, minExp: 0 });
+    expect(withoutFilter(all, salary!)).toEqual({ ...all, minSalary: 0 });
+    expect(withoutFilter(all, sort!)).toEqual({ ...all, sort: 'latest' });
   });
 });
