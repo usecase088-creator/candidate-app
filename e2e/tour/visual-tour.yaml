@@ -108,8 +108,17 @@ env:
     timeout: 20000
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}09-filters
+# Website parity: a filter shows as a removable chip on Search; Clear all resets it for the rest of the tour.
 - tapOn:
-    id: filters.close
+    id: filters.type.Locum
+    optional: true
+- tapOn:
+    id: filters.done
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}09b-search-active-filters
+- tapOn:
+    id: search.clearFilters
+    optional: true
 - tapOn:
     id: tabs.home
 - scrollUntilVisible:
@@ -285,6 +294,13 @@ env:
     timeout: 30000
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}20-builder
+# Website parity: the readiness card opens to the next best fixes and the step list.
+- tapOn:
+    id: builder.overview.toggle
+- waitForAnimationToEnd
+- takeScreenshot: ${OUT}20b-builder-steps
+- tapOn:
+    id: builder.overview.toggle
 - runFlow: ../maestro/_common/goBack.yaml
 - tapOn:
     id: topbar.notifications
