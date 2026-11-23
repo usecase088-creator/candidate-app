@@ -13,12 +13,12 @@ env:
     visible:
       id: profile.screen
     timeout: 20000
-# The Profile page is long (website sections); the row may sit below the fold, and a tap off-screen hits the tab bar.
+# The Profile page is long (website sections). Scroll to the last row (Sign out): the row above is then fully on screen.
+# (Scrolling to the row itself can stop with it a few pixels under the tab bar, which Maestro never counts as visible.)
 - scrollUntilVisible:
     element:
-      id: profile.settings
-    centerElement: true
-    timeout: 20000
+      id: profile.signout
+    timeout: 30000
 - tapOn:
     id: profile.settings
 - extendedWaitUntil:

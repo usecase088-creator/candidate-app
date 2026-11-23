@@ -136,4 +136,5 @@ appId: work.apronhanger.candidate.dev
 - extendedWaitUntil:
     visible: 'Radiology Technician.*'
     timeout: 90000
-- assertVisible: '9 applications.*'
+# The seed has 8; this adds one. apply-form (run before this in a full run) may have added another.
+- assertVisible: '(9|10) applications.*'

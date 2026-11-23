@@ -40,8 +40,11 @@ appId: work.apronhanger.candidate.dev
     element:
       id: action.docs.files.pick.gallery
     timeout: 15000
+# The iOS "Save Password?" sheet can open late, over the photo picker (iPhone run 2026-11-23): close it first.
+- runFlow: _common/iosPasswordSheet.yaml
 - tapOn:
     id: action.docs.files.pick.gallery
+- runFlow: _common/iosPasswordSheet.yaml
 # The phone's own photo picker (Google Photos on this phone) opens over the app. The photo added above is the newest, so
 # it is the first tile: tap only that one, never a position further in (the rest is the owner's own library).
 - extendedWaitUntil:

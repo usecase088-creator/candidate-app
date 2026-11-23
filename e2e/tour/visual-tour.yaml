@@ -89,7 +89,15 @@ env:
     timeout: 30000
 - waitForAnimationToEnd
 - takeScreenshot: ${OUT}07-saved
+- runFlow: ../maestro/_common/iosPasswordSheet.yaml
 - runFlow: ../maestro/_common/goBack.yaml
+# The iPhone edge swipe sometimes does not take (iPhone run 2026-11-23 stayed on Saved jobs): try once more.
+- runFlow:
+    when:
+      visible:
+        id: saved.screen
+    commands:
+      - runFlow: ../maestro/_common/goBack.yaml
 - tapOn:
     id: tabs.search
 - waitForAnimationToEnd
