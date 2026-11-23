@@ -16,10 +16,11 @@ import { queryView } from '@/features/jobs/hooks/queryView';
 import { useSession } from '@/features/auth/sessionStore';
 import { colors, radius, shadows, spacing } from '@/theme/tokens';
 
-import { nextBestFixes, type ProfileJson } from '../builder/model';
+import { type ProfileJson } from '../builder/model';
 import { AvatarSection } from '../components/AvatarSection';
 import { CompletenessRing } from '../components/CompletenessRing';
 import { ProfileSections, ProfileStats } from '../components/ProfileSections';
+import { profileChecklist } from '../logic/profileChecklist';
 import { profileView, SECTION_STEP, type SectionKey } from '../logic/profileView';
 import { useCandidateMe } from '../hooks/useCandidateMe';
 
@@ -28,7 +29,8 @@ const ICONS = {
   cv: { ios: 'doc.text', android: 'description', web: 'description' },
   settings: { ios: 'gearshape', android: 'settings', web: 'settings' },
   signOut: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout', web: 'logout' },
-  fix: { ios: 'plus.circle', android: 'add_circle', web: 'add_circle' },
+  done: { ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' },
+  todo: { ios: 'circle', android: 'radio_button_unchecked', web: 'radio_button_unchecked' },
   verified: { ios: 'checkmark.shield', android: 'verified_user', web: 'verified_user' },
 } as const;
 const ICON_SIZE = 24;
@@ -37,7 +39,8 @@ const ROW_INSET = spacing['4'] + ICON_SIZE + spacing['3'];
 
 /**
  * Profile tab (D32): hero (avatar, name, headline, the website's verified badge, location, email, phone), the website
- * stats strip, a strength card with the completeness ring and the next best fixes, the website profile sections
+ * stats strip, the website strength card (completeness ring, "x of y complete", the eight-item checklist whose
+ * open items open the builder at their step, and "Complete profile" under 100%), the website profile sections
  * (About ... Languages, each with Edit), then two grouped lists: Profile (Edit profile, My CV) and Account (Settings,
  * Sign out). With no profile yet the website empty state replaces the strength card and the sections. The lists stay
  * on screen while the profile loads or fails, so Sign out is always one tap away.
@@ -52,10 +55,11 @@ export function ProfileScreen() {
   const name = String(profile?.name ?? me?.name ?? '');
   const headline = typeof profile?.headline === 'string' ? profile.headline : '';
   const completeness = Math.round(Number(profile?.completeness ?? 0));
-  const fixes = profile ? nextBestFixes(profile) : [];
+  const checklist = profile ? profileChecklist(profile) : [];
+  const doneCount = checklist.filter((item) => item.done).length;
   const openBuilder = () => router.push('/profile-builder');
-  const editSection = (key: SectionKey) =>
-    router.push({ pathname: '/profile-builder', params: { step: String(SECTION_STEP[key]) } });
+  const openStep = (step: number) => router.push({ pathname: '/profile-builder', params: { step: String(step) } });
+  const editSection = (key: SectionKey) => openStep(SECTION_STEP[key]);
   // M4: no profile yet (website "Your CV hasn't been built yet"): the one filled CTA lives in the empty card.
   const heroCta = view === 'ready' && !profile;
   const details = me && profile ? profileView(me) : null;
@@ -166,27 +170,45 @@ export function ProfileScreen() {
                 <CompletenessRing testID="profile.completeness" percent={completeness} />
                 <View style={styles.strengthText}>
                   <AppText variant="rowTitle">Profile strength</AppText>
-                  <AppText variant="secondary" color="mutedForeground">
-                    {completeness >= 100 ? 'Your profile is complete.' : 'Add the items below to reach 100%.'}
+                  <AppText testID="profile.strength.subtitle" variant="secondary" color="mutedForeground">
+                    {`${doneCount} of ${checklist.length} complete`}
                   </AppText>
                 </View>
               </View>
-              {fixes.length > 0 ? (
-                <View testID="profile.fixes" style={styles.fixes}>
-                  <Separator />
-                  {fixes.map((fix, i) => (
-                    <Fragment key={fix}>
-                      {i > 0 ? <Separator inset={ROW_INSET} /> : null}
-                      <ListRow
-                        testID={`profile.fixes.${i}`}
-                        title={fix}
-                        titleNumberOfLines={2}
-                        leading={<Icon name={ICONS.fix} size={ICON_SIZE} tintColor={colors.brand} />}
-                        onPress={openBuilder}
-                      />
-                    </Fragment>
-                  ))}
-                </View>
+              {/* Website ProfileStrengthCard: every item, a check when done, an empty circle when not. */}
+              <View testID="profile.checklist" style={styles.checklist}>
+                <Separator />
+                {checklist.map((item, i) => (
+                  <Fragment key={item.key}>
+                    {i > 0 ? <Separator inset={ROW_INSET} /> : null}
+                    <ListRow
+                      testID={`profile.checklist.${i}`}
+                      title={item.label}
+                      accessibilityLabel={`${item.label}, ${item.done ? 'complete' : 'not complete'}`}
+                      accessibilityRole={item.done ? 'text' : 'button'}
+                      accessibilityHint={item.done ? undefined : 'Opens the profile builder'}
+                      leading={
+                        <Icon
+                          testID={`profile.checklist.${i}.icon`}
+                          name={item.done ? ICONS.done : ICONS.todo}
+                          size={ICON_SIZE}
+                          tintColor={item.done ? colors.brand : colors.mutedForeground}
+                        />
+                      }
+                      onPress={item.done ? undefined : () => openStep(item.step)}
+                    />
+                  </Fragment>
+                ))}
+              </View>
+              {completeness < 100 ? (
+                <Button
+                  testID="profile.strength.complete"
+                  label="Complete profile"
+                  variant="secondary"
+                  size="md"
+                  fullWidth
+                  onPress={openBuilder}
+                />
               ) : null}
             </View>
           )}
@@ -254,6 +276,6 @@ const styles = StyleSheet.create({
   strengthRow: { flexDirection: 'row', alignItems: 'center', gap: spacing['4'] },
   strengthText: { flex: 1, gap: spacing['0.5'] },
   // Rows sit inside the card: pull them to its edges so the pressed state and separators run full width.
-  fixes: { marginHorizontal: -spacing['4'], marginBottom: -spacing['4'], paddingTop: spacing['1'] },
+  checklist: { marginHorizontal: -spacing['4'], paddingTop: spacing['1'] },
   bottom: { height: spacing['8'] },
 });

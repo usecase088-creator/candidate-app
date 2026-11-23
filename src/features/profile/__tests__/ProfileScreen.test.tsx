@@ -73,15 +73,61 @@ describe('Profile tab', () => {
     expect(style.borderWidth ?? 0).toBe(0);
   });
 
-  it('D32: lists up to three next best fixes under the ring, each opening the builder', async () => {
+  it("the website strength checklist: all eight items, done or not, and the website's \"x of y complete\"", async () => {
     installJobsBackend({ me: applicantMe });
     await openProfile();
-    expect(await screen.findByTestId('profile.fixes')).toBeOnTheScreen();
-    expect(screen.getByTestId('profile.fixes.0')).toHaveTextContent('Add your registration number');
-    expect(screen.getByTestId('profile.fixes.2')).toBeOnTheScreen();
-    expect(screen.queryByTestId('profile.fixes.3')).toBeNull();
-    await fireEvent.press(screen.getByTestId('profile.fixes.0'));
+    expect(screen.getByTestId('profile.strength.subtitle')).toHaveTextContent('3 of 8 complete');
+    const list = within(screen.getByTestId('profile.checklist'));
+    const expected: [string, boolean][] = [
+      ['Contact details', true],
+      ['Location', true],
+      ['Registration', false],
+      ['Professional summary', false],
+      ['Work experience', false],
+      ['Education', false],
+      ['Clinical skills', true],
+      ['Certifications', false],
+    ];
+    expected.forEach(([label, done], i) => {
+      const row = list.getByTestId(`profile.checklist.${i}`);
+      expect(row).toHaveTextContent(label);
+      expect(row).toHaveProp('accessibilityLabel', `${label}, ${done ? 'complete' : 'not complete'}`);
+      // Website: a check for a done item, an empty circle for one still to do.
+      expect(list.getByTestId(`profile.checklist.${i}.icon`)).toHaveProp(
+        'name',
+        done ? 'checkmark.circle.fill' : 'circle',
+      );
+      expect(list.getByTestId(`profile.checklist.${i}.icon`)).toHaveProp(
+        'tintColor',
+        done ? colors.brand : colors.mutedForeground,
+      );
+    });
+    expect(list.queryByTestId('profile.checklist.8')).toBeNull();
+    // A done item is plain text, like the website: no button for screen readers.
+    expect(list.getByTestId('profile.checklist.0').props.accessibilityRole).not.toBe('button');
+  });
+
+  it('a not-done checklist item opens the builder at the step that fills it', async () => {
+    installJobsBackend({ me: applicantMe });
+    await openProfile();
+    expect(screen.getByTestId('profile.checklist.2').props.accessibilityRole).toBe('button');
+    await fireEvent.press(screen.getByTestId('profile.checklist.2'));
+    expect(await screen.findByTestId('builder.progress')).toHaveTextContent('Step 3 of 16');
+  });
+
+  it('website "Complete profile" opens the builder while completeness is under 100%', async () => {
+    installJobsBackend({ me: applicantMe });
+    await openProfile();
+    expect(screen.getByTestId('profile.strength.complete')).toHaveTextContent('Complete profile');
+    await fireEvent.press(screen.getByTestId('profile.strength.complete'));
     expect(await screen.findByTestId('builder.screen')).toBeOnTheScreen();
+  });
+
+  it('no "Complete profile" button at 100%', async () => {
+    installJobsBackend({ me: { ...applicantMe, profile: { ...applicantMe.profile, completeness: 100 } } });
+    await openProfile();
+    expect(screen.getByTestId('profile.completeness')).toHaveTextContent(/100%/);
+    expect(screen.queryByTestId('profile.strength.complete')).toBeNull();
   });
 
   it('D32: Edit profile, My CV, Settings and Sign out are grouped rows once the profile exists', async () => {
@@ -95,7 +141,7 @@ describe('Profile tab', () => {
     expect(screen.getByTestId('profile.signout')).toHaveTextContent('Sign out');
   });
 
-  it('M4: with no profile yet it shows the website empty state with one "Build my CV" button and no fixes list', async () => {
+  it('M4: with no profile yet it shows the website empty state with one "Build my CV" button and no checklist', async () => {
     installJobsBackend({ me: { ...applicantMe, profile: null } });
     await startSignedIn('/profile', 'profile.screen');
     expect(await screen.findByTestId('profile.empty')).toBeOnTheScreen();
@@ -106,7 +152,8 @@ describe('Profile tab', () => {
       ),
     ).toBeOnTheScreen();
     expect(screen.getByTestId('profile.edit')).toHaveTextContent('Build my CV');
-    expect(screen.queryByTestId('profile.fixes')).toBeNull();
+    expect(screen.queryByTestId('profile.checklist')).toBeNull();
+    expect(screen.queryByTestId('profile.strength.complete')).toBeNull();
     expect(screen.queryByTestId('profile.sections')).toBeNull();
     await fireEvent.press(screen.getByTestId('profile.edit'));
     expect(await screen.findByTestId('builder.screen')).toBeOnTheScreen();
