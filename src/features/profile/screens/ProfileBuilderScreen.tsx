@@ -8,7 +8,7 @@
 // on the Review step and "Submit application", which sends the application instead of saving the profile.
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { type ComponentRef, Fragment, useEffect, useRef, useState } from 'react';
+import { type ComponentRef, Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { CustomFieldResponses, UploadedFile } from '@/api/schemas/applications';
@@ -45,12 +45,15 @@ import { haptic } from '@/lib/haptics';
 import { colors, radius, spacing } from '@/theme/tokens';
 
 import { VaultSection } from '../components/VaultSection';
+import { BuilderOverview } from '../builder/components/BuilderOverview';
+import { CvMiniPreview } from '../builder/components/CvMiniPreview';
 import { FormField } from '../builder/components/FormField';
 import { SalaryRange } from '../builder/components/SalaryRange';
 import { type BuilderDraft, clearDraft, loadDraft, type PendingFile, saveDraft } from '../builder/draftStore';
 import { type Block, type FieldSpec, stepBlocks } from '../builder/formSpec';
 import { type Draft, draftFromMe, type ProfileJson, profileFromDraft } from '../builder/model';
 import { LAST_STEP, STEPS } from '../builder/options';
+import { builderReadiness } from '../builder/readiness';
 import { validateStep } from '../builder/validation';
 import { CANDIDATE_ME_KEY, useCandidateMe } from '../hooks/useCandidateMe';
 import { profileApi } from '../profileApi';
@@ -337,6 +340,7 @@ function Builder({
 
   const meta = STEPS[step]!;
   const progress = Math.round(((step + 1) / STEPS.length) * 100);
+  const readiness = useMemo(() => builderReadiness(draft), [draft]);
   return (
     // R3 #4: the sticky bar pads the bottom inset itself (like JobDetails / ApplyFrame), so the screen takes only the top.
     <Screen testID="builder.screen" edges={['top']} padded={false}>
@@ -350,6 +354,16 @@ function Builder({
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}
       >
+        <BuilderOverview
+          readiness={readiness}
+          steps={STEPS}
+          step={step}
+          onOpenStep={(i) => {
+            // Website: any step opens from the list; Continue and the final save still check the steps.
+            setError(undefined);
+            if (i !== step) goTo(i);
+          }}
+        />
         <View style={styles.header}>
           <View style={styles.progressRow}>
             <AppText testID="builder.progress" variant="secondary" color="mutedForeground" tabular>
@@ -418,6 +432,11 @@ function Builder({
               problem={problem}
             />
           </View>
+        ) : null}
+
+        {step === LAST_STEP ? (
+          // Website CvMiniPreview (sidebar): the CV this form makes, in small.
+          <CvMiniPreview testID="builder.cvPreview" profile={profileFromDraft(draft, {})} />
         ) : null}
 
         {step === LAST_STEP ? (

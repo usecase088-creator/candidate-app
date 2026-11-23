@@ -709,3 +709,116 @@ describe('Profile builder: website details', () => {
     );
   });
 });
+
+// Website ProfileFormWizard sidebar: "Application readiness" (computeDoctorReadiness), the step list and the mini CV
+// preview. On the phone the readiness and the steps sit in one card at the top that opens; the preview is on Review.
+describe('Profile builder: readiness, steps and CV preview', () => {
+  const openSteps = async () => fireEvent.press(await screen.findByTestId('builder.overview.toggle'));
+
+  it('shows the readiness of what is typed and follows the typing', async () => {
+    setup();
+    await open();
+    // fullProfile: no procedures, research or documents yet → 7 of 10 checks.
+    expect(await screen.findByTestId('builder.readiness.score')).toHaveTextContent('70% ready');
+    await fireEvent.changeText(screen.getByTestId('builder.field.fullName'), '');
+    expect(screen.getByTestId('builder.readiness.score')).toHaveTextContent('60% ready');
+  });
+
+  it('the card opens on the website "Next best fixes" and the 16 steps, and closes again', async () => {
+    setup();
+    await open();
+    expect(screen.queryByTestId('builder.steps.0')).toBeNull();
+    await openSteps();
+    expect(screen.getByTestId('builder.overview.toggle')).toHaveProp(
+      'accessibilityState',
+      expect.objectContaining({ expanded: true }),
+    );
+    expect(screen.getByText('Next best fixes')).toBeOnTheScreen();
+    expect(screen.getByTestId('builder.readiness.fix.0')).toHaveTextContent('Add procedure exposure');
+    expect(screen.getByTestId('builder.readiness.fix.1')).toHaveTextContent('Add publications or citation metrics');
+    expect(screen.getByTestId('builder.readiness.fix.2')).toHaveTextContent('Mark verification documents ready');
+    expect(screen.getByTestId('builder.steps.15')).toHaveTextContent(/Review & Submit/);
+    await openSteps();
+    expect(screen.queryByTestId('builder.steps.0')).toBeNull();
+  });
+
+  it('each step says done, current or optional, like the website list', async () => {
+    setup();
+    await atStep(2);
+    await open();
+    await openSteps();
+    expect(screen.getByTestId('builder.steps.0')).toHaveProp('accessibilityLabel', 'Step 1, Basic Details, done');
+    expect(screen.getByTestId('builder.steps.2')).toHaveProp(
+      'accessibilityLabel',
+      'Step 3, Registration & Compliance, current',
+    );
+    expect(screen.getByTestId('builder.steps.2')).toHaveProp(
+      'accessibilityState',
+      expect.objectContaining({ selected: true }),
+    );
+    expect(screen.getByTestId('builder.steps.6')).toHaveProp('accessibilityLabel', 'Step 7, Procedures, optional');
+    expect(screen.getByTestId('builder.steps.6')).toHaveTextContent(/Optional/);
+    expect(screen.getByTestId('builder.steps.0.done')).toBeOnTheScreen();
+    expect(screen.queryByTestId('builder.steps.2.done')).toBeNull();
+  });
+
+  it('a step opens straight away, also past a step that is not valid yet (website); the save still checks them all', async () => {
+    const me = meWith({ ...fullProfile, clinicalSkills: [] });
+    setup(me);
+    await atStep(0, me);
+    await open();
+    await openSteps();
+    await fireEvent.press(screen.getByTestId('builder.steps.15'));
+    expect(await screen.findByTestId('builder.progress')).toHaveTextContent('Step 16 of 16');
+    expect(screen.queryByTestId('builder.steps.0')).toBeNull(); // the card closes on a jump
+    await waitFor(async () => expect((await onPhone())?.step).toBe(15));
+    expect(puts).toHaveLength(0);
+    await fireEvent.press(screen.getByTestId('builder.submit'));
+    expect(await screen.findByText('Add at least one clinical skill')).toBeOnTheScreen();
+    expect(screen.getByTestId('builder.progress')).toHaveTextContent('Step 6 of 16');
+  });
+
+  it('a jump clears the message of the step the user left', async () => {
+    setup();
+    await open();
+    await fireEvent.changeText(await screen.findByTestId('builder.field.fullName'), '');
+    await next();
+    expect(await screen.findByTestId('builder.error')).toBeOnTheScreen();
+    await openSteps();
+    await fireEvent.press(screen.getByTestId('builder.steps.4'));
+    expect(await screen.findByTestId('builder.progress')).toHaveTextContent('Step 5 of 16');
+    expect(screen.queryByTestId('builder.error')).toBeNull();
+  });
+
+  it('Review shows the mini CV preview of the form (website CvMiniPreview)', async () => {
+    const me = meWith({ ...fullProfile, clinicalSkills: ['PTCA', 'Echo', 'TEE', 'Holter'] });
+    setup(me);
+    await atStep(15, me);
+    await open();
+    expect(await screen.findByTestId('builder.cvPreview.name')).toHaveTextContent('Demo Applicant');
+    expect(screen.getByTestId('builder.cvPreview.headline')).toHaveTextContent('Cardiology · 6 years experience');
+    expect(screen.getByTestId('builder.cvPreview.experience.0')).toHaveTextContent(/Consultant.*AMRI/);
+    expect(screen.getByTestId('builder.cvPreview.skill.2')).toHaveTextContent('TEE');
+    expect(screen.queryByTestId('builder.cvPreview.skill.3')).toBeNull(); // the website shows three
+  });
+
+  it('no CV preview before the Review step', async () => {
+    setup();
+    await open();
+    await screen.findByTestId('builder.progress');
+    expect(screen.queryByTestId('builder.cvPreview')).toBeNull();
+  });
+
+  it('step 6: a tapped suggestion is added to the clinical skills (website suggestions for doctors)', async () => {
+    setup();
+    await atStep(5);
+    await open();
+    expect(await screen.findByTestId('builder.field.clinicalSkills.suggest.0')).toHaveTextContent('OPD Management');
+    await fireEvent.press(screen.getByTestId('builder.field.clinicalSkills.suggest.0'));
+    expect(screen.getByTestId('builder.field.clinicalSkills.item.1')).toHaveTextContent('OPD Management');
+    expect(screen.getByTestId('builder.field.clinicalSkills.suggest.0')).toHaveTextContent('ICU Care');
+    await next();
+    await waitFor(async () => expect((await onPhone())?.step).toBe(6));
+    expect((await onPhone())?.draft.clinicalSkills).toEqual(['PTCA', 'OPD Management']);
+  });
+});

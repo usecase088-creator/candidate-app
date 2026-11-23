@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 import { colors } from '@/theme/tokens';
-import { renderWithProviders, screen } from '@/test/render';
+import { fireEvent, renderWithProviders, screen } from '@/test/render';
 
 import type { FieldSpec } from '../../formSpec';
 import { FormField } from '../FormField';
@@ -75,5 +75,54 @@ describe('FormField required marker', () => {
       />,
     );
     expect(flat(screen.getByTestId('builder.field.d.required').props.style).color).toBe(colors.errorText);
+  });
+});
+
+// Website ChipInput `suggestions`: tap to add, the ones already added are hidden, at most 8 shown, each with a "+".
+describe('FormField chips suggestions', () => {
+  const SPECIALTIES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+  const chips = (over: Partial<FieldSpec> = {}) =>
+    field({ kind: 'chips', key: 'skills', label: 'Clinical skills', suggestions: SPECIALTIES, ...over });
+
+  it('shows at most 8 suggestions, each with a plus icon and "Add <word>" for screen readers', async () => {
+    await renderWithProviders(
+      <FormField testID="builder.field.skills" spec={chips()} value={[]} onChange={() => {}} />,
+    );
+    expect(screen.getByTestId('builder.field.skills.suggest.7')).toHaveTextContent('H');
+    expect(screen.queryByTestId('builder.field.skills.suggest.8')).toBeNull();
+    expect(screen.getByTestId('builder.field.skills.suggest.0.icon')).toBeOnTheScreen();
+    expect(screen.getByTestId('builder.field.skills.suggest.0')).toHaveProp('accessibilityLabel', 'Add A');
+  });
+
+  it('hides the ones already added, so the next ones move up', async () => {
+    await renderWithProviders(
+      <FormField testID="builder.field.skills" spec={chips()} value={['A', 'C']} onChange={() => {}} />,
+    );
+    expect(screen.getByTestId('builder.field.skills.suggest.0')).toHaveTextContent('B');
+    expect(screen.getByTestId('builder.field.skills.suggest.7')).toHaveTextContent('J');
+    expect(screen.queryByText('A', { exact: true })).toBeOnTheScreen(); // the added chip itself
+  });
+
+  it('tapping a suggestion adds it to the list', async () => {
+    const onChange = jest.fn();
+    await renderWithProviders(
+      <FormField testID="builder.field.skills" spec={chips()} value={['A']} onChange={onChange} />,
+    );
+    await fireEvent.press(screen.getByTestId('builder.field.skills.suggest.1'));
+    expect(onChange).toHaveBeenCalledWith(['A', 'C']);
+  });
+
+  it('a single chips field (primary specialty) is replaced by the tapped suggestion', async () => {
+    const onChange = jest.fn();
+    await renderWithProviders(
+      <FormField
+        testID="builder.field.specialty"
+        spec={chips({ key: 'specialty', single: true })}
+        value="A"
+        onChange={onChange}
+      />,
+    );
+    await fireEvent.press(screen.getByTestId('builder.field.specialty.suggest.0'));
+    expect(onChange).toHaveBeenCalledWith('B');
   });
 });

@@ -82,6 +82,20 @@ export const DOCTOR_SPECIALTIES = [
 ];
 export const DENTIST_SPECIALTIES = ['Dental Surgery', 'Endodontics', 'Orthodontics', 'Prosthodontics'];
 export const OTHER_SPECIALTIES = ['ICU', 'OT', 'Radiology', 'Laboratory', 'Hospital Ops'];
+/** Website ChipInput suggestions (ProfileFormWizard): key procedures of a clinical position. */
+export const KEY_PROCEDURE_SUGGESTIONS = ['OPD', 'ICU rounds', 'Emergency calls', 'Surgery assist', 'Cath lab'];
+/** Website clinical-skill suggestions, by role. */
+export const DOCTOR_SKILLS = [
+  'OPD Management',
+  'ICU Care',
+  'Emergency Medicine',
+  'Echocardiography',
+  'Perioperative Care',
+];
+export const NURSE_SKILLS = ['IV Cannulation', 'Wound Care', 'Ventilator Care', 'Triage'];
+export const DENTIST_SKILLS = ['RCT', 'Restorations', 'Crowns', 'Implants'];
+export const OTHER_SKILLS = ['Sterilization', 'Equipment Setup', 'Patient Handling'];
+export const LANGUAGE_SUGGESTIONS = ['English', 'Hindi', 'Bengali', 'Tamil', 'Telugu', 'Marathi', 'Kannada'];
 
 export const GRADE_OPTIONS = [
   'Intern',

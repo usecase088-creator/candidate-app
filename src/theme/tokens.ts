@@ -14,6 +14,8 @@ export const colors = {
   primaryForeground: '#F7FBFD',
   /** R2: secondary text on the navy hero band (80% of primaryForeground; AA on every gradient stop). */
   primaryForegroundMuted: 'rgba(247,251,253,0.8)',
+  /** Boxes and pills on navy (profile builder CV preview; website primary-foreground/10-15). */
+  primaryForegroundTint: 'rgba(247,251,253,0.12)',
   brand: '#326AD9',
   brandForeground: '#F7FBFD',
   brandSoft: '#E1F0FF',

@@ -124,6 +124,18 @@ describe('D32 additions', () => {
     expect(contrast(colors.mutedForeground, colors.fill)).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('builder CV preview: a 12% white tint on navy for its boxes, with white and muted text AA on it', () => {
+    expect(colors.primaryForegroundTint).toBe('rgba(247,251,253,0.12)');
+    const over = (alpha: number, top: string, bg: string) => {
+      const ch = (hex: string, i: number) => parseInt(hex.slice(i, i + 2), 16);
+      const mix = [1, 3, 5].map((i) => Math.round(alpha * ch(top, i) + (1 - alpha) * ch(bg, i)));
+      return `#${mix.map((n) => n.toString(16).padStart(2, '0')).join('')}`;
+    };
+    const box = over(0.12, colors.primaryForeground, colors.navy);
+    expect(contrast(colors.primaryForeground, box)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(over(0.8, colors.primaryForeground, box), box)).toBeGreaterThanOrEqual(4.5);
+  });
+
   it('R2: muted text on the navy hero band (80% white) stays AA on every gradient stop', () => {
     expect(colors.primaryForegroundMuted).toBe('rgba(247,251,253,0.8)');
     // 80% #F7FBFD over each stop, then checked against that stop.

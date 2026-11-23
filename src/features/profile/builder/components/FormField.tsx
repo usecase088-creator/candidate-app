@@ -25,6 +25,9 @@ type Props = {
 /** D32: up to this many short options stay chips; longer lists become a picker row (Role 18, State 36). */
 const MAX_CHIP_OPTIONS = 6;
 const LOCK = { ios: 'lock', android: 'lock', web: 'lock' } as const;
+const PLUS = { ios: 'plus', android: 'add', web: 'add' } as const;
+/** Website ChipInput: at most this many suggestions, the ones not added yet. */
+const MAX_SUGGESTIONS = 8;
 
 const asString = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v));
 const asList = (v: unknown): string[] =>
@@ -241,11 +244,14 @@ function ChipsField({ testID, spec, value, onChange }: Props) {
         <View style={styles.wrap}>
           {spec.suggestions
             .filter((s) => !items.includes(s))
+            .slice(0, MAX_SUGGESTIONS)
             .map((s, i) => (
               <Chip
                 key={s}
                 testID={`${testID}.suggest.${i}`}
                 label={s}
+                accessibilityLabel={`Add ${s}`}
+                icon={PLUS}
                 selected={false}
                 onPress={() => add(s)}
               />

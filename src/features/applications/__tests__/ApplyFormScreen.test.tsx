@@ -168,6 +168,24 @@ describe('Apply with the structured form: the form', () => {
   });
 });
 
+// Website wizard sidebar in apply mode too: readiness, the step list and the mini CV preview.
+describe('Apply with the structured form: readiness and steps', () => {
+  it('shows the readiness, opens any step from the list and shows the CV preview on Review', async () => {
+    setup({ jobs: [jobWithQuestions] });
+    await open();
+    expect(await screen.findByTestId('builder.readiness.score')).toHaveTextContent('70% ready');
+    await fireEvent.press(screen.getByTestId('builder.overview.toggle'));
+    await fireEvent.press(screen.getByTestId('builder.steps.15'));
+    expect(await screen.findByTestId('builder.progress')).toHaveTextContent('Step 16 of 16');
+    expect(screen.getByTestId('builder.applyingTo')).toBeOnTheScreen();
+    expect(screen.getByTestId('builder.questions')).toBeOnTheScreen();
+    expect(screen.getByTestId('builder.cvPreview.name')).toHaveTextContent('Demo Applicant');
+    expect(within(screen.getByTestId('builder.submit')).getByText('Submit application')).toBeOnTheScreen();
+    // Apply mode keeps nothing on the phone, a jump included (the profile draft is never touched).
+    expect(await loadDraft(candidateUser.id)).toBeNull();
+  });
+});
+
 describe('Apply with the structured form: submit', () => {
   it('sends the form profile and the answers, saves no profile, says "Application submitted!" and opens My Applications', async () => {
     const apps = setup({ jobs: [jobWithQuestions] });

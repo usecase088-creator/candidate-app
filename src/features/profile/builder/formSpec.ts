@@ -4,7 +4,9 @@ import type { Draft, Experience } from './model';
 import {
   AVAILABILITY_OPTIONS,
   AVAILABILITY_STATUS_OPTIONS,
+  DENTIST_SKILLS,
   DENTIST_SPECIALTIES,
+  DOCTOR_SKILLS,
   DOCTOR_SPECIALTIES,
   DOCUMENT_OPTIONS,
   GRADE_OPTIONS,
@@ -13,7 +15,11 @@ import {
   isDentist,
   isDoctor,
   isNurse,
+  KEY_PROCEDURE_SUGGESTIONS,
+  LANGUAGE_SUGGESTIONS,
   LICENSE_STATUS_OPTIONS,
+  NURSE_SKILLS,
+  OTHER_SKILLS,
   OTHER_SPECIALTIES,
   RIGHT_TO_WORK_OPTIONS,
   ROLE_TYPES,
@@ -314,6 +320,7 @@ export function stepBlocks(step: number, s: Draft): Block[] {
               key: 'keyProcedures',
               label: 'Key procedures in this role',
               placeholder: 'Add procedure and press Add',
+              suggestions: KEY_PROCEDURE_SUGGESTIONS,
             },
             {
               kind: 'multiline',
@@ -336,6 +343,7 @@ export function stepBlocks(step: number, s: Draft): Block[] {
               label: nurse ? 'Patient care & ward skills' : 'Clinical skills',
               required: true,
               placeholder: 'Type a skill and press Add',
+              suggestions: doctor ? DOCTOR_SKILLS : nurse ? NURSE_SKILLS : dentist ? DENTIST_SKILLS : OTHER_SKILLS,
             },
           ],
         },
@@ -520,7 +528,15 @@ export function stepBlocks(step: number, s: Draft): Block[] {
       return [
         {
           type: 'fields',
-          fields: [{ kind: 'chips', key: 'languages', label: 'Languages', placeholder: 'Add language' }],
+          fields: [
+            {
+              kind: 'chips',
+              key: 'languages',
+              label: 'Languages',
+              placeholder: 'Add language',
+              suggestions: LANGUAGE_SUGGESTIONS,
+            },
+          ],
         },
       ];
     case 13:
