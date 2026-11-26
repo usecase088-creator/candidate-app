@@ -25,7 +25,13 @@ Read this first in a new session, then `CLAUDE.md`. Short and exact on purpose.
   (Roles / Top LPA / Best fit) in the sheet and removable active-filter chips with Clear all on Search. `npm run check`:
   137 suites / 2,068 tests. Flows: Profile rows are reached by scrolling to Sign out first (Maestro never counts a row
   clipped by the tab bar as visible). To check once: on the Android login screen after a session expiry the password box
-  showed dots with an empty email (the form starts empty; most likely Google autofill). The GitHub credential in Git Credential Manager expired overnight: pushes used the repo token from `.env.local`
+  showed dots with an empty email (the form starts empty; most likely Google autofill).
+  **Preview APK `68a52670` (2026-11-26, commit 3d00915, staging backend, with these features):**
+  https://expo.dev/artifacts/eas/7UaoVpmpZajRb9Jrla813BsKhOR-V5YcGiM743plmRM.apk (uninstall the old preview app first).
+  Android phone (local build of the same code): jobs-search-filters, profile-builder, apply-form, account-delete and the
+  tour pass. iPhone: the full run on sim build b709f12a passed 16/20; the 4 fixed flows (application-documents,
+  apply-quick, profile-builder, tour) are not yet re-run: four dispatches were cancelled, GitHub had no macOS arm64
+  runner ("capacity constraints"). Re-dispatch them. The GitHub credential in Git Credential Manager expired overnight: pushes used the repo token from `.env.local`
   for the command only; Raj should sign in to GCM again.
   **iPhone (EAS sim build f1c00b62, commit d6e6b7a): all 20 flows + the tour pass** (first run 15/20: Profile rows below
   the new sections, a seeded experience without the now-required specialty, a late "Save Password?" sheet; flows fixed
